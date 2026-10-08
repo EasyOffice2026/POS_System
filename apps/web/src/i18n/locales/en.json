@@ -1,0 +1,54 @@
+{
+  "app": {
+    "name": "POS System"
+  },
+  "common": {
+    "loading": "Loading…"
+  },
+  "language": {
+    "switchTo": "Switch language",
+    "english": "English",
+    "arabic": "العربية"
+  },
+  "auth": {
+    "signInTitle": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "signOut": "Sign out",
+    "errors": {
+      "INVALID_CREDENTIALS": "The email or password is not correct.",
+      "ACCOUNT_LOCKED": "This account is locked after too many failed attempts.",
+      "retryIn_one": "Try again in {{count}} minute.",
+      "retryIn_other": "Try again in {{count}} minutes.",
+      "RATE_LIMITED": "Too many attempts. Wait a few minutes and try again.",
+      "network": "Cannot reach the server. Check your connection and try again.",
+      "unknown": "Something went wrong. Try again."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {{name}}",
+    "role": "Role: {{role}}",
+    "brands": "Brands",
+    "branches": "Branches",
+    "noBrands": "There are no brands to show.",
+    "noBranches": "This brand has no branches yet.",
+    "loadError": "Could not load the data.",
+    "noAccess": "Your role has no dashboard sections yet."
+  },
+  "roles": {
+    "group_admin": "Group Admin",
+    "brand_manager": "Brand Manager",
+    "marketing": "Marketing",
+    "branch_manager": "Branch Manager",
+    "cashier": "Cashier",
+    "kitchen": "Kitchen",
+    "purchaser": "Purchaser"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "back": "Back to the dashboard"
+  }
+}
