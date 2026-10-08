@@ -138,6 +138,61 @@ describe('reading as a branch-scoped user', () => {
   });
 });
 
+describe('branch assignments', () => {
+  async function assign(email: string, branchId: string, brandId: string) {
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+    await prisma.userBranch.create({ data: { userId: user.id, branchId, brandId } });
+  }
+
+  beforeEach(async () => {
+    await assign('a@x.io', world.branchA1.id, world.brandA.id);
+    await assign('b@x.io', world.branchB1.id, world.brandB.id);
+  });
+
+  it('are only visible inside the brand', async () => {
+    const rows = await brandScope(world.brandA.id).userBranch.findMany();
+
+    expect(rows.map((row) => row.branchId)).toEqual([world.branchA1.id]);
+  });
+
+  it('are only visible for the assigned branches to a branch user', async () => {
+    await assign('a@x.io', world.branchA2.id, world.brandA.id);
+
+    const rows = await branchScope(world.brandA.id, [world.branchA2.id]).userBranch.findMany();
+
+    expect(rows.map((row) => row.branchId)).toEqual([world.branchA2.id]);
+  });
+
+  it('cannot be created for another brand', async () => {
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: 'a@x.io' } });
+
+    await expect(
+      brandScope(world.brandA.id).userBranch.create({
+        data: { userId: user.id, branchId: world.branchB1.id, brandId: world.brandB.id },
+      }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+  });
+
+  it('cannot name a branch of another brand, because the database refuses the pair', async () => {
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: 'a@x.io' } });
+
+    await expect(
+      prisma.userBranch.create({
+        data: { userId: user.id, branchId: world.branchB1.id, brandId: world.brandA.id },
+      }),
+    ).rejects.toMatchObject({ code: 'P2003' });
+  });
+
+  it('cannot be removed by another brand', async () => {
+    const removed = await brandScope(world.brandB.id).userBranch.deleteMany({
+      where: { branchId: world.branchA1.id },
+    });
+
+    expect(removed.count).toBe(0);
+    expect(await prisma.userBranch.count()).toBe(2);
+  });
+});
+
 describe('reading as a group user', () => {
   it('sees every brand, branch and user', async () => {
     const db = groupScope();
@@ -309,7 +364,7 @@ describe('what the scoped client refuses', () => {
         data: {
           roleId: '00000000-0000-7000-8000-000000000000',
           name: 'x',
-          branches: { create: [{ branchId: world.branchA1.id }] },
+          branches: { create: [{ branchId: world.branchA1.id, brandId: world.brandA.id }] },
         },
       }),
     ).rejects.toThrow(/Nested writes/);
@@ -329,7 +384,6 @@ describe('what the scoped client refuses', () => {
 
   it('models without tenant rules', async () => {
     await expect(db().refreshToken.findMany()).rejects.toThrow(/no tenant rules/);
-    await expect(db().userBranch.findMany()).rejects.toThrow(/no tenant rules/);
   });
 
   it('writes to the built-in roles, which are read-only', async () => {

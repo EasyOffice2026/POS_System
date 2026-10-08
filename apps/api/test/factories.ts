@@ -26,6 +26,10 @@ interface UserInput {
 // Needs the built-in roles in the database (call syncSystemRoles first).
 export async function createUser(prisma: PrismaClient, hasher: PasswordHasher, input: UserInput) {
   const role = await prisma.role.findUniqueOrThrow({ where: { key: input.roleKey } });
+  const { brandId, branchIds = [] } = input;
+  if (branchIds.length > 0 && !brandId) {
+    throw new Error('A user with branches needs a brand id.');
+  }
 
   return prisma.user.create({
     data: {
@@ -36,7 +40,9 @@ export async function createUser(prisma: PrismaClient, hasher: PasswordHasher, i
       staffCode: input.staffCode ?? null,
       passwordHash: input.email ? await hasher.hash(input.password ?? TEST_PASSWORD) : null,
       pinHash: input.pin ? await hasher.hash(input.pin) : null,
-      branches: { create: (input.branchIds ?? []).map((branchId) => ({ branchId })) },
+      branches: {
+        create: branchIds.map((branchId) => ({ branchId, brandId: brandId as string })),
+      },
     },
   });
 }

@@ -32,6 +32,7 @@ const tenantModels: Record<string, ModelRule> = {
   Branch: { brand: 'brandId', branch: 'id' },
   User: { brand: 'brandId' },
   AuditLog: { brand: 'brandId', branch: 'branchId' },
+  UserBranch: { brand: 'brandId', branch: 'branchId' },
 };
 
 // Reference data every signed-in person may read. Never writable through this client.

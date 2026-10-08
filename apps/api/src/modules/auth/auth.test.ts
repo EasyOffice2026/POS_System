@@ -493,7 +493,9 @@ describe('POST /auth/refresh', () => {
     const cashier = await prisma.user.findFirstOrThrow({
       where: { brandId: world.brand.id, staffCode: '1001' },
     });
-    await prisma.userBranch.create({ data: { userId: cashier.id, branchId: second.id } });
+    await prisma.userBranch.create({
+      data: { userId: cashier.id, branchId: second.id, brandId: world.brand.id },
+    });
 
     const login = await pinLogin(world.branch.id, '1001', '1234');
     const res = await refreshWith(refreshTokenOf(login) ?? '');

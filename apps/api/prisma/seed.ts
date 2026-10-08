@@ -185,9 +185,10 @@ try {
     });
 
     await prisma.userBranch.deleteMany({ where: { userId: user.id } });
-    if (user.branchIds.length > 0) {
+    if (user.branchIds.length > 0 && user.brandId) {
+      const brandId = user.brandId;
       await prisma.userBranch.createMany({
-        data: user.branchIds.map((branchId) => ({ userId: user.id, branchId })),
+        data: user.branchIds.map((branchId) => ({ userId: user.id, branchId, brandId })),
       });
     }
   }

@@ -54,6 +54,8 @@ model Branch {
   brand       Brand        @relation(fields: [brandId], references: [id], onDelete: Restrict)
   assignments UserBranch[]
 
+  // Lets tables that carry a brand id point at "this branch of this brand".
+  @@unique([id, brandId])
   @@index([brandId])
   @@map("branches")
 }
@@ -106,12 +108,16 @@ model User {
 model UserBranch {
   userId   String @map("user_id") @db.Uuid
   branchId String @map("branch_id") @db.Uuid
+  // Copy of the branch's brand, so rows can be filtered by brand like every other table.
+  // The foreign key to the branch includes it, so it can never name another brand.
+  brandId  String @map("brand_id") @db.Uuid
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Cascade)
 
   @@id([userId, branchId])
   @@index([branchId])
+  @@index([brandId])
   @@map("user_branches")
 }
 
