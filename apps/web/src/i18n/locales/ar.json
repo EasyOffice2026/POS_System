@@ -3,7 +3,26 @@
     "name": "نظام نقاط البيع"
   },
   "common": {
-    "loading": "جارٍ التحميل…"
+    "loading": "جارٍ التحميل…",
+    "save": "حفظ",
+    "saving": "جارٍ الحفظ…",
+    "cancel": "إلغاء",
+    "back": "رجوع",
+    "loadMore": "عرض المزيد",
+    "all": "الكل",
+    "optional": "اختياري",
+    "copy": "نسخ",
+    "copied": "تم النسخ",
+    "noPermission": "ليس لديك صلاحية فتح هذه الصفحة.",
+    "loadError": "تعذّر تحميل البيانات.",
+    "saveError": "تعذّر الحفظ. حاول مرة أخرى."
+  },
+  "nav": {
+    "label": "القائمة الرئيسية",
+    "dashboard": "لوحة التحكم",
+    "users": "المستخدمون",
+    "roles": "الأدوار",
+    "audit": "سجل المراجعة"
   },
   "language": {
     "switchTo": "تغيير اللغة",
@@ -50,6 +69,159 @@
     "cashier": "أمين الصندوق",
     "kitchen": "المطبخ",
     "purchaser": "مسؤول المشتريات"
+  },
+  "scopes": {
+    "GROUP": "المجموعة",
+    "BRAND": "العلامة التجارية",
+    "BRANCH": "الفرع"
+  },
+  "permissions": {
+    "brands_read": "عرض العلامات التجارية",
+    "brands_write": "تعديل العلامات التجارية",
+    "branches_read": "عرض الفروع",
+    "branches_write": "تعديل الفروع",
+    "users_read": "عرض المستخدمين",
+    "users_write": "تعديل المستخدمين",
+    "roles_read": "عرض الأدوار",
+    "menu_read": "عرض القائمة",
+    "menu_write": "تعديل القائمة",
+    "audit_read": "عرض سجل المراجعة"
+  },
+  "users": {
+    "title": "المستخدمون",
+    "newUser": "مستخدم جديد",
+    "editUser": "تعديل المستخدم",
+    "empty": "لا يوجد مستخدمون مطابقون لهذه الفلاتر.",
+    "search": "بحث",
+    "searchPlaceholder": "الاسم أو البريد أو رمز الموظف",
+    "filterRole": "الدور",
+    "filterStatus": "الحالة",
+    "never": "لم يسجّل الدخول",
+    "lockedUntil": "مقفل حتى {{time}}",
+    "columns": {
+      "name": "الاسم",
+      "role": "الدور",
+      "signIn": "تسجيل الدخول",
+      "branches": "الفروع",
+      "status": "الحالة",
+      "lastSignIn": "آخر دخول"
+    },
+    "status": {
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "locked": "مقفل"
+    },
+    "form": {
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "staffCode": "رمز الموظف",
+      "role": "الدور",
+      "brand": "العلامة التجارية",
+      "branches": "الفروع",
+      "language": "اللغة",
+      "password": "كلمة المرور",
+      "pin": "الرقم السري (PIN)",
+      "chooseRole": "اختر دوراً",
+      "chooseBrand": "اختر علامة تجارية",
+      "noBranches": "لا توجد فروع في هذه العلامة التجارية بعد.",
+      "signInHint": "أدخل بريداً إلكترونياً أو رمز موظف أو كليهما.",
+      "staffCodeHint": "رمز الموظف مع الرقم السري يتيح تسجيل الدخول من جهاز الفرع.",
+      "initialPasswordHint": "اختياري. يمكن تعيينها لاحقاً.",
+      "initialPinHint": "اختياري. يمكن تعيينه لاحقاً.",
+      "yourOwnRole": "لا يمكنك تغيير دورك بنفسك."
+    },
+    "messages": {
+      "created": "تم إنشاء المستخدم.",
+      "saved": "تم حفظ التغييرات.",
+      "deactivated": "تم إيقاف الحساب وتسجيل خروجه من كل الأجهزة.",
+      "activated": "تم تفعيل الحساب مرة أخرى.",
+      "unlocked": "تم فك قفل الحساب."
+    },
+    "actions": {
+      "deactivate": "إيقاف",
+      "activate": "تفعيل",
+      "unlock": "فك القفل",
+      "viewActivity": "عرض النشاط"
+    },
+    "credentials": {
+      "title": "كلمة المرور والرقم السري",
+      "type": "ما الذي تريد تعيينه",
+      "typePassword": "كلمة المرور",
+      "typePin": "الرقم السري",
+      "value": "القيمة الجديدة",
+      "valueHint": "اتركها فارغة لننشئ لك قيمة.",
+      "set": "تعيين",
+      "generatedPin": "الرقم السري الجديد يظهر الآن فقط. انسخه وسلّمه للشخص.",
+      "generatedPassword": "كلمة المرور الجديدة تظهر الآن فقط. انسخها وسلّمها للشخص.",
+      "needsEmail": "كلمة المرور تتطلب بريداً إلكترونياً.",
+      "needsStaffCode": "الرقم السري يتطلب رمز موظف.",
+      "pinOnlyBranch": "الرقم السري لأدوار الفروع فقط.",
+      "done": "تم الحفظ. تم إنهاء جلسات الشخص."
+    }
+  },
+  "validation": {
+    "invalid": "تحقق من الحقول المحددة.",
+    "required": "هذا الحقل مطلوب.",
+    "emailInvalid": "أدخل بريداً إلكترونياً صحيحاً.",
+    "PIN_FORMAT": "الرقم السري من 4 إلى 6 أرقام.",
+    "PIN_REPEATED": "لا يجوز أن يكون الرقم السري رقماً واحداً مكرراً.",
+    "PIN_SEQUENCE": "لا يجوز أن يكون الرقم السري تسلسلاً مثل 1234.",
+    "PASSWORD_TOO_SHORT": "كلمة المرور تتطلب 10 أحرف على الأقل.",
+    "PASSWORD_TOO_LONG": "كلمة المرور لا تتجاوز 128 حرفاً.",
+    "EMAIL_OR_STAFF_CODE_REQUIRED": "أدخل بريداً إلكترونياً أو رمز موظف.",
+    "PASSWORD_NEEDS_EMAIL": "كلمة المرور تتطلب بريداً إلكترونياً.",
+    "PIN_NEEDS_STAFF_CODE": "الرقم السري يتطلب رمز موظف.",
+    "PIN_ONLY_FOR_BRANCH_ROLES": "الرقم السري لأدوار الفروع فقط.",
+    "STAFF_CODE_NEEDS_BRAND": "مدير المجموعة ليس له رمز موظف.",
+    "BRAND_REQUIRED": "اختر علامة تجارية.",
+    "BRAND_NOT_FOUND": "هذه العلامة التجارية غير موجودة.",
+    "BRAND_NOT_ALLOWED_FOR_GROUP_ROLE": "مدير المجموعة لا ينتمي إلى علامة تجارية.",
+    "BRANCH_REQUIRED": "اختر فرعاً واحداً على الأقل.",
+    "BRANCH_NOT_FOUND": "أحد الفروع المختارة غير موجود في هذه العلامة التجارية.",
+    "BRANCHES_NOT_ALLOWED_FOR_ROLE": "هذا الدور لا يرتبط بفروع.",
+    "ROLE_NOT_FOUND": "هذا الدور غير موجود.",
+    "EMAIL_TAKEN": "هذا البريد الإلكتروني مستخدم بالفعل.",
+    "STAFF_CODE_TAKEN": "رمز الموظف هذا مستخدم بالفعل.",
+    "FORBIDDEN": "غير مسموح لك بهذا الإجراء.",
+    "NOT_FOUND": "هذا الشخص غير موجود أو لا يمكنك رؤيته."
+  },
+  "rolesPage": {
+    "title": "الأدوار",
+    "intro": "هذه هي الأدوار المدمجة وما يسمح به كل دور. يتحقق الخادم من الصلاحيات في كل طلب.",
+    "permission": "الصلاحية",
+    "scope": "النطاق",
+    "allowed": "مسموح",
+    "notAllowed": "غير مسموح"
+  },
+  "audit": {
+    "title": "سجل المراجعة",
+    "filterAction": "الإجراء",
+    "filterFrom": "من",
+    "filterTo": "إلى",
+    "onePerson": "يعرض نشاط شخص واحد.",
+    "clear": "مسح الفلاتر",
+    "empty": "لا توجد أحداث مطابقة لهذه الفلاتر.",
+    "unknownPerson": "—",
+    "showDetails": "عرض",
+    "columns": {
+      "when": "الوقت",
+      "action": "الإجراء",
+      "person": "الشخص",
+      "details": "التفاصيل",
+      "address": "عنوان IP"
+    },
+    "actions": {
+      "auth_login_success": "تسجيل دخول",
+      "auth_login_failed": "محاولة دخول فاشلة",
+      "auth_login_locked": "قفل الحساب",
+      "auth_login_blocked": "منع الدخول (الحساب مقفل)",
+      "auth_logout": "تسجيل خروج",
+      "auth_refresh_reuse_detected": "إعادة استخدام رمز الجلسة",
+      "user_created": "إنشاء مستخدم",
+      "user_updated": "تعديل مستخدم",
+      "user_credentials_reset": "تعيين كلمة مرور أو رقم سري",
+      "user_unlocked": "فك قفل مستخدم"
+    }
   },
   "notFound": {
     "title": "الصفحة غير موجودة",

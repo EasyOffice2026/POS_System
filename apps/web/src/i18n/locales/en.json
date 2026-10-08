@@ -3,7 +3,26 @@
     "name": "POS System"
   },
   "common": {
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "back": "Back",
+    "loadMore": "Load more",
+    "all": "All",
+    "optional": "Optional",
+    "copy": "Copy",
+    "copied": "Copied",
+    "noPermission": "You do not have permission to open this page.",
+    "loadError": "Could not load the data.",
+    "saveError": "Could not save. Try again."
+  },
+  "nav": {
+    "label": "Main menu",
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "roles": "Roles",
+    "audit": "Audit log"
   },
   "language": {
     "switchTo": "Switch language",
@@ -46,6 +65,159 @@
     "cashier": "Cashier",
     "kitchen": "Kitchen",
     "purchaser": "Purchaser"
+  },
+  "scopes": {
+    "GROUP": "Group",
+    "BRAND": "Brand",
+    "BRANCH": "Branch"
+  },
+  "permissions": {
+    "brands_read": "See brands",
+    "brands_write": "Change brands",
+    "branches_read": "See branches",
+    "branches_write": "Change branches",
+    "users_read": "See users",
+    "users_write": "Change users",
+    "roles_read": "See roles",
+    "menu_read": "See the menu",
+    "menu_write": "Change the menu",
+    "audit_read": "See the audit log"
+  },
+  "users": {
+    "title": "Users",
+    "newUser": "New user",
+    "editUser": "Edit user",
+    "empty": "No users match these filters.",
+    "search": "Search",
+    "searchPlaceholder": "Name, email or staff code",
+    "filterRole": "Role",
+    "filterStatus": "Status",
+    "never": "Never",
+    "lockedUntil": "Locked until {{time}}",
+    "columns": {
+      "name": "Name",
+      "role": "Role",
+      "signIn": "Sign-in",
+      "branches": "Branches",
+      "status": "Status",
+      "lastSignIn": "Last sign-in"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "locked": "Locked"
+    },
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "staffCode": "Staff code",
+      "role": "Role",
+      "brand": "Brand",
+      "branches": "Branches",
+      "language": "Language",
+      "password": "Password",
+      "pin": "PIN",
+      "chooseRole": "Choose a role",
+      "chooseBrand": "Choose a brand",
+      "noBranches": "There are no branches in this brand yet.",
+      "signInHint": "Give an email, a staff code, or both.",
+      "staffCodeHint": "A staff code and a PIN let this person sign in at a branch terminal.",
+      "initialPasswordHint": "Optional. It can be set later.",
+      "initialPinHint": "Optional. It can be set later.",
+      "yourOwnRole": "You cannot change your own role."
+    },
+    "messages": {
+      "created": "User created.",
+      "saved": "Changes saved.",
+      "deactivated": "The account is deactivated and signed out everywhere.",
+      "activated": "The account is active again.",
+      "unlocked": "The account is unlocked."
+    },
+    "actions": {
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "unlock": "Unlock",
+      "viewActivity": "View activity"
+    },
+    "credentials": {
+      "title": "Password and PIN",
+      "type": "What to set",
+      "typePassword": "Password",
+      "typePin": "PIN",
+      "value": "New value",
+      "valueHint": "Leave empty to make one for you.",
+      "set": "Set",
+      "generatedPin": "The new PIN is shown only now. Copy it and give it to the person.",
+      "generatedPassword": "The new password is shown only now. Copy it and give it to the person.",
+      "needsEmail": "A password needs an email.",
+      "needsStaffCode": "A PIN needs a staff code.",
+      "pinOnlyBranch": "Only branch roles sign in with a PIN.",
+      "done": "Saved. The person's sessions were ended."
+    }
+  },
+  "validation": {
+    "invalid": "Check the highlighted fields.",
+    "required": "This field is required.",
+    "emailInvalid": "Enter a valid email.",
+    "PIN_FORMAT": "A PIN has 4 to 6 digits.",
+    "PIN_REPEATED": "A PIN cannot be one digit repeated.",
+    "PIN_SEQUENCE": "A PIN cannot be a straight run such as 1234.",
+    "PASSWORD_TOO_SHORT": "A password needs at least 10 characters.",
+    "PASSWORD_TOO_LONG": "A password can have at most 128 characters.",
+    "EMAIL_OR_STAFF_CODE_REQUIRED": "Give an email or a staff code.",
+    "PASSWORD_NEEDS_EMAIL": "A password needs an email.",
+    "PIN_NEEDS_STAFF_CODE": "A PIN needs a staff code.",
+    "PIN_ONLY_FOR_BRANCH_ROLES": "Only branch roles sign in with a PIN.",
+    "STAFF_CODE_NEEDS_BRAND": "A group admin has no staff code.",
+    "BRAND_REQUIRED": "Choose a brand.",
+    "BRAND_NOT_FOUND": "This brand does not exist.",
+    "BRAND_NOT_ALLOWED_FOR_GROUP_ROLE": "A group admin belongs to no brand.",
+    "BRANCH_REQUIRED": "Pick at least one branch.",
+    "BRANCH_NOT_FOUND": "A chosen branch does not exist in this brand.",
+    "BRANCHES_NOT_ALLOWED_FOR_ROLE": "This role has no branches.",
+    "ROLE_NOT_FOUND": "This role does not exist.",
+    "EMAIL_TAKEN": "This email is already used.",
+    "STAFF_CODE_TAKEN": "This staff code is already used.",
+    "FORBIDDEN": "You are not allowed to do this.",
+    "NOT_FOUND": "This person does not exist or you cannot see them."
+  },
+  "rolesPage": {
+    "title": "Roles",
+    "intro": "These are the built-in roles and what each one may do. The server checks permissions on every request.",
+    "permission": "Permission",
+    "scope": "Scope",
+    "allowed": "Allowed",
+    "notAllowed": "Not allowed"
+  },
+  "audit": {
+    "title": "Audit log",
+    "filterAction": "Action",
+    "filterFrom": "From",
+    "filterTo": "To",
+    "onePerson": "Showing the activity of one person.",
+    "clear": "Clear filters",
+    "empty": "No events match these filters.",
+    "unknownPerson": "—",
+    "showDetails": "Show",
+    "columns": {
+      "when": "When",
+      "action": "Action",
+      "person": "Person",
+      "details": "Details",
+      "address": "IP address"
+    },
+    "actions": {
+      "auth_login_success": "Signed in",
+      "auth_login_failed": "Failed sign-in",
+      "auth_login_locked": "Account locked",
+      "auth_login_blocked": "Sign-in blocked (account locked)",
+      "auth_logout": "Signed out",
+      "auth_refresh_reuse_detected": "Session token reused",
+      "user_created": "User created",
+      "user_updated": "User changed",
+      "user_credentials_reset": "Password or PIN set",
+      "user_unlocked": "User unlocked"
+    }
   },
   "notFound": {
     "title": "Page not found",

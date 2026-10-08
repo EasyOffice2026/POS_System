@@ -1,9 +1,13 @@
 import {
+  type AdminUser,
+  type AuditLog,
   type AuthUser,
   type Branch,
   type Brand,
   permissions,
+  type RoleInfo,
   type SessionResponse,
+  systemRoles,
 } from '@pos/shared';
 
 export const ids = {
@@ -46,7 +50,7 @@ export const branchManager: AuthUser = {
   scope: 'BRANCH',
   brandId: ids.pizza,
   branchIds: [ids.pizzaMall],
-  permissions: ['branches:read', 'menu:read'],
+  permissions: ['branches:read', 'users:read', 'menu:read'],
   preferredLang: 'en',
 };
 
@@ -108,3 +112,91 @@ export const burgerAirport: Branch = {
 };
 
 export const page = <T>(data: T[], nextCursor: string | null = null) => ({ data, nextCursor });
+
+// --- people, roles and audit rows, for the user management screens ---
+
+export const userIds = {
+  sara: '01990000-0000-7000-8000-000000000201',
+  dana: '01990000-0000-7000-8000-000000000202',
+  maha: '01990000-0000-7000-8000-000000000203',
+  locked: '01990000-0000-7000-8000-000000000204',
+};
+
+export function adminUser(overrides: Partial<AdminUser> = {}): AdminUser {
+  return {
+    id: userIds.sara,
+    brandId: ids.pizza,
+    name: 'Sara Cashier',
+    email: 'sara@pos.local',
+    staffCode: '1001',
+    role: { key: 'cashier', name: 'Cashier', scope: 'BRANCH' },
+    branchIds: [ids.pizzaMall],
+    preferredLang: 'en',
+    isActive: true,
+    lockedUntil: null,
+    hasPassword: true,
+    hasPin: true,
+    lastLoginAt: '2026-10-08T09:30:00.000Z',
+    createdAt: '2026-10-01T08:00:00.000Z',
+    ...overrides,
+  };
+}
+
+export const sara = adminUser();
+
+export const dana = adminUser({
+  id: userIds.dana,
+  name: 'Dana Downtown',
+  email: null,
+  staffCode: '1002',
+  branchIds: [ids.pizzaDowntown],
+  hasPassword: false,
+  lastLoginAt: null,
+  isActive: false,
+});
+
+export const lockedUser = adminUser({
+  id: userIds.locked,
+  name: 'Locked Larry',
+  email: 'larry@pos.local',
+  staffCode: '1003',
+  lockedUntil: '2026-10-09T12:00:00.000Z',
+});
+
+export const mahaManager = adminUser({
+  id: userIds.maha,
+  name: 'Maha Mall Manager',
+  email: 'maha@pos.local',
+  staffCode: null,
+  role: { key: 'branch_manager', name: 'Branch Manager', scope: 'BRANCH' },
+  hasPin: false,
+});
+
+// The built-in roles as the API returns them. "assignable" depends on who is asking.
+export function rolesFor(actor: 'group' | 'brand'): RoleInfo[] {
+  return systemRoles.map((role) => ({
+    key: role.key,
+    name: role.name,
+    scope: role.scope,
+    permissions: [...role.permissions],
+    assignable: actor === 'group' || role.key !== 'group_admin',
+  }));
+}
+
+export function auditRow(overrides: Partial<AuditLog> = {}): AuditLog {
+  return {
+    id: '01990000-0000-7000-8000-000000000301',
+    action: 'user.created',
+    userId: groupAdmin.id,
+    userName: 'Group Admin',
+    brandId: ids.pizza,
+    branchId: null,
+    entityType: 'user',
+    entityId: userIds.sara,
+    metadata: { role: 'cashier', branches: 1 },
+    ip: '10.0.0.5',
+    userAgent: 'TestBrowser/1.0',
+    createdAt: '2026-10-08T10:15:00.000Z',
+    ...overrides,
+  };
+}
