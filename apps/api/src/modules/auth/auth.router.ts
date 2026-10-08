@@ -4,15 +4,12 @@ import { type CookieOptions, type Request, type RequestHandler, Router } from 'e
 import { rateLimit } from 'express-rate-limit';
 import type { Config } from '../../config';
 import { errors } from '../../lib/http-errors';
+import { requestMeta } from '../../lib/request-meta';
 import { parseWith } from '../../lib/validate';
-import type { AuthService, RequestMeta } from './auth.service';
+import type { AuthService } from './auth.service';
 
 // The refresh cookie is only sent to the auth routes.
 const COOKIE_PATH = '/api/v1/auth';
-
-function requestMeta(req: Request): RequestMeta {
-  return { ip: req.ip ?? null, userAgent: req.get('user-agent')?.slice(0, 500) ?? null };
-}
 
 export function createAuthRouter(deps: {
   service: AuthService;

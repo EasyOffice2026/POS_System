@@ -31,6 +31,8 @@ export const errors = {
     new AppError(401, 'INVALID_REFRESH_TOKEN', 'The session is no longer valid. Sign in again'),
   forbidden: () => new AppError(403, 'FORBIDDEN', 'You do not have permission to do this'),
   notFound: (what: string) => new AppError(404, 'NOT_FOUND', `${what} was not found`),
+  // The code says what is taken, for example EMAIL_TAKEN.
+  conflict: (code: string, message: string) => new AppError(409, code, message),
   accountLocked: (retryAfterSeconds: number) =>
     new AppError(429, 'ACCOUNT_LOCKED', 'Too many failed attempts. Try again later', {
       details: { retryAfterSeconds },

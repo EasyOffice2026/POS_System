@@ -24,13 +24,16 @@ export class TenantViolationError extends Error {
 interface ModelRule {
   brand?: string;
   branch?: string;
+  // For rows with no branch column of their own: a branch-scoped person only sees rows that are
+  // linked to one of their branches through this to-many relation (users, through assignments).
+  branchesThrough?: { relation: string; field: string };
 }
 
 // Every table that holds tenant data needs an entry here. A model without one is refused.
 const tenantModels: Record<string, ModelRule> = {
   Brand: { brand: 'id' },
   Branch: { brand: 'brandId', branch: 'id' },
-  User: { brand: 'brandId' },
+  User: { brand: 'brandId', branchesThrough: { relation: 'branches', field: 'branchId' } },
   AuditLog: { brand: 'brandId', branch: 'branchId' },
   UserBranch: { brand: 'brandId', branch: 'branchId' },
 };
@@ -101,6 +104,10 @@ function tenantFilter(rule: ModelRule, ctx: TenantContext): Args | null {
   if (ctx.scope === 'BRANCH' && rule.branch) {
     conditions.push({ [rule.branch]: { in: ctx.branchIds } });
   }
+  if (ctx.scope === 'BRANCH' && rule.branchesThrough) {
+    const { relation, field } = rule.branchesThrough;
+    conditions.push({ [relation]: { some: { [field]: { in: ctx.branchIds } } } });
+  }
   return { AND: conditions };
 }
 
@@ -147,6 +154,12 @@ function scopeCreateData(model: string, rule: ModelRule, data: unknown, ctx: Ten
     if (typeof given !== 'string' || !ctx.branchIds.includes(given)) {
       throw new TenantViolationError(`Cannot create ${model} rows for another branch.`);
     }
+  }
+
+  // A new row of this kind is linked to a branch afterwards, so a branch-scoped person could
+  // never see what they just made.
+  if (rule.branchesThrough && ctx.scope === 'BRANCH') {
+    throw new TenantViolationError(`A branch-scoped user cannot create ${model} rows.`);
   }
 
   return result;

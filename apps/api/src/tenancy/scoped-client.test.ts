@@ -193,6 +193,75 @@ describe('branch assignments', () => {
   });
 });
 
+describe('people, as a branch-scoped user', () => {
+  async function addCashier(email: string, branchIds: string[]) {
+    const user = await prisma.user.create({
+      data: {
+        brandId: world.brandA.id,
+        roleId: (await prisma.role.findUniqueOrThrow({ where: { key: 'cashier' } })).id,
+        name: email,
+        email,
+      },
+    });
+    for (const branchId of branchIds) {
+      await prisma.userBranch.create({
+        data: { userId: user.id, branchId, brandId: world.brandA.id },
+      });
+    }
+    return user;
+  }
+
+  beforeEach(async () => {
+    await addCashier('at-a1@x.io', [world.branchA1.id]);
+    await addCashier('at-a2@x.io', [world.branchA2.id]);
+    await addCashier('at-both@x.io', [world.branchA1.id, world.branchA2.id]);
+  });
+
+  it('only sees people who work at one of their branches', async () => {
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    const emails = (await db.user.findMany({ orderBy: { email: 'asc' } })).map((u) => u.email);
+
+    // The brand manager has no branch, and at-a2 works elsewhere.
+    expect(emails).toEqual(['at-a1@x.io', 'at-both@x.io']);
+  });
+
+  it('sees a person who works at several branches when one of them is theirs', async () => {
+    const db = branchScope(world.brandA.id, [world.branchA2.id]);
+
+    const emails = (await db.user.findMany({ orderBy: { email: 'asc' } })).map((u) => u.email);
+
+    expect(emails).toEqual(['at-a2@x.io', 'at-both@x.io']);
+  });
+
+  it('cannot reach a person at another branch by id', async () => {
+    const other = await prisma.user.findUniqueOrThrow({ where: { email: 'at-a2@x.io' } });
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    expect(await db.user.findUnique({ where: { id: other.id } })).toBeNull();
+    await expect(
+      db.user.update({ where: { id: other.id }, data: { name: 'Hacked' } }),
+    ).rejects.toMatchObject({ code: 'P2025' });
+  });
+
+  it('cannot create people', async () => {
+    const role = await prisma.role.findUniqueOrThrow({ where: { key: 'cashier' } });
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    await expect(
+      db.user.create({ data: { brandId: world.brandA.id, roleId: role.id, name: 'New' } }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+  });
+
+  it('a brand-scoped person still sees everybody in the brand', async () => {
+    const emails = (await brandScope(world.brandA.id).user.findMany()).map((u) => u.email);
+
+    expect(emails).toEqual(
+      expect.arrayContaining(['a@x.io', 'at-a1@x.io', 'at-a2@x.io', 'at-both@x.io']),
+    );
+  });
+});
+
 describe('reading as a group user', () => {
   it('sees every brand, branch and user', async () => {
     const db = groupScope();

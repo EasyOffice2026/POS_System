@@ -14,6 +14,7 @@ import { type AuditEvent, writeAudit } from '../../lib/audit';
 import { errors } from '../../lib/http-errors';
 import type { PasswordHasher } from '../../lib/password';
 import type { PrismaClient } from '../../lib/prisma';
+import type { RequestMeta } from '../../lib/request-meta';
 import { generateRefreshToken, hashRefreshToken, type TokenService } from '../../lib/tokens';
 
 // Lockout rules (see docs/specs/001-auth-and-tenancy.md): every 5th failure in a row locks the
@@ -35,11 +36,6 @@ export interface AuthDeps {
   hasher: PasswordHasher;
   tokens: TokenService;
   config: Config;
-}
-
-export interface RequestMeta {
-  ip: string | null;
-  userAgent: string | null;
 }
 
 export interface IssuedSession {
@@ -289,6 +285,15 @@ export function createAuthService({ prisma, hasher, tokens, config }: AuthDeps) 
         { action: 'auth.logout', userId: record.userId, brandId: record.user.brandId },
         meta,
       );
+    },
+
+    // Ends every session of a person, for example when they are deactivated or get a new password.
+    // Their access token stays valid until it expires (15 minutes) but cannot be refreshed.
+    async revokeAllSessions(userId: string): Promise<void> {
+      await prisma.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
     },
 
     async me(claims: AccessTokenClaims): Promise<AuthUser> {
