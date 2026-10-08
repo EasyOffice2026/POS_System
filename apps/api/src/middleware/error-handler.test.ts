@@ -2,12 +2,15 @@ import { apiErrorSchema } from '@pos/shared';
 import express from 'express';
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
+import { createTestPrisma, testConfig } from '../../test/helpers';
 import { createApp } from '../app';
 import { errorHandler } from './error-handler';
 
+const prisma = createTestPrisma();
+
 describe('error handling', () => {
   it('answers unknown routes with the standard error body', async () => {
-    const res = await request(createApp()).get('/api/v1/nope');
+    const res = await request(createApp({ prisma, config: testConfig() })).get('/api/v1/nope');
 
     expect(res.status).toBe(404);
     expect(apiErrorSchema.parse(res.body).error.code).toBe('NOT_FOUND');

@@ -14,6 +14,8 @@ export interface Config {
   passwordHashProfile: HashProfileName;
   accessToken: { secret: string; ttlSeconds: number };
   refreshToken: { ttlDays: number; cookieName: string; cookieSecure: boolean };
+  // Failed sign-in or refresh requests allowed per IP address in the window.
+  authRateLimit: { windowMs: number; max: number };
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -32,6 +34,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       .min(60)
       .default(15 * 60),
     REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).default(7),
+    AUTH_RATE_LIMIT_MAX: z.coerce.number().int().min(1).default(30),
   });
 
   const values = schema.parse(env);
@@ -51,5 +54,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       cookieName: 'pos_refresh',
       cookieSecure: production,
     },
+    authRateLimit: { windowMs: 15 * 60 * 1000, max: values.AUTH_RATE_LIMIT_MAX },
   };
 }
