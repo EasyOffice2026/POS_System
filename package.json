@@ -12,6 +12,7 @@
     "packages/*"
   ],
   "scripts": {
+    "dev:api": "npm run dev -w @pos/api",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
