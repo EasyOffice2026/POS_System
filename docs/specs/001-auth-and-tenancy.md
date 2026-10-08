@@ -76,7 +76,7 @@ The cookie design assumes the web app and the API share one site (the same domai
 
 ## Audit log
 
-These events are written to the audit log with the user, brand, branch, IP address and browser: `auth.login.success`, `auth.login.failed`, `auth.login.locked`, `auth.logout`, `auth.refresh.reuse_detected`. Audit rows are never updated or deleted.
+These events are written to the audit log with the user, brand, branch, IP address and browser: `auth.login.success`, `auth.login.failed`, `auth.login.locked` (the moment an account is locked), `auth.login.blocked` (an attempt refused because the account is locked), `auth.logout`, `auth.refresh.reuse_detected`. Passwords and PINs are never written to the log. Audit rows are never updated or deleted.
 
 ## Tenant scoping
 
@@ -103,7 +103,7 @@ All data access in request handlers goes through a scoped database client built 
 
 List endpoints take `?limit=` (1 to 100, default 50) and `?cursor=` and return `{ "data": [...], "nextCursor": "..." | null }`.
 
-Errors use the standard body `{ "error": { "code", "message", "details" } }`. Codes: `VALIDATION_ERROR` (400), `INVALID_CREDENTIALS` (401), `UNAUTHENTICATED` (401), `TOKEN_EXPIRED` (401), `INVALID_REFRESH_TOKEN` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `ACCOUNT_LOCKED` (429), `RATE_LIMITED` (429), `INTERNAL_ERROR` (500).
+Errors use the standard body `{ "error": { "code", "message", "details" } }`. Codes: `VALIDATION_ERROR` (400), `INVALID_JSON` (400), `INVALID_CREDENTIALS` (401), `UNAUTHENTICATED` (401), `TOKEN_EXPIRED` (401), `INVALID_REFRESH_TOKEN` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `PAYLOAD_TOO_LARGE` (413), `ACCOUNT_LOCKED` (429), `RATE_LIMITED` (429), `INTERNAL_ERROR` (500).
 
 ## Acceptance criteria
 
@@ -124,3 +124,4 @@ Errors use the standard body `{ "error": { "code", "message", "details" } }`. Co
 3. Confirm the permission matrix above.
 4. Should a POS terminal keep a session for 7 days, or end it with the shift?
 5. How does a terminal learn its branch? Device pairing is designed in Phase 2. Until then the branch id is entered during setup.
+6. If sign-out cannot reach the server, the person is signed out on that device but their refresh cookie stays valid until it expires, and a reload could sign them back in. Is that acceptable on shared terminals, or should a terminal refuse to sign out while offline?

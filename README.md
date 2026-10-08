@@ -2,7 +2,7 @@
 
 A web-based point of sale and operations platform for restaurant groups that run several brands across many branches. It covers orders, kitchen display, inventory, recipes, purchasing, customer loyalty and reporting, in Arabic (RTL) and English (LTR).
 
-**Status:** Phase 1 is under way. The project skeleton is in place: API, web app, print bridge, shared package, CI and local database services. None of the product features are built yet.
+**Status:** Phase 1 is under way. Sign-in, tenant isolation between brands and branches, the database schema and the web shell (login, dashboard, Arabic/English) are built. Menus, orders and the other product features are not built yet.
 
 ## What the system will do
 
@@ -17,32 +17,48 @@ A web-based point of sale and operations platform for restaurant groups that run
 
 ## Getting started
 
-**You need:** Node.js 24 (the version in `.nvmrc`, which comes with npm 11), and Docker for the local database services.
+**You need:** Node.js 24 (the version in `.nvmrc`, which comes with npm 11) and Docker for the database.
 
 ```
 npm install
-npm run dev
+npm run infra:up      # PostgreSQL and Redis in Docker, on localhost only
+npm run db:setup      # apply the migrations and add the demo data
+npm run dev           # API and web app together
 ```
 
-`npm run dev` starts the API and the web app together. Open the web address printed in the terminal (normally http://localhost:5173; Vite picks the next free port if that one is taken). The page shows `API: ok` when the web app can reach the API.
+Open the web address printed in the terminal (normally http://localhost:5173; Vite picks the next free port if that one is taken) and sign in with one of the demo accounts below.
 
-The database services are not used by any code yet. When you need them:
+Everything has a working default, so copying `.env.example` to `.env` is optional. `.env` is never committed.
 
-```
-npm run infra:up
-```
+### Demo accounts
 
-This starts PostgreSQL and Redis in Docker, bound to localhost only. Copying `.env.example` to `.env` is optional; the defaults work without it. `.env` is never committed.
+`npm run db:setup` creates two brands (Pizza Palace and Burger Hub) with two branches each, and one account per role. These are for development only. The seed refuses to run when `NODE_ENV` is `production`.
+
+| Email                            | Role           | Sees                      |
+| -------------------------------- | -------------- | ------------------------- |
+| `admin@pos.local`                | Group Admin    | Every brand and branch    |
+| `pizza.manager@pos.local`        | Brand Manager  | Pizza Palace              |
+| `burger.manager@pos.local`       | Brand Manager  | Burger Hub                |
+| `pizza.marketing@pos.local`      | Marketing      | Pizza Palace              |
+| `pizza.mall.manager@pos.local`   | Branch Manager | Pizza Palace, Mall branch |
+| `pizza.mall.purchaser@pos.local` | Purchaser      | Pizza Palace, Mall branch |
+
+The password for all of them is `DevPassw0rd!`. Cashiers and kitchen staff sign in at a terminal with a branch, a staff code and a PIN instead (the PIN screen comes with the POS terminal in Phase 2). The API already accepts them, for example staff code `1001` with PIN `1234` at the Mall branch (`01990000-0000-7000-8000-000000000011`).
 
 ### Commands
 
-| Command                                                | What it does                                                        |
-| ------------------------------------------------------ | ------------------------------------------------------------------- |
-| `npm run dev`                                          | Start the API and web app together                                  |
-| `npm run dev:api`, `dev:web`, `dev:print-bridge`       | Start one service                                                   |
-| `npm run infra:up`, `infra:down`, `infra:logs`         | Start, stop or follow PostgreSQL and Redis                          |
-| `npm run check`                                        | Run everything CI runs: format check, lint, typecheck, tests, build |
-| `npm run format`, `lint`, `typecheck`, `test`, `build` | Run a single step                                                   |
+| Command                                                | What it does                                                          |
+| ------------------------------------------------------ | --------------------------------------------------------------------- |
+| `npm run dev`                                          | Start the API and web app together                                    |
+| `npm run dev:api`, `dev:web`, `dev:print-bridge`       | Start one service                                                     |
+| `npm run infra:up`, `infra:down`, `infra:logs`         | Start, stop or follow PostgreSQL and Redis                            |
+| `npm run db:setup`                                     | Apply the migrations and add the demo data                            |
+| `npm run db:migrate`                                   | Create a new migration after changing `apps/api/prisma/schema.prisma` |
+| `npm run db:deploy`, `db:seed`, `db:reset`             | Apply migrations, add demo data, or wipe the database and start again |
+| `npm run check`                                        | Run everything CI runs: format check, lint, typecheck, tests, build   |
+| `npm run format`, `lint`, `typecheck`, `test`, `build` | Run a single step                                                     |
+
+The API tests need PostgreSQL, so run `npm run infra:up` first. They use their own schema (`pos_test`) inside the database and apply the real migrations to it, so your development data is never touched.
 
 ### Ports
 
@@ -56,26 +72,30 @@ This starts PostgreSQL and Redis in Docker, bound to localhost only. Copying `.e
 
 ## Tech stack
 
-| Layer           | Technology                                                                            |
-| --------------- | ------------------------------------------------------------------------------------- |
-| Frontend        | React 19, TypeScript, Vite 8. Planned: Tailwind CSS, Zustand, TanStack Query, i18next |
-| Backend         | Node.js 24 LTS, Express 5, TypeScript, Zod. Planned: Prisma, Socket.io, BullMQ        |
-| Data            | PostgreSQL 18, Redis 8. S3-compatible object storage is still to be chosen            |
-| Branch hardware | Node print bridge (skeleton) for ESC/POS receipt and kitchen printers                 |
-| Testing         | Vitest, Testing Library, Supertest. Planned: Playwright, k6                           |
-| DevOps          | Docker Compose, GitHub Actions. Planned: Sentry, Grafana                              |
+| Layer           | Technology                                                                             |
+| --------------- | -------------------------------------------------------------------------------------- |
+| Frontend        | React 19, TypeScript, Vite 8, React Router 8, TanStack Query, i18next, Tailwind CSS 4  |
+| Backend         | Node.js 24 LTS, Express 5, TypeScript, Zod, Prisma 7. Planned: Socket.io, BullMQ       |
+| Data            | PostgreSQL 18, Redis 8. S3-compatible object storage is still to be chosen             |
+| Sign-in         | JWT access tokens (jose), rotating refresh tokens in an httpOnly cookie, scrypt hashes |
+| Branch hardware | Node print bridge (skeleton) for ESC/POS receipt and kitchen printers                  |
+| Testing         | Vitest, Testing Library, Supertest. Planned: Playwright, k6                            |
+| DevOps          | Docker Compose, GitHub Actions. Planned: Sentry, Grafana                               |
 
 ## Repository structure
 
 ```
 pos-system/
 ├── apps/
-│   ├── web/            # React app: POS, KDS, tables, management console
+│   ├── web/            # React app: login, dashboard (POS, KDS and tables to come)
 │   ├── api/            # Node.js REST API (Express)
+│   │   ├── prisma/     # Database schema, migrations and demo seed
+│   │   └── src/        # modules/, middleware/, tenancy/, lib/
 │   └── print-bridge/   # Local service that drives branch printers
 ├── packages/
 │   └── shared/         # Shared TypeScript types and Zod schemas
 ├── docs/
+│   ├── specs/          # Module specs, written before each module is built
 │   ├── proposal/       # Technical proposal (HTML and Word)
 │   └── prototype/      # Clickable cashier screen prototype
 ├── scripts/            # Build helpers
@@ -85,10 +105,15 @@ pos-system/
 
 The other packages import `@pos/shared` as TypeScript source, so there is no build step to run after changing it. The API and print bridge are bundled with esbuild for production (`npm run build`).
 
-The documents in `docs/` are for reference:
+### How data stays separate between brands
+
+Every request after sign-in gets a database client limited to the brand and branches of the signed-in person. It refuses to read or write anything outside them, and it refuses nested relation loading, nested writes, raw SQL and tables nobody gave rules to. Handlers must use this client, not the plain one. See [spec 001](docs/specs/001-auth-and-tenancy.md) and `apps/api/src/tenancy/`.
+
+### Documents
 
 | File                                                                   | Description                                                                                            |
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| [docs/specs/](docs/specs/)                                             | Module specs: sign-in and tenant scoping, brands and branches, users and roles, menu                   |
 | [POS_System_Proposal_1.html](docs/proposal/POS_System_Proposal_1.html) | Technical Proposal v1.1: modules, database schema, API, architecture, security                         |
 | [POS_System_Proposal_1.docx](docs/proposal/POS_System_Proposal_1.docx) | The same proposal as a Word document                                                                   |
 | [POS_Terminal.html](docs/prototype/POS_Terminal.html)                  | Clickable prototype of the cashier screen. Open it in a browser; it uses mock data and needs no server |
@@ -117,6 +142,6 @@ Planning baseline: 37 weeks from 12 Oct 2026.
 | `hotfix/vX.Y.Z`                 | Urgent production fix, branched from `main`     |
 
 - Nobody pushes directly to `main` or `develop`. All changes go through a pull request with passing CI and one approval.
-- CI runs the format check, lint, typecheck, tests and build on every pull request. Run `npm run check` before you push to get the same result locally.
+- CI runs the format check, lint, typecheck, tests and build on every pull request, with a PostgreSQL service for the API tests. Run `npm run check` before you push to get the same result locally.
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/), scoped by module, for example `feat(orders): split payment` or `fix(kds): recall ticket`.
-- Any new text shown in the UI must be added to both the English and Arabic translation files.
+- Any new text shown in the UI must be added to both the English and Arabic translation files. A test fails if one is missing.
