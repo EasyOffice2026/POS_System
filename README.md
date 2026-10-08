@@ -2,7 +2,7 @@
 
 A web-based point of sale and operations platform for restaurant groups that run several brands across many branches. It covers orders, kitchen display, inventory, recipes, purchasing, customer loyalty and reporting, in Arabic (RTL) and English (LTR).
 
-**Status:** Phase 1 is under way. Sign-in, tenant isolation between brands and branches, the database schema and the web shell (login, dashboard, Arabic/English) are built. Menus, orders and the other product features are not built yet.
+**Status:** Phase 1 is under way. Sign-in, tenant isolation between brands and branches, the database schema, the web shell (login, dashboard, Arabic/English) and user administration (users, roles, audit log) are built. Brand and branch screens, menus, orders and the other product features are not built yet.
 
 ## What the system will do
 
@@ -44,6 +44,19 @@ Everything has a working default, so copying `.env.example` to `.env` is optiona
 | `pizza.mall.purchaser@pos.local` | Purchaser      | Pizza Palace, Mall branch |
 
 The password for all of them is `DevPassw0rd!`. Cashiers and kitchen staff sign in at a terminal with a branch, a staff code and a PIN instead (the PIN screen comes with the POS terminal in Phase 2). The API already accepts them, for example staff code `1001` with PIN `1234` at the Mall branch (`01990000-0000-7000-8000-000000000011`).
+
+### What you can try
+
+Sign in as `admin@pos.local` and use the menu under the header. Each link shows only when the person has its permission.
+
+| Screen    | What it does                                                                             | Needs                                  |
+| --------- | ---------------------------------------------------------------------------------------- | -------------------------------------- |
+| Dashboard | The brands and branches the person can see                                               | Any signed-in person                   |
+| Users     | Search and filter people, add and change them, deactivate, unlock, set a password or PIN | `users:read` (changing: `users:write`) |
+| Roles     | What each built-in role may do                                                           | `roles:read`                           |
+| Audit log | Who did what, newest first, filtered by action, days or person                           | `audit:read`                           |
+
+Sign in as `pizza.manager@pos.local` to see that only Pizza Palace people and events appear, and that a brand manager cannot create a group admin. Sign in as `pizza.mall.manager@pos.local` to see a branch manager's view: the people at their own branch, with no way to change them. Switch the language with the button in the header to see the screens in Arabic, mirrored right to left.
 
 ### Commands
 
@@ -87,7 +100,7 @@ The API tests need PostgreSQL, so run `npm run infra:up` first. They use their o
 ```
 pos-system/
 ├── apps/
-│   ├── web/            # React app: login, dashboard (POS, KDS and tables to come)
+│   ├── web/            # React app: login, dashboard, users, roles, audit log (POS, KDS to come)
 │   ├── api/            # Node.js REST API (Express)
 │   │   ├── prisma/     # Database schema, migrations and demo seed
 │   │   └── src/        # modules/, middleware/, tenancy/, lib/
