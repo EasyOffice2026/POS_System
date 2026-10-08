@@ -19,9 +19,9 @@ A web-based point of sale and operations platform for restaurant groups that run
 
 | File | Description |
 | --- | --- |
-| [POS_System_Proposal_1.html](POS_System_Proposal_1.html) | Technical Proposal v1.1: modules, database schema, API, architecture, security |
-| [POS_System_Proposal_1.docx](POS_System_Proposal_1.docx) | The same proposal as a Word document |
-| [POS_Terminal.html](POS_Terminal.html) | Clickable prototype of the cashier screen. Open it in a browser; it uses mock data and needs no server |
+| [POS_System_Proposal_1.html](docs/proposal/POS_System_Proposal_1.html) | Technical Proposal v1.1: modules, database schema, API, architecture, security |
+| [POS_System_Proposal_1.docx](docs/proposal/POS_System_Proposal_1.docx) | The same proposal as a Word document |
+| [POS_Terminal.html](docs/prototype/POS_Terminal.html) | Clickable prototype of the cashier screen. Open it in a browser; it uses mock data and needs no server |
 
 ## Planned tech stack
 
@@ -78,4 +78,4 @@ Planning baseline: 37 weeks from 12 Oct 2026.
 
 ## Getting started
 
-Setup instructions will be added once the monorepo is created in Phase 1, week 1. Until then, open `POS_Terminal.html` in a browser to try the cashier flow.
+Setup instructions will be added once the monorepo is created in Phase 1, week 1. Until then, open `docs/prototype/POS_Terminal.html` in a browser to try the cashier flow.
