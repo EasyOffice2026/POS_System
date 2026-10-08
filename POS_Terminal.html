@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" id="root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS Terminal — Multi-Brand F&B</title>
+<style>
+/* ── RESET & ROOT ─────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1B4F72;--accent:#2471A3;--accent2:#1A5276;
+  --green:#1E8449;--red:#C0392B;--orange:#D35400;--gold:#B7950B;
+  --bg:#F0F3F7;--panel:#fff;--border:#DDE3ED;
+  --text:#1C2833;--muted:#7F8C8D;--light:#EBF5FB;
+  --header:#0E2F4A;--sidebar:#F7F9FC;
+  --cat-active:#1B4F72;--cat-bg:#fff;
+  --item-hover:#F0F7FF;
+  --shadow:0 2px 12px rgba(0,0,0,.09);
+  --r:10px;
+}
+html,body{height:100%;font-family:'Segoe UI',Arial,sans-serif;font-size:13px;background:var(--bg);color:var(--text);}
+button{cursor:pointer;border:none;font-family:inherit;}
+input{font-family:inherit;}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px}
+
+/* ── LAYOUT ───────────────────────────────────────────── */
+#app{display:grid;grid-template-rows:var(--hh,56px) 1fr;height:100vh;overflow:hidden;}
+#header{background:var(--header);display:flex;align-items:center;padding:0 16px;gap:12px;z-index:200;}
+#body{display:grid;grid-template-columns:220px 1fr 340px;height:100%;overflow:hidden;}
+
+/* ── HEADER ───────────────────────────────────────────── */
+.hdr-logo{color:#fff;font-weight:800;font-size:15px;white-space:nowrap;letter-spacing:.3px;}
+.hdr-logo span{color:#AED6F1;font-size:11px;display:block;font-weight:400;letter-spacing:1px;}
+.hdr-sep{width:1px;height:30px;background:rgba(255,255,255,.15);margin:0 4px;}
+.hdr-branch{color:rgba(255,255,255,.75);font-size:12px;}
+.hdr-branch strong{color:#fff;display:block;font-size:13px;}
+.spacer{flex:1;}
+.hdr-clock{color:#AED6F1;font-size:18px;font-weight:700;letter-spacing:1px;min-width:70px;text-align:center;}
+.hdr-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;transition:.15s;}
+.hdr-btn:hover{background:rgba(255,255,255,.2);}
+.hdr-btn.lang{font-size:13px;min-width:42px;text-align:center;}
+.cashier-badge{display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.85);font-size:12px;}
+.cashier-av{width:28px;height:28px;border-radius:50%;background:#2E86C1;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+
+/* ── LEFT PANEL ───────────────────────────────────────── */
+#left{background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+
+/* Order Type */
+.ot-header{padding:12px 14px 8px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;}
+.ot-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 12px 12px;}
+.ot-tab{background:#fff;border:2px solid var(--border);border-radius:8px;padding:8px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);transition:.15s;cursor:pointer;}
+.ot-tab.active{border-color:var(--primary);background:var(--light);color:var(--primary);}
+.ot-tab .ot-icon{font-size:18px;display:block;margin-bottom:3px;}
+
+/* Table Grid */
+#table-panel{flex:1;overflow:hidden;display:flex;flex-direction:column;border-top:1px solid var(--border);}
+.tp-header{padding:10px 14px 6px;display:flex;align-items:center;justify-content:space-between;}
+.tp-header span{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;}
+.tp-filter{display:flex;gap:4px;padding:0 12px 8px;}
+.tf{padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;}
+.tf.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.table-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 12px 12px;overflow-y:auto;flex:1;}
+.tbl{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:pointer;transition:.15s;border:2px solid transparent;position:relative;}
+.tbl.free{background:#E9F7EF;color:var(--green);border-color:#A9DFBF;}
+.tbl.free:hover{background:#D5F5E3;}
+.tbl.occ{background:#FDEDEC;color:var(--red);border-color:#F5B7B1;}
+.tbl.selected{background:var(--primary);color:#fff !important;border-color:var(--primary);}
+.tbl .t-num{font-size:14px;font-weight:800;}
+.tbl .t-covers{font-size:9px;opacity:.8;}
+.tbl .t-dot{width:6px;height:6px;border-radius:50%;position:absolute;top:4px;right:4px;}
+.tbl.free .t-dot{background:var(--green);}
+.tbl.occ  .t-dot{background:var(--red);}
+
+/* Takeaway / Delivery info */
+#order-info{flex:1;overflow-y:auto;padding:12px;}
+.oi-field{margin-bottom:10px;}
+.oi-field label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;}
+.oi-field input,.oi-field select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:#fff;}
+.oi-field input:focus,.oi-field select:focus{outline:none;border-color:var(--accent);}
+
+/* ── MIDDLE PANEL ─────────────────────────────────────── */
+#middle{display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+
+/* Search */
+.search-bar{padding:10px 14px 8px;display:flex;gap:8px;align-items:center;}
+.search-bar input{flex:1;padding:9px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.search-bar input:focus{outline:none;border-color:var(--accent);}
+.search-bar .icon{font-size:16px;color:var(--muted);}
+
+/* Category tabs */
+#cat-strip{display:flex;gap:6px;padding:0 14px 10px;overflow-x:auto;flex-shrink:0;}
+#cat-strip::-webkit-scrollbar{height:0;}
+.cat-tab{flex-shrink:0;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;border:1.5px solid var(--border);background:#fff;color:var(--muted);}
+.cat-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.cat-tab:hover:not(.active){background:var(--light);color:var(--primary);border-color:var(--mid,#AED6F1);}
+
+/* Menu grid */
+#menu-grid{flex:1;overflow-y:auto;padding:0 14px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start;}
+.mi{background:#fff;border-radius:var(--r);border:1.5px solid var(--border);padding:0;cursor:pointer;transition:.15s;overflow:hidden;display:flex;flex-direction:column;}
+.mi:hover{border-color:var(--accent);box-shadow:0 4px 14px rgba(27,79,114,.12);transform:translateY(-1px);}
+.mi:active{transform:scale(.98);}
+.mi-img{width:100%;height:90px;object-fit:cover;background:linear-gradient(135deg,#e8f4fd,#d6eaf8);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;}
+.mi-body{padding:10px 10px 12px;flex:1;display:flex;flex-direction:column;}
+.mi-name{font-size:12px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:2px;}
+.mi-name-ar{font-size:11px;color:var(--muted);direction:rtl;text-align:right;}
+.mi-price{font-size:14px;font-weight:800;color:var(--primary);margin-top:auto;padding-top:6px;}
+.mi-badge{font-size:9px;font-weight:700;background:var(--light);color:var(--primary);padding:2px 6px;border-radius:4px;display:inline-block;margin-bottom:4px;}
+.mi.unavail{opacity:.45;cursor:not-allowed;}
+.mi.unavail:hover{transform:none;box-shadow:none;border-color:var(--border);}
+
+/* ── RIGHT PANEL (CART) ───────────────────────────────── */
+#right{background:#fff;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+
+/* Cart header */
+.cart-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.cart-head h3{font-size:14px;font-weight:800;color:var(--primary);}
+.cart-order-num{font-size:11px;color:var(--muted);}
+.cart-type-badge{padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;background:var(--light);color:var(--primary);}
+
+/* Cart items */
+#cart-items{flex:1;overflow-y:auto;padding:8px 0;}
+.empty-cart{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);gap:8px;}
+.empty-cart .ec-icon{font-size:48px;opacity:.3;}
+.empty-cart p{font-size:12px;}
+.ci{padding:8px 14px;border-bottom:1px solid #f5f5f5;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start;}
+.ci-name{font-size:13px;font-weight:700;color:var(--text);}
+.ci-mods{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.4;}
+.ci-note{font-size:10px;color:var(--orange);font-style:italic;margin-top:1px;}
+.ci-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.ci-price{font-size:13px;font-weight:700;color:var(--primary);}
+.qty-ctrl{display:flex;align-items:center;gap:6px;}
+.qty-btn{width:22px;height:22px;border-radius:5px;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:.1s;}
+.qty-btn.minus{background:#FDEDEC;color:var(--red);}
+.qty-btn.plus{background:#E9F7EF;color:var(--green);}
+.qty-btn:hover{filter:brightness(.93);}
+.qty-num{font-size:13px;font-weight:700;min-width:16px;text-align:center;}
+.ci-void{font-size:9px;color:var(--red);cursor:pointer;opacity:.7;}
+.ci-void:hover{opacity:1;}
+
+/* Cart footer */
+.cart-foot{border-top:1px solid var(--border);padding:12px 14px;flex-shrink:0;}
+.cf-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px;color:var(--muted);}
+.cf-row.total{font-size:16px;font-weight:800;color:var(--text);padding-top:8px;margin-top:4px;border-top:1px dashed var(--border);}
+.cf-row.total .cf-val{color:var(--primary);}
+.cf-val{font-weight:600;color:var(--text);}
+
+/* Cart actions */
+.cart-actions{padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+.cart-action-row{display:flex;gap:8px;}
+.btn{border-radius:8px;font-size:12px;font-weight:700;padding:9px 14px;transition:.15s;display:flex;align-items:center;justify-content:center;gap:5px;}
+.btn-sm{padding:7px 10px;font-size:11px;border-radius:7px;}
+.btn-outline{background:#fff;border:1.5px solid var(--border);color:var(--text);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-primary{background:var(--primary);color:#fff;flex:1;padding:13px;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:#166535;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-red:hover{background:#922B21;}
+.btn-orange{background:var(--orange);color:#fff;}
+.btn-orange:hover{background:#A04000;}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);}
+.btn-ghost:hover{background:var(--light);}
+.btn-kds{background:#7D3C98;color:#fff;}
+.btn-kds:hover{background:#6C3483;}
+
+/* ── MODALS ───────────────────────────────────────────── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+.overlay.hidden{display:none;}
+.modal{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25);max-height:90vh;display:flex;flex-direction:column;}
+.modal-head{background:var(--primary);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
+.modal-head h3{color:#fff;font-size:15px;font-weight:800;}
+.modal-close{background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:rgba(255,255,255,.25);}
+.modal-body{padding:20px;overflow-y:auto;flex:1;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0;}
+
+/* Modifier modal */
+#mod-modal .modal{width:460px;}
+.mod-item-preview{display:flex;align-items:center;gap:14px;background:var(--light);border-radius:10px;padding:12px 14px;margin-bottom:16px;}
+.mip-icon{font-size:30px;}
+.mip-name{font-size:14px;font-weight:700;color:var(--primary);}
+.mip-price{font-size:13px;color:var(--muted);}
+.mod-group{margin-bottom:16px;}
+.mg-label{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--primary);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.mg-req{font-size:9px;background:#FDEDEC;color:var(--red);padding:2px 6px;border-radius:4px;}
+.mg-opt{font-size:9px;background:#E9F7EF;color:var(--green);padding:2px 6px;border-radius:4px;}
+.mod-opts{display:flex;flex-direction:column;gap:5px;}
+.mod-opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:.12s;}
+.mod-opt:hover{border-color:var(--accent);background:var(--light);}
+.mod-opt.selected{border-color:var(--primary);background:var(--light);}
+.mod-opt input{accent-color:var(--primary);}
+.mod-opt .mo-name{flex:1;font-size:13px;}
+.mod-opt .mo-price{font-size:12px;color:var(--green);font-weight:700;}
+.note-field{margin-top:4px;}
+.note-field label{font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px;}
+.note-field input{width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;}
+.note-field input:focus{outline:none;border-color:var(--accent);}
+
+/* Payment modal */
+#pay-modal .modal{width:560px;}
+.pay-summary{background:var(--light);border-radius:10px;padding:14px 16px;margin-bottom:18px;}
+.ps-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+.ps-row.total{font-size:17px;font-weight:800;color:var(--primary);border-top:1px dashed var(--border);margin-top:6px;padding-top:8px;}
+.pay-methods{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
+.pm{border:2px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;transition:.15s;}
+.pm:hover{border-color:var(--accent);}
+.pm.active{border-color:var(--primary);background:var(--light);}
+.pm .pm-icon{font-size:24px;display:block;margin-bottom:5px;}
+.pm .pm-name{font-size:11px;font-weight:700;color:var(--text);}
+.pay-input-area{margin-bottom:14px;}
+.pi-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px;}
+.pay-amount-display{font-size:32px;font-weight:800;color:var(--primary);text-align:center;background:var(--light);border-radius:10px;padding:16px;margin-bottom:12px;letter-spacing:2px;}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.np-btn{background:#f8f9fa;border:1px solid var(--border);border-radius:8px;padding:13px;font-size:16px;font-weight:700;text-align:center;cursor:pointer;transition:.1s;color:var(--text);}
+.np-btn:hover{background:var(--light);border-color:var(--accent);}
+.np-btn.del{background:#FDEDEC;color:var(--red);border-color:#F5B7B1;}
+.np-btn.exact{background:var(--light);color:var(--primary);border-color:var(--mid,#AED6F1);font-size:11px;}
+.change-display{background:#E9F7EF;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+.cd-label{font-size:12px;color:var(--green);}
+.cd-value{font-size:18px;font-weight:800;color:var(--green);}
+
+/* Receipt */
+#receipt-modal .modal{width:380px;}
+.receipt{font-family:'Courier New',monospace;font-size:12px;color:#000;padding:4px;}
+.r-center{text-align:center;}
+.r-brand{font-size:16px;font-weight:700;}
+.r-div{border-top:1px dashed #999;margin:8px 0;}
+.r-row{display:flex;justify-content:space-between;padding:2px 0;}
+.r-total{font-size:14px;font-weight:700;}
+.r-footer{text-align:center;color:#666;font-size:10px;}
+
+/* Void modal */
+#void-modal .modal{width:380px;}
+.void-reasons{display:flex;flex-direction:column;gap:6px;}
+.vr{border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;cursor:pointer;font-size:13px;transition:.12s;}
+.vr:hover,.vr.selected{border-color:var(--red);background:#FDEDEC;color:var(--red);}
+
+/* Discount modal */
+#disc-modal .modal{width:380px;}
+.disc-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.dt{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:10px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;color:var(--muted);}
+.dt.active{border-color:var(--orange);background:#FEF5E7;color:var(--orange);}
+.disc-input{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.disc-input input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:18px;font-weight:700;text-align:center;}
+.disc-input input:focus{outline:none;border-color:var(--orange);}
+.disc-input .di-suffix{font-size:16px;font-weight:700;color:var(--muted);}
+.disc-presets{display:flex;gap:6px;flex-wrap:wrap;}
+.dp{background:var(--light);color:var(--primary);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;}
+.dp:hover{background:#D6EAF8;border-color:var(--accent);}
+
+/* ── LOYALTY ─────────────────────────────────────────── */
+.loy-bar{padding:8px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.loy-add{width:100%;border:1.5px dashed #E5C96B;background:#FFFDF5;color:var(--gold);border-radius:8px;padding:8px;font-size:12px;font-weight:700;}
+.loy-add:hover{border-color:var(--gold);background:#FEF9E7;}
+.loy-card{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#FEF9E7,#FDF2D0);border:1px solid #F7DC6F;border-radius:8px;padding:8px 10px;}
+.loy-av{width:32px;height:32px;border-radius:50%;background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;}
+.loy-info{flex:1;min-width:0;}
+.loy-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.loy-meta{font-size:10px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:5px;}
+.loy-pts{font-size:13px;font-weight:800;color:var(--gold);text-align:end;white-space:nowrap;}
+.loy-pts small{display:block;font-size:9px;font-weight:600;color:var(--muted);}
+.loy-x{background:none;color:var(--muted);font-size:13px;padding:2px 4px;}
+.loy-x:hover{color:var(--red);}
+.tier{display:inline-block;font-size:9px;font-weight:800;padding:1px 6px;border-radius:4px;letter-spacing:.3px;}
+.tier-bronze{background:#F6DDCC;color:#8E4B10;}
+.tier-silver{background:#E5E8E8;color:#515A5A;}
+.tier-gold{background:#F9E79F;color:#7D6608;}
+.cf-row.earn{font-size:11px;}
+#loy-modal .modal{width:420px;}
+.loy-search{display:flex;gap:8px;}
+.loy-search input{flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:15px;font-weight:600;letter-spacing:.5px;}
+.loy-search input:focus{outline:none;border-color:var(--gold);}
+.loy-demo{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.8;background:var(--bg);border-radius:8px;padding:10px 12px;}
+.loy-demo a{color:var(--accent);cursor:pointer;text-decoration:underline;margin-inline-end:8px;}
+.loy-profile{text-align:center;padding:6px 0 4px;}
+.loy-profile .loy-av{width:52px;height:52px;font-size:18px;margin:0 auto 8px;}
+.loy-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;}
+.loy-stat{background:var(--bg);border-radius:8px;padding:8px;text-align:center;}
+.loy-stat b{display:block;font-size:15px;color:var(--text);}
+.loy-stat span{font-size:10px;color:var(--muted);}
+.loy-next{font-size:11px;color:var(--muted);margin-top:10px;text-align:center;}
+.loy-bar-track{height:6px;background:var(--border);border-radius:3px;margin-top:5px;overflow:hidden;}
+.loy-bar-fill{height:100%;background:var(--gold);}
+.loy-consent{display:flex;gap:8px;align-items:flex-start;font-size:11px;color:var(--muted);margin-top:4px;}
+.btn-gold{background:var(--gold);color:#fff;}
+.btn-gold:hover{background:#9A7D0A;}
+.redeem-box{border:1.5px solid #F7DC6F;background:#FFFDF5;border-radius:10px;padding:12px 14px;margin-bottom:16px;}
+.rb-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:8px;gap:8px;}
+.rb-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.rb-row input{width:120px;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:14px;font-weight:700;text-align:center;}
+.rb-row input:focus{outline:none;border-color:var(--gold);}
+.rb-note{font-size:10px;color:var(--muted);margin-top:6px;}
+.rb-ok{font-size:12px;color:var(--green);font-weight:700;flex:1;}
+.r-loy{border:1px dashed #999;padding:6px;margin-top:4px;}
+
+/* ── NOTIFICATION TOAST ───────────────────────────────── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1C2833;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;transition:opacity .3s;opacity:0;pointer-events:none;}
+#toast.show{opacity:1;}
+
+/* ── RTL ──────────────────────────────────────────────── */
+[dir="rtl"] #body{direction:rtl;}
+[dir="rtl"] .ci-mods,[dir="rtl"] .ci-note{direction:rtl;text-align:right;}
+[dir="rtl"] .mi-name{text-align:right;}
+[dir="rtl"] .cart-head,[dir="rtl"] .cf-row,[dir="rtl"] .cart-foot{direction:rtl;}
+
+/* ── KDS BADGE ────────────────────────────────────────── */
+.kds-badge{font-size:9px;background:#7D3C98;color:#fff;padding:2px 6px;border-radius:4px;margin-top:2px;display:inline-block;}
+
+/* ── STATUS BAR ───────────────────────────────────────── */
+#status-bar{background:var(--header);padding:4px 16px;display:flex;align-items:center;gap:16px;border-top:1px solid rgba(255,255,255,.1);}
+.sb-item{font-size:10px;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:4px;}
+.sb-dot{width:6px;height:6px;border-radius:50%;}
+.sb-dot.on{background:#2ECC71;}
+.sb-dot.off{background:var(--red);}
+
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ── HEADER ── -->
+<header id="header">
+  <div class="hdr-logo">🍽 BrandPOS<span>MULTI-BRAND F&B</span></div>
+  <div class="hdr-sep"></div>
+  <div class="hdr-branch"><strong id="branch-name">Pizza Palace — Mall Branch</strong><span id="branch-sub">Table Section A</span></div>
+  <div class="spacer"></div>
+  <div class="hdr-clock" id="clock">--:--</div>
+  <div class="hdr-sep"></div>
+  <div class="cashier-badge"><div class="cashier-av" id="cashier-av">JI</div><span id="cashier-name">Javed Iqbal</span></div>
+  <div class="hdr-sep"></div>
+  <button class="hdr-btn" onclick="openDiscount()">🏷 Disc</button>
+  <button class="hdr-btn btn-kds" style="background:rgba(125,60,152,.5);border-color:rgba(125,60,152,.8);" onclick="sendToKDS()">📺 KDS</button>
+  <button class="hdr-btn lang" onclick="toggleLang()" id="lang-btn">عر</button>
+  <button class="hdr-btn" onclick="endShift()" style="background:rgba(192,57,43,.3);border-color:rgba(192,57,43,.6);">⏹ End Shift</button>
+</header>
+
+<div id="body">
+
+<!-- ── LEFT PANEL ── -->
+<div id="left">
+  <div class="ot-header" id="ot-label">ORDER TYPE</div>
+  <div class="ot-tabs">
+    <div class="ot-tab active" onclick="setOrderType('dine-in',this)"><span class="ot-icon">🍽</span><span id="ot1">Dine-In</span></div>
+    <div class="ot-tab" onclick="setOrderType('takeaway',this)"><span class="ot-icon">🥡</span><span id="ot2">Takeaway</span></div>
+    <div class="ot-tab" onclick="setOrderType('delivery',this)"><span class="ot-icon">🛵</span><span id="ot3">Delivery</span></div>
+  </div>
+
+  <!-- Table Panel -->
+  <div id="table-panel">
+    <div class="tp-header"><span id="tp-label">TABLES</span><span style="font-size:11px;color:var(--green);" id="free-count">12 Free</span></div>
+    <div class="tp-filter">
+      <div class="tf active" onclick="filterTables('all',this)" id="tf-all">All</div>
+      <div class="tf" onclick="filterTables('free',this)" id="tf-free">Free</div>
+      <div class="tf" onclick="filterTables('occ',this)" id="tf-occ">Busy</div>
+    </div>
+    <div class="table-grid" id="table-grid"></div>
+  </div>
+
+  <!-- Order info for takeaway/delivery -->
+  <div id="order-info" style="display:none;">
+    <div class="oi-field"><label id="lbl-name">Customer Name</label><input type="text" id="cust-name" placeholder="Enter name..."></div>
+    <div class="oi-field"><label id="lbl-phone">Phone</label><input type="text" id="cust-phone" placeholder="+966 5XX XXX XXX"></div>
+    <div id="delivery-extra" style="display:none;">
+      <div class="oi-field"><label id="lbl-addr">Delivery Address</label><input type="text" id="cust-addr" placeholder="Street, Area..."></div>
+      <div class="oi-field"><label id="lbl-plat">Platform</label>
+        <select id="plat-select" onchange="updateTotals()">
+          <option value="direct">Direct Order</option>
+          <option value="talabat">🟠 Talabat</option>
+          <option value="deliveroo">🔵 Deliveroo</option>
+          <option value="jahez">🟢 Jahez</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MIDDLE PANEL ── -->
+<div id="middle">
+  <div class="search-bar">
+    <span class="icon">🔍</span>
+    <input type="text" id="search-input" placeholder="Search menu items..." oninput="filterMenu(this.value)">
+  </div>
+  <div id="cat-strip"></div>
+  <div id="menu-grid"></div>
+</div>
+
+<!-- ── RIGHT PANEL (CART) ── -->
+<div id="right">
+  <div class="cart-head">
+    <div>
+      <h3 id="cart-title">Current Order</h3>
+      <div class="cart-order-num" id="order-num">#ORD-0001</div>
+    </div>
+    <div>
+      <span class="cart-type-badge" id="cart-type-badge">🍽 Dine-In</span>
+      <div style="font-size:10px;color:var(--muted);text-align:right;margin-top:3px;" id="cart-table-label"></div>
+    </div>
+  </div>
+
+  <!-- Loyalty member bar -->
+  <div class="loy-bar" id="loy-bar"></div>
+
+  <div id="cart-items">
+    <div class="empty-cart" id="empty-cart">
+      <div class="ec-icon">🛒</div>
+      <p id="empty-msg">Cart is empty</p>
+      <p style="font-size:11px;" id="empty-sub">Select items from the menu</p>
+    </div>
+  </div>
+
+  <div class="cart-foot" id="cart-foot" style="display:none;">
+    <div class="cf-row"><span id="cf-sub">Subtotal</span><span class="cf-val" id="cf-sub-val">SAR 0.000</span></div>
+    <div class="cf-row" id="disc-row" style="display:none;"><span id="cf-disc">Discount</span><span class="cf-val" style="color:var(--red);" id="cf-disc-val">- SAR 0.000</span></div>
+    <div class="cf-row total"><span id="cf-tot">TOTAL</span><span class="cf-val" id="cf-tot-val">SAR 0.000</span></div>
+    <div class="cf-row earn" id="earn-row" style="display:none;"><span id="cf-earn">⭐ Points to earn</span><span class="cf-val" style="color:var(--gold);" id="cf-earn-val">+0</span></div>
+  </div>
+
+  <div class="cart-actions">
+    <div class="cart-action-row">
+      <button class="btn btn-outline btn-sm" onclick="clearCart()" id="btn-clear">🗑 Clear</button>
+      <button class="btn btn-ghost btn-sm" onclick="openVoid()" id="btn-void">⊘ Void Item</button>
+      <button class="btn btn-orange btn-sm" onclick="openDiscount()" id="btn-disc">🏷 Discount</button>
+    </div>
+    <div class="cart-action-row">
+      <button class="btn btn-kds" onclick="sendToKDS()" style="flex:1;">📺 Send to Kitchen</button>
+    </div>
+    <button class="btn btn-primary" onclick="openPayment()" id="btn-pay">
+      💳 &nbsp;<span id="btn-pay-label">Process Payment</span>
+    </button>
+  </div>
+</div>
+
+</div><!-- /body -->
+</div><!-- /app -->
+
+<!-- ══════════ MODIFIER MODAL ══════════ -->
+<div class="overlay hidden" id="mod-modal" onclick="closeMod(event)">
+  <div class="modal" style="width:460px;" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3 id="mod-title">Customize Item</h3>
+      <button class="modal-close" onclick="closeMod()">✕</button>
+    </div>
+    <div class="modal-body" id="mod-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeMod()">Cancel</button>
+      <button class="btn btn-primary" style="flex:2;" onclick="confirmMod()">✓ Add to Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PAYMENT MODAL ══════════ -->
+<div class="overlay hidden" id="pay-modal" onclick="closePay(event)">
+  <div class="modal" style="width:560px;" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3 id="pay-title">Process Payment</h3>
+      <button class="modal-close" onclick="closePay()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="pay-summary" id="pay-summary"></div>
+      <div id="redeem-box"></div>
+      <div class="pi-label" id="pay-method-label">PAYMENT METHOD</div>
+      <div class="pay-methods">
+        <div class="pm active" onclick="selectPayMethod('cash',this)"><span class="pm-icon">💵</span><div class="pm-name" id="pm1">Cash</div></div>
+        <div class="pm" onclick="selectPayMethod('card',this)"><span class="pm-icon">💳</span><div class="pm-name" id="pm2">Card</div></div>
+        <div class="pm" onclick="selectPayMethod('wallet',this)"><span class="pm-icon">📱</span><div class="pm-name" id="pm3">Wallet</div></div>
+        <div class="pm" onclick="selectPayMethod('split',this)"><span class="pm-icon">⚡</span><div class="pm-name" id="pm4">Split</div></div>
+      </div>
+      <div id="cash-section">
+        <div class="pi-label" id="lbl-tendered">AMOUNT TENDERED</div>
+        <div class="pay-amount-display" id="pay-display">SAR 0.000</div>
+        <div class="numpad">
+          <div class="np-btn" onclick="npPress('1')">1</div>
+          <div class="np-btn" onclick="npPress('2')">2</div>
+          <div class="np-btn" onclick="npPress('3')">3</div>
+          <div class="np-btn" onclick="npPress('4')">4</div>
+          <div class="np-btn" onclick="npPress('5')">5</div>
+          <div class="np-btn" onclick="npPress('6')">6</div>
+          <div class="np-btn" onclick="npPress('7')">7</div>
+          <div class="np-btn" onclick="npPress('8')">8</div>
+          <div class="np-btn" onclick="npPress('9')">9</div>
+          <div class="np-btn exact" onclick="npExact()" id="np-exact">Exact</div>
+          <div class="np-btn" onclick="npPress('0')">0</div>
+          <div class="np-btn del" onclick="npDel()">⌫</div>
+        </div>
+        <div class="change-display" id="change-display">
+          <span class="cd-label" id="lbl-change">Change</span>
+          <span class="cd-value" id="change-val">SAR 0.000</span>
+        </div>
+      </div>
+      <div id="card-section" style="display:none;">
+        <div style="text-align:center;padding:30px;color:var(--muted);">
+          <div style="font-size:48px;">💳</div>
+          <div style="margin-top:12px;font-size:14px;font-weight:700;" id="card-msg">Please tap or insert card</div>
+          <div style="font-size:12px;margin-top:6px;" id="card-sub">Waiting for terminal...</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closePay()">Cancel</button>
+      <button class="btn btn-green" style="flex:2;" onclick="confirmPayment()">✓ <span id="btn-confirm-pay">Confirm Payment</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ RECEIPT MODAL ══════════ -->
+<div class="overlay hidden" id="receipt-modal" onclick="closeReceipt(event)">
+  <div class="modal" style="width:380px;" onclick="event.stopPropagation()">
+    <div class="modal-head" style="background:var(--green);">
+      <h3>✓ Payment Successful</h3>
+      <button class="modal-close" onclick="closeReceipt()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="receipt" id="receipt-content"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeReceipt()">🖨 Print</button>
+      <button class="btn btn-primary" style="flex:2;" onclick="newOrder()">+ New Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ VOID MODAL ══════════ -->
+<div class="overlay hidden" id="void-modal" onclick="closeVoid(event)">
+  <div class="modal" style="width:380px;" onclick="event.stopPropagation()">
+    <div class="modal-head" style="background:var(--red);">
+      <h3 id="void-title">Void Item</h3>
+      <button class="modal-close" onclick="closeVoid()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:12px;color:var(--muted);font-size:12px;" id="void-sub">Select item to void and reason:</p>
+      <div id="void-item-list" style="margin-bottom:14px;"></div>
+      <div class="void-reasons" id="void-reasons"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeVoid()">Cancel</button>
+      <button class="btn btn-red" style="flex:2;" onclick="confirmVoid()" id="btn-confirm-void">Void Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ DISCOUNT MODAL ══════════ -->
+<div class="overlay hidden" id="disc-modal" onclick="closeDisc(event)">
+  <div class="modal" style="width:380px;" onclick="event.stopPropagation()">
+    <div class="modal-head" style="background:var(--orange);">
+      <h3 id="disc-title">Apply Discount</h3>
+      <button class="modal-close" onclick="closeDisc()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="disc-tabs">
+        <div class="dt active" onclick="setDiscType('percent',this)" id="dt-pct">% Percent</div>
+        <div class="dt" onclick="setDiscType('fixed',this)" id="dt-fix">SAR Fixed</div>
+      </div>
+      <div class="disc-input">
+        <input type="number" id="disc-val" placeholder="0" min="0" oninput="updateDiscPreview()">
+        <span class="di-suffix" id="disc-suffix">%</span>
+      </div>
+      <div class="disc-presets" id="disc-presets">
+        <div class="dp" onclick="setDiscPreset(5)">5%</div>
+        <div class="dp" onclick="setDiscPreset(10)">10%</div>
+        <div class="dp" onclick="setDiscPreset(15)">15%</div>
+        <div class="dp" onclick="setDiscPreset(20)">20%</div>
+        <div class="dp" onclick="setDiscPreset(25)">25%</div>
+        <div class="dp" onclick="setDiscPreset(50)">50%</div>
+      </div>
+      <div style="margin-top:14px;background:var(--light);border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;color:var(--muted);" id="disc-preview-label">Discount Amount</span>
+        <span style="font-size:18px;font-weight:800;color:var(--orange);" id="disc-preview">SAR 0.000</span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="flex:1;" onclick="removeDiscount()">Remove</button>
+      <button class="btn btn-orange" style="flex:2;" onclick="confirmDiscount()" id="btn-apply-disc">Apply Discount</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ KDS MODAL ══════════ -->
+<div class="overlay hidden" id="kds-modal" onclick="closeKDS(event)">
+  <div class="modal" style="width:500px;" onclick="event.stopPropagation()">
+    <div class="modal-head" style="background:#7D3C98;">
+      <h3>📺 Kitchen Display — Sent</h3>
+      <button class="modal-close" onclick="closeKDS()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;padding:20px 0 10px;">
+        <div style="font-size:48px;">✅</div>
+        <div style="font-size:16px;font-weight:700;color:#7D3C98;margin-top:10px;" id="kds-msg">Order sent to Kitchen!</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px;" id="kds-sub">Items will appear on the KDS screen immediately.</div>
+      </div>
+      <div id="kds-items" style="margin-top:16px;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" style="flex:1;" onclick="closeKDS()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ LOYALTY MODAL ══════════ -->
+<div class="overlay hidden" id="loy-modal" onclick="closeLoy(event)">
+  <div class="modal" style="width:420px;" onclick="event.stopPropagation()">
+    <div class="modal-head" style="background:var(--gold);">
+      <h3 id="loy-title">⭐ Loyalty Member</h3>
+      <button class="modal-close" onclick="closeLoy()">✕</button>
+    </div>
+    <div class="modal-body" id="loy-body"></div>
+    <div class="modal-foot" id="loy-foot"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════
+const CURRENCY = 'SAR';
+const fmt = n => `${CURRENCY} ${Number(n).toFixed(3)}`;
+
+const LANG = {
+  en: {
+    orderType:'ORDER TYPE', dineIn:'Dine-In', takeaway:'Takeaway', delivery:'Delivery',
+    tables:'TABLES', freeCount:n=>`${n} Free`,
+    custName:'Customer Name', phone:'Phone', address:'Delivery Address', platform:'Platform',
+    cart:'Current Order', emptyCart:'Cart is empty', emptyCartSub:'Select items from the menu',
+    subtotal:'Subtotal', discount:'Discount', total:'TOTAL',
+    clear:'Clear', void:'Void Item', disc:'Discount',
+    pay:'Process Payment', kds:'Send to Kitchen',
+    payTitle:'Process Payment', payMethod:'PAYMENT METHOD',
+    cash:'Cash', card:'Card', wallet:'Wallet', split:'Split',
+    tendered:'AMOUNT TENDERED', change:'Change',
+    voidTitle:'Void Item', voidSub:'Select item to void and reason:',
+    discTitle:'Apply Discount',
+    search:'Search menu items...',
+    branchName:'Pizza Palace — Mall Branch', branchSub:'Table Section A',
+    cashierName:'Javed Iqbal',
+    confirmPay:'Confirm Payment',
+    cardMsg:'Please tap or insert card', cardSub:'Waiting for terminal...',
+    kdsMsg:'Order sent to Kitchen!', kdsSub:'Items will appear on the KDS screen immediately.',
+    npExact:'Exact',
+    discPreviewLabel:'Discount Amount',
+  },
+  ar: {
+    orderType:'نوع الطلب', dineIn:'داخل المطعم', takeaway:'سفري', delivery:'توصيل',
+    tables:'الطاولات', freeCount:n=>`${n} متاحة`,
+    custName:'اسم العميل', phone:'الهاتف', address:'عنوان التوصيل', platform:'المنصة',
+    cart:'الطلب الحالي', emptyCart:'السلة فارغة', emptyCartSub:'اختر أصنافاً من القائمة',
+    subtotal:'المجموع', discount:'الخصم', total:'الإجمالي',
+    clear:'مسح', void:'إلغاء صنف', disc:'خصم',
+    pay:'إتمام الدفع', kds:'إرسال للمطبخ',
+    payTitle:'إتمام الدفع', payMethod:'طريقة الدفع',
+    cash:'نقداً', card:'بطاقة', wallet:'محفظة', split:'دفع مقسّم',
+    tendered:'المبلغ المدفوع', change:'الباقي',
+    voidTitle:'إلغاء صنف', voidSub:'اختر الصنف وسبب الإلغاء:',
+    discTitle:'تطبيق الخصم',
+    search:'ابحث في القائمة...',
+    branchName:'بيتزا بالاس — فرع المول', branchSub:'قسم الطاولات A',
+    cashierName:'جاوید اقبال',
+    confirmPay:'تأكيد الدفع',
+    cardMsg:'أدخل أو مرر البطاقة', cardSub:'في انتظار الجهاز...',
+    kdsMsg:'تم إرسال الطلب للمطبخ!', kdsSub:'ستظهر الأصناف على شاشة المطبخ فوراً.',
+    npExact:'المبلغ بالكامل',
+    discPreviewLabel:'قيمة الخصم',
+  }
+};
+
+const CATEGORIES = [
+  {id:'all', en:'All Items', ar:'جميع الأصناف'},
+  {id:'starters', en:'Starters', ar:'المقبلات'},
+  {id:'main', en:'Main Course', ar:'الأطباق الرئيسية'},
+  {id:'pizza', en:'Pizzas', ar:'البيتزا'},
+  {id:'burgers', en:'Burgers', ar:'البرغر'},
+  {id:'beverages', en:'Beverages', ar:'المشروبات'},
+  {id:'desserts', en:'Desserts', ar:'الحلويات'},
+];
+
+const MENU = [
+  // Starters
+  {id:'s1', cat:'starters', en:'Chicken Wings', ar:'أجنحة الدجاج', price:18.5, icon:'🍗', modGroups:[
+    {id:'mg1', en:'Sauce', ar:'الصلصة', req:true, multi:false, opts:[
+      {id:'o1',en:'Buffalo Hot',ar:'بافالو حار',price:0},
+      {id:'o2',en:'Honey Mustard',ar:'عسل خردل',price:0},
+      {id:'o3',en:'BBQ',ar:'باربيكيو',price:0},
+    ]},
+    {id:'mg2', en:'Extras', ar:'إضافات', req:false, multi:true, opts:[
+      {id:'o4',en:'Extra Sauce',ar:'صلصة إضافية',price:2},
+      {id:'o5',en:'Ranch Dip',ar:'غموس رانش',price:3},
+    ]},
+  ]},
+  {id:'s2', cat:'starters', en:'Garlic Bread', ar:'خبز الثوم', price:9.5, icon:'🥖', modGroups:[]},
+  {id:'s3', cat:'starters', en:'Mozzarella Sticks', ar:'عيدان الجبن', price:16, icon:'🧀', modGroups:[
+    {id:'mg3', en:'Dipping Sauce', ar:'صلصة التغميس', req:false, multi:false, opts:[
+      {id:'o6',en:'Marinara',ar:'مارينارا',price:0},
+      {id:'o7',en:'Aioli',ar:'أيولي',price:0},
+    ]},
+  ]},
+  {id:'s4', cat:'starters', en:'Caesar Salad', ar:'سلطة سيزر', price:14, icon:'🥗', modGroups:[
+    {id:'mg4', en:'Protein', ar:'البروتين', req:false, multi:false, opts:[
+      {id:'o8',en:'Add Grilled Chicken',ar:'دجاج مشوي',price:7},
+      {id:'o9',en:'Add Shrimp',ar:'روبيان',price:10},
+    ]},
+  ]},
+  // Main
+  {id:'m1', cat:'main', en:'Grilled Chicken', ar:'دجاج مشوي', price:42, icon:'🍗', modGroups:[
+    {id:'mg5', en:'Side Dish', ar:'الطبق الجانبي', req:true, multi:false, opts:[
+      {id:'o10',en:'French Fries',ar:'بطاطس مقلية',price:0},
+      {id:'o11',en:'Mashed Potato',ar:'بطاطس مهروسة',price:0},
+      {id:'o12',en:'Steamed Rice',ar:'أرز مطهو',price:0},
+    ]},
+  ]},
+  {id:'m2', cat:'main', en:'Grilled Salmon', ar:'سلمون مشوي', price:68, icon:'🐟', modGroups:[
+    {id:'mg6', en:'Cooking Style', ar:'طريقة الطهي', req:false, multi:false, opts:[
+      {id:'o13',en:'Well Done',ar:'مطهو جيداً',price:0},
+      {id:'o14',en:'Medium',ar:'متوسط',price:0},
+    ]},
+  ]},
+  {id:'m3', cat:'main', en:'Beef Steak 300g', ar:'ستيك لحم 300غ', price:89, icon:'🥩', modGroups:[
+    {id:'mg7', en:'Doneness', ar:'درجة الطهي', req:true, multi:false, opts:[
+      {id:'o15',en:'Rare',ar:'نيئ',price:0},
+      {id:'o16',en:'Medium Rare',ar:'متوسط نيئ',price:0},
+      {id:'o17',en:'Medium',ar:'متوسط',price:0},
+      {id:'o18',en:'Well Done',ar:'مطهو جيداً',price:0},
+    ]},
+  ]},
+  // Pizza
+  {id:'p1', cat:'pizza', en:'Margherita Pizza', ar:'بيتزا مرغريتا', price:35, icon:'🍕', modGroups:[
+    {id:'mg8', en:'Size', ar:'الحجم', req:true, multi:false, opts:[
+      {id:'o19',en:'Small 9"',ar:'صغير 9"',price:0},
+      {id:'o20',en:'Medium 12"',ar:'وسط 12"',price:10},
+      {id:'o21',en:'Large 15"',ar:'كبير 15"',price:18},
+    ]},
+    {id:'mg9', en:'Crust', ar:'الحواف', req:false, multi:false, opts:[
+      {id:'o22',en:'Thin Crust',ar:'عجينة رقيقة',price:0},
+      {id:'o23',en:'Stuffed Crust',ar:'حواف محشوة',price:8},
+    ]},
+  ]},
+  {id:'p2', cat:'pizza', en:'BBQ Chicken Pizza', ar:'بيتزا دجاج باربيكيو', price:42, icon:'🍕', modGroups:[
+    {id:'mg10', en:'Size', ar:'الحجم', req:true, multi:false, opts:[
+      {id:'o24',en:'Small 9"',ar:'صغير 9"',price:0},
+      {id:'o25',en:'Medium 12"',ar:'وسط 12"',price:10},
+      {id:'o26',en:'Large 15"',ar:'كبير 15"',price:18},
+    ]},
+  ]},
+  {id:'p3', cat:'pizza', en:'Pepperoni Pizza', ar:'بيتزا بيبروني', price:45, icon:'🍕', modGroups:[
+    {id:'mg11', en:'Size', ar:'الحجم', req:true, multi:false, opts:[
+      {id:'o27',en:'Small 9"',ar:'صغير 9"',price:0},
+      {id:'o28',en:'Medium 12"',ar:'وسط 12"',price:10},
+      {id:'o29',en:'Large 15"',ar:'كبير 15"',price:18},
+    ]},
+  ]},
+  // Burgers
+  {id:'b1', cat:'burgers', en:'Classic Beef Burger', ar:'برغر لحم كلاسيك', price:32, icon:'🍔', modGroups:[
+    {id:'mg12', en:'Patty', ar:'قرص اللحم', req:false, multi:false, opts:[
+      {id:'o30',en:'Single',ar:'مفرد',price:0},
+      {id:'o31',en:'Double',ar:'مضاعف',price:12},
+    ]},
+    {id:'mg13', en:'Extras', ar:'إضافات', req:false, multi:true, opts:[
+      {id:'o32',en:'Extra Cheese',ar:'جبن إضافي',price:3},
+      {id:'o33',en:'Bacon',ar:'بيكون',price:5},
+      {id:'o34',en:'Fried Egg',ar:'بيضة مقلية',price:4},
+    ]},
+  ]},
+  {id:'b2', cat:'burgers', en:'Crispy Chicken Burger', ar:'برغر دجاج مقرمش', price:28, icon:'🍔', modGroups:[]},
+  {id:'b3', cat:'burgers', en:'Mushroom Swiss Burger', ar:'برغر مشروم وجبن سويسري', price:36, icon:'🍔', modGroups:[]},
+  // Beverages
+  {id:'v1', cat:'beverages', en:'Fresh Lemonade', ar:'ليموناضة طازجة', price:12, icon:'🍋', modGroups:[
+    {id:'mg14', en:'Sweetness', ar:'الحلاوة', req:false, multi:false, opts:[
+      {id:'o35',en:'Less Sweet',ar:'أقل حلاوة',price:0},
+      {id:'o36',en:'Regular',ar:'عادي',price:0},
+      {id:'o37',en:'Extra Sweet',ar:'حلو أكثر',price:0},
+    ]},
+  ]},
+  {id:'v2', cat:'beverages', en:'Mango Juice', ar:'عصير مانجو', price:14, icon:'🥭', modGroups:[]},
+  {id:'v3', cat:'beverages', en:'Soft Drink Can', ar:'مشروب غازي', price:6, icon:'🥤', modGroups:[]},
+  {id:'v4', cat:'beverages', en:'Mineral Water', ar:'ماء معدني', price:4, icon:'💧', modGroups:[]},
+  {id:'v5', cat:'beverages', en:'Iced Coffee', ar:'قهوة مثلجة', price:18, icon:'☕', modGroups:[
+    {id:'mg15', en:'Size', ar:'الحجم', req:true, multi:false, opts:[
+      {id:'o38',en:'Medium',ar:'وسط',price:0},
+      {id:'o39',en:'Large',ar:'كبير',price:4},
+    ]},
+    {id:'mg16', en:'Milk', ar:'الحليب', req:false, multi:false, opts:[
+      {id:'o40',en:'Regular Milk',ar:'حليب عادي',price:0},
+      {id:'o41',en:'Oat Milk',ar:'حليب الشوفان',price:3},
+      {id:'o42',en:'Almond Milk',ar:'حليب اللوز',price:3},
+    ]},
+  ]},
+  // Desserts
+  {id:'d1', cat:'desserts', en:'Chocolate Lava Cake', ar:'كيك اللافا بالشوكولاتة', price:22, icon:'🎂', modGroups:[]},
+  {id:'d2', cat:'desserts', en:'Umm Ali', ar:'أم علي', price:18, icon:'🍮', modGroups:[]},
+  {id:'d3', cat:'desserts', en:'Ice Cream 2 Scoops', ar:'آيس كريم 2 كرات', price:16, icon:'🍨', modGroups:[
+    {id:'mg17', en:'Flavors', ar:'النكهات', req:true, multi:true, opts:[
+      {id:'o43',en:'Vanilla',ar:'فانيلا',price:0},
+      {id:'o44',en:'Chocolate',ar:'شوكولاتة',price:0},
+      {id:'o45',en:'Strawberry',ar:'فراولة',price:0},
+      {id:'o46',en:'Pistachio',ar:'فستق',price:2},
+    ]},
+  ]},
+];
+
+const TABLES = Array.from({length:20},(_,i)=>({
+  id:i+1,
+  status: [2,5,9,12,16,17,18].includes(i+1) ? 'occ' : 'free',
+  covers: [2,5,9,12,16,17,18].includes(i+1) ? [2,4,3,6,2,4,5][([2,5,9,12,16,17,18]).indexOf(i+1)] : null,
+}));
+
+const VOID_REASONS = {
+  en:['Customer Changed Mind','Wrong Item Ordered','Item Not Available','Customer Complaint','Duplicate Entry'],
+  ar:['تغيير رأي العميل','طلب صنف خاطئ','الصنف غير متوفر','شكوى عميل','إدخال مكرر'],
+};
+
+// ── Loyalty program rules (configurable in Management Console) ──
+const LOYALTY = {
+  earnPerSar: 1,          // points per SAR paid (after discounts, excl. points portion)
+  ptValue: 0.05,          // SAR value of 1 point  → 100 pts = SAR 5
+  minRedeem: 500,         // minimum points per redemption
+  maxRedeemPct: 50,       // max % of bill payable with points
+  signupBonus: 50,
+  demoOtp: '1234',        // prototype only — real system sends SMS
+  tiers: [
+    {id:'bronze', en:'Bronze', ar:'برونزي', min:0,    mult:1},
+    {id:'silver', en:'Silver', ar:'فضي',    min:2000, mult:1.25},
+    {id:'gold',   en:'Gold',   ar:'ذهبي',   min:5000, mult:1.5},
+  ],
+};
+// Sample members (group-wide wallet — shared across all brands)
+const MEMBERS = [
+  {phone:'0501234567', name:'Ahmed Al-Harbi',  nameAr:'أحمد الحربي',   points:6240, yearPts:7120, visits:48},
+  {phone:'0555111222', name:'Sara Al-Qahtani', nameAr:'سارة القحطاني', points:2850, yearPts:3400, visits:21},
+  {phone:'0533000999', name:'Mohammed Khan',   nameAr:'محمد خان',      points:420,  yearPts:420,  visits:3},
+];
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let lang = 'en';
+let orderType = 'dine-in';
+let selectedTable = null;
+let currentCat = 'all';
+let cart = []; // {id, name, nameAr, price, qty, mods:[], note:'', sentToKDS:false}
+let discount = {type:'percent', value:0};
+let orderCounter = 1;
+let payMethod = 'cash';
+let npInput = '';
+let modItem = null, modSelections = {}, modNote = '';
+let voidSelectedItem = null, voidSelectedReason = null;
+let discType = 'percent';
+let tableFilter = 'all';
+let member = null;                 // attached loyalty member
+let loyState = 'search', loyFound = null, loyPhone = '';
+let redeemPts = 0, otpSent = false, redeemVerified = false;
+let lastLoy = null;                // loyalty result of last payment (for receipt)
+
+// ═══════════════════════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════════════════════
+function updateClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString(lang==='ar'?'ar-SA':'en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
+}
+setInterval(updateClock,1000); updateClock();
+
+// ═══════════════════════════════════════════════════════════
+// LANGUAGE
+// ═══════════════════════════════════════════════════════════
+function toggleLang(){
+  lang = lang==='en'?'ar':'en';
+  const root = document.getElementById('root');
+  root.setAttribute('lang',lang);
+  root.setAttribute('dir',lang==='ar'?'rtl':'ltr');
+  document.getElementById('lang-btn').textContent = lang==='ar'?'EN':'عر';
+  applyLang();
+}
+function t(key){ return LANG[lang][key] || key; }
+function applyLang(){
+  const L = LANG[lang];
+  document.getElementById('ot-label').textContent   = L.orderType;
+  document.getElementById('ot1').textContent         = L.dineIn;
+  document.getElementById('ot2').textContent         = L.takeaway;
+  document.getElementById('ot3').textContent         = L.delivery;
+  document.getElementById('tp-label').textContent    = L.tables;
+  document.getElementById('lbl-name').textContent    = L.custName;
+  document.getElementById('lbl-phone').textContent   = L.phone;
+  document.getElementById('lbl-addr').textContent    = L.address;
+  document.getElementById('lbl-plat').textContent    = L.platform;
+  document.getElementById('cart-title').textContent  = L.cart;
+  document.getElementById('empty-msg').textContent   = L.emptyCart;
+  document.getElementById('empty-sub').textContent   = L.emptyCartSub;
+  document.getElementById('cf-sub').textContent      = L.subtotal;
+  document.getElementById('cf-disc').textContent     = L.discount;
+  document.getElementById('cf-tot').textContent      = L.total;
+  document.getElementById('btn-pay-label').textContent = L.pay;
+  document.getElementById('pm1').textContent         = L.cash;
+  document.getElementById('pm2').textContent         = L.card;
+  document.getElementById('pm3').textContent         = L.wallet;
+  document.getElementById('pm4').textContent         = L.split;
+  document.getElementById('search-input').placeholder = L.search;
+  document.getElementById('branch-name').textContent = L.branchName;
+  document.getElementById('branch-sub').textContent  = L.branchSub;
+  document.getElementById('cashier-name').textContent = L.cashierName;
+  document.getElementById('pay-title').textContent   = L.payTitle;
+  document.getElementById('pay-method-label').textContent = L.payMethod;
+  document.getElementById('lbl-tendered').textContent = L.tendered;
+  document.getElementById('lbl-change').textContent  = L.change;
+  document.getElementById('void-title').textContent  = L.voidTitle;
+  document.getElementById('void-sub').textContent    = L.voidSub;
+  document.getElementById('disc-title').textContent  = L.discTitle;
+  document.getElementById('btn-confirm-pay').textContent = L.confirmPay;
+  document.getElementById('card-msg').textContent    = L.cardMsg;
+  document.getElementById('card-sub').textContent    = L.cardSub;
+  document.getElementById('np-exact').textContent    = L.npExact;
+  document.getElementById('disc-preview-label').textContent = L.discPreviewLabel;
+  renderMenu();
+  renderCats();
+  renderLoyaltyBar();
+  renderCart();
+  renderTables();
+  updateFreeCount();
+}
+
+// ═══════════════════════════════════════════════════════════
+// ORDER TYPE
+// ═══════════════════════════════════════════════════════════
+function setOrderType(type, el){
+  orderType = type;
+  document.querySelectorAll('.ot-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const tp = document.getElementById('table-panel');
+  const oi = document.getElementById('order-info');
+  const de = document.getElementById('delivery-extra');
+  const badges = {
+    'dine-in': `🍽 ${t('dineIn')}`,
+    'takeaway': `🥡 ${t('takeaway')}`,
+    'delivery': `🛵 ${t('delivery')}`,
+  };
+  document.getElementById('cart-type-badge').textContent = badges[type];
+  if(type==='dine-in'){
+    tp.style.display='flex'; oi.style.display='none';
+    selectedTable=null; document.getElementById('cart-table-label').textContent='';
+    renderTables();
+  } else {
+    tp.style.display='none'; oi.style.display='block';
+    de.style.display = type==='delivery'?'block':'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TABLES
+// ═══════════════════════════════════════════════════════════
+function filterTables(f, el){
+  tableFilter=f;
+  document.querySelectorAll('.tf').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderTables();
+}
+function renderTables(){
+  const grid = document.getElementById('table-grid');
+  const filtered = TABLES.filter(t => tableFilter==='all'||t.status===tableFilter);
+  grid.innerHTML = filtered.map(t=>`
+    <div class="tbl ${t.status} ${selectedTable===t.id?'selected':''}" onclick="selectTable(${t.id})">
+      <div class="t-dot"></div>
+      <div class="t-num">${t.id}</div>
+      <div class="t-covers">${t.status==='occ'?(lang==='ar'?`${t.covers} أشخاص`:`${t.covers}p`):(lang==='ar'?'شاغرة':'Free')}</div>
+    </div>`).join('');
+  updateFreeCount();
+}
+function selectTable(id){
+  if(orderType!=='dine-in') return;
+  selectedTable = id;
+  const tbl = TABLES.find(t=>t.id===id);
+  document.getElementById('cart-table-label').textContent =
+    lang==='ar' ? `طاولة ${id}` : `Table ${id}`;
+  renderTables();
+  toast(lang==='ar'?`تم تحديد الطاولة ${id}`:`Table ${id} selected`);
+}
+function updateFreeCount(){
+  const n = TABLES.filter(t=>t.status==='free').length;
+  document.getElementById('free-count').textContent = t('freeCount')(n);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CATEGORIES
+// ═══════════════════════════════════════════════════════════
+function renderCats(){
+  const strip = document.getElementById('cat-strip');
+  strip.innerHTML = CATEGORIES.map(c=>`
+    <div class="cat-tab ${currentCat===c.id?'active':''}" onclick="selectCat('${c.id}',this)">
+      ${lang==='ar'?c.ar:c.en}
+    </div>`).join('');
+}
+function selectCat(id, el){
+  currentCat=id;
+  document.querySelectorAll('.cat-tab').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderMenu();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MENU
+// ═══════════════════════════════════════════════════════════
+function renderMenu(search=''){
+  const grid = document.getElementById('menu-grid');
+  const s = search.toLowerCase().trim();
+  const items = MENU.filter(it=>{
+    const catOk = currentCat==='all'||it.cat===currentCat;
+    const searchOk = !s || it.en.toLowerCase().includes(s) || it.ar.includes(s);
+    return catOk && searchOk;
+  });
+  if(!items.length){ grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);">No items found</div>`; return; }
+  grid.innerHTML = items.map(it=>`
+    <div class="mi" onclick="addItem('${it.id}')">
+      <div class="mi-img">${it.icon}</div>
+      <div class="mi-body">
+        ${it.modGroups.length?`<span class="mi-badge">${lang==='ar'?'خيارات':'Options'}</span>`:''}
+        <div class="mi-name">${lang==='ar'?it.ar:it.en}</div>
+        ${lang==='en'?`<div class="mi-name-ar">${it.ar}</div>`:`<div class="mi-name-ar" style="direction:ltr;text-align:left;">${it.en}</div>`}
+        <div class="mi-price">${fmt(it.price)}</div>
+      </div>
+    </div>`).join('');
+}
+function filterMenu(v){ renderMenu(v); }
+
+// ═══════════════════════════════════════════════════════════
+// ADD ITEM
+// ═══════════════════════════════════════════════════════════
+function addItem(id){
+  const item = MENU.find(i=>i.id===id);
+  if(!item) return;
+  if(item.modGroups.length){
+    openMod(item);
+  } else {
+    pushToCart(item,[]);
+  }
+}
+function pushToCart(item, mods, note=''){
+  // Check if same item+same mods already in cart (no mods = merge)
+  const key = item.id + JSON.stringify(mods);
+  const existing = cart.find(c=>c._key===key&&!c.sentToKDS);
+  if(existing && !mods.length){ existing.qty++; }
+  else {
+    const modsTotal = mods.reduce((a,m)=>a+m.price,0);
+    cart.push({
+      id: item.id, _key:key,
+      name:item.en, nameAr:item.ar,
+      basePrice:item.price, price:item.price+modsTotal,
+      qty:1, mods, note, sentToKDS:false,
+      cartId: Date.now()+Math.random(),
+    });
+  }
+  renderCart();
+  toast(lang==='ar'?`تمت إضافة ${item.ar} ✓`:`${item.en} added ✓`);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CART
+// ═══════════════════════════════════════════════════════════
+const EMPTY_CART_EL = document.getElementById('empty-cart');
+function renderCart(){
+  const container = document.getElementById('cart-items');
+  const emptyDiv  = EMPTY_CART_EL; // keep a reference — innerHTML below detaches it from the DOM
+  const footDiv   = document.getElementById('cart-foot');
+  if(!cart.length){
+    container.innerHTML=''; container.appendChild(emptyDiv);
+    emptyDiv.style.display='flex'; footDiv.style.display='none';
+    document.getElementById('disc-row').style.display='none';
+    return;
+  }
+  emptyDiv.style.display='none'; footDiv.style.display='block';
+  container.innerHTML = cart.map((c,i)=>`
+    <div class="ci">
+      <div>
+        <div class="ci-name">${lang==='ar'?c.nameAr:c.name}</div>
+        ${c.mods.length?`<div class="ci-mods">+ ${c.mods.map(m=>lang==='ar'?m.nameAr||m.name:m.name).join(', ')}</div>`:''}
+        ${c.note?`<div class="ci-note">📝 ${c.note}</div>`:''}
+        ${c.sentToKDS?`<span class="kds-badge">📺 ${lang==='ar'?'أُرسل للمطبخ':'Sent to KDS'}</span>`:''}
+      </div>
+      <div class="ci-right">
+        <div class="ci-price">${fmt(c.price*c.qty)}</div>
+        <div class="qty-ctrl">
+          <button class="qty-btn minus" onclick="changeQty(${i},-1)">−</button>
+          <span class="qty-num">${c.qty}</span>
+          <button class="qty-btn plus"  onclick="changeQty(${i},+1)">+</button>
+        </div>
+        <span class="ci-void" onclick="quickVoid(${i})">⊘ ${lang==='ar'?'حذف':'void'}</span>
+      </div>
+    </div>`).join('');
+  updateTotals();
+}
+function changeQty(i,d){
+  cart[i].qty+=d;
+  if(cart[i].qty<=0) cart.splice(i,1);
+  renderCart();
+}
+function quickVoid(i){ cart.splice(i,1); renderCart(); toast(lang==='ar'?'تم إزالة الصنف':'Item removed'); }
+function clearCart(){ if(!cart.length) return; cart=[]; discount={type:'percent',value:0}; renderCart(); toast(lang==='ar'?'تم مسح الطلب':'Order cleared'); }
+function getSubtotal(){ return cart.reduce((s,c)=>s+c.price*c.qty,0); }
+function getDiscount(){
+  const sub = getSubtotal();
+  if(!discount.value) return 0;
+  return discount.type==='percent' ? sub*(discount.value/100) : Math.min(discount.value,sub);
+}
+function getTotal(){ return Math.max(0, getSubtotal()-getDiscount()); }
+function updateTotals(){
+  const sub=getSubtotal(), disc=getDiscount(), tot=getTotal();
+  document.getElementById('cf-sub-val').textContent  = fmt(sub);
+  document.getElementById('cf-tot-val').textContent  = fmt(tot);
+  const dRow = document.getElementById('disc-row');
+  if(disc>0){ dRow.style.display='flex'; document.getElementById('cf-disc-val').textContent=`- ${fmt(disc)}`; }
+  else { dRow.style.display='none'; }
+  // Loyalty: estimated points to earn
+  const eRow = document.getElementById('earn-row');
+  if(member){
+    eRow.style.display='flex';
+    document.getElementById('cf-earn').textContent = lang==='ar'?'⭐ النقاط المكتسبة':'⭐ Points to earn';
+    document.getElementById('cf-earn-val').textContent = earnEligible()
+      ? `+${ptsFmt(pointsFor(tot))} ${lang==='ar'?'نقطة':'pts'}`
+      : (lang==='ar'?'غير مؤهل (طلب منصة)':'Not eligible (platform order)');
+  } else eRow.style.display='none';
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODIFIER MODAL
+// ═══════════════════════════════════════════════════════════
+function openMod(item){
+  modItem = item; modSelections = {}; modNote='';
+  document.getElementById('mod-title').textContent = lang==='ar'?item.ar:item.en;
+  const body = document.getElementById('mod-body');
+  body.innerHTML = `
+    <div class="mod-item-preview">
+      <span class="mip-icon">${item.icon}</span>
+      <div><div class="mip-name">${lang==='ar'?item.ar:item.en}</div><div class="mip-price">${fmt(item.price)}</div></div>
+    </div>
+    ${item.modGroups.map(mg=>`
+      <div class="mod-group">
+        <div class="mg-label">
+          ${lang==='ar'?mg.ar:mg.en}
+          ${mg.req?`<span class="mg-req">${lang==='ar'?'إلزامي':'Required'}</span>`:`<span class="mg-opt">${lang==='ar'?'اختياري':'Optional'}</span>`}
+        </div>
+        <div class="mod-opts">
+          ${mg.opts.map(o=>`
+            <label class="mod-opt" id="mo-${o.id}">
+              <input type="${mg.multi?'checkbox':'radio'}" name="mg-${mg.id}" value="${o.id}"
+                onchange="onModChange('${mg.id}','${o.id}',${mg.multi},'${o.en}','${o.ar}',${o.price})">
+              <span class="mo-name">${lang==='ar'?o.ar:o.en}</span>
+              ${o.price?`<span class="mo-price">+${fmt(o.price)}</span>`:''}
+            </label>`).join('')}
+        </div>
+      </div>`).join('')}
+    <div class="note-field">
+      <label>${lang==='ar'?'ملاحظة':'Special Note'}</label>
+      <input type="text" placeholder="${lang==='ar'?'مثلاً: بدون بصل':'e.g. no onions'}" id="mod-note-inp" value="">
+    </div>`;
+  document.getElementById('mod-modal').classList.remove('hidden');
+}
+function onModChange(groupId, optId, multi, nameEn, nameAr, price){
+  const el = document.getElementById(`mo-${optId}`);
+  if(!multi){ modSelections[groupId]=[{id:optId,name:nameEn,nameAr,price}]; }
+  else {
+    if(!modSelections[groupId]) modSelections[groupId]=[];
+    const inp = el.querySelector('input');
+    if(inp.checked) modSelections[groupId].push({id:optId,name:nameEn,nameAr,price});
+    else modSelections[groupId] = modSelections[groupId].filter(x=>x.id!==optId);
+  }
+  el.classList.toggle('selected', el.querySelector('input').checked);
+}
+function confirmMod(){
+  // Check required
+  for(const mg of modItem.modGroups){
+    if(mg.req && (!modSelections[mg.id]||!modSelections[mg.id].length)){
+      toast(lang==='ar'?`الرجاء تحديد: ${mg.ar}`:`Please select: ${mg.en}`); return;
+    }
+  }
+  const allMods = Object.values(modSelections).flat();
+  const note = document.getElementById('mod-note-inp').value;
+  pushToCart(modItem, allMods, note);
+  closeMod();
+}
+function closeMod(e){ if(e&&e.target!==document.getElementById('mod-modal')) return; document.getElementById('mod-modal').classList.add('hidden'); }
+
+// ═══════════════════════════════════════════════════════════
+// PAYMENT
+// ═══════════════════════════════════════════════════════════
+function openPayment(){
+  if(!cart.length){ toast(lang==='ar'?'الطلب فارغ':'Cart is empty'); return; }
+  if(orderType==='dine-in'&&!selectedTable){ toast(lang==='ar'?'الرجاء اختيار طاولة':'Please select a table'); return; }
+  npInput=''; payMethod='cash';
+  redeemPts=0; otpSent=false; redeemVerified=false;
+  renderRedeemBox();
+  document.querySelectorAll('.pm').forEach(p=>p.classList.remove('active'));
+  document.querySelector('.pm').classList.add('active');
+  document.getElementById('cash-section').style.display='block';
+  document.getElementById('card-section').style.display='none';
+  renderPaySummary();
+  updatePayDisplay();
+  document.getElementById('pay-modal').classList.remove('hidden');
+}
+function renderPaySummary(){
+  const sub=getSubtotal(), disc=getDiscount(), tot=getTotal();
+  document.getElementById('pay-summary').innerHTML=`
+    <div class="ps-row"><span>${t('subtotal')}</span><span>${fmt(sub)}</span></div>
+    ${disc>0?`<div class="ps-row"><span>${t('discount')}</span><span style="color:var(--red)">- ${fmt(disc)}</span></div>`:''}
+    <div class="ps-row ${redeemVerified?'':'total'}"><span>${t('total')}</span><span>${fmt(tot)}</span></div>
+    ${redeemVerified?`<div class="ps-row"><span>⭐ ${lang==='ar'?'نقاط مستبدلة':'Points redeemed'} (${ptsFmt(redeemPts)})</span><span style="color:var(--gold)">- ${fmt(redeemValue())}</span></div>
+    <div class="ps-row total"><span>${lang==='ar'?'المبلغ المستحق':'AMOUNT DUE'}</span><span>${fmt(amountDue())}</span></div>`:''}`;
+}
+function selectPayMethod(m,el){
+  payMethod=m; npInput='';
+  document.querySelectorAll('.pm').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('cash-section').style.display = (m==='cash'||m==='split')?'block':'none';
+  document.getElementById('card-section').style.display = (m==='card'||m==='wallet')?'block':'none';
+  updatePayDisplay();
+}
+function npPress(v){ npInput+=v; updatePayDisplay(); }
+function npDel(){ npInput=npInput.slice(0,-1); updatePayDisplay(); }
+function npExact(){ npInput=String(Math.ceil(amountDue()*10)/10); updatePayDisplay(); }
+function updatePayDisplay(){
+  const tot=amountDue(), paid=parseFloat(npInput||0);
+  const change = Math.max(0,paid-tot);
+  document.getElementById('pay-display').textContent = npInput ? fmt(parseFloat(npInput)) : fmt(0);
+  document.getElementById('change-val').textContent = fmt(change);
+  document.getElementById('change-display').style.background = change>0?'#E9F7EF':'#F8F9FA';
+  document.getElementById('change-val').style.color = change>0?'var(--green)':'var(--muted)';
+}
+function confirmPayment(){
+  if(otpSent&&!redeemVerified){
+    toast(lang==='ar'?'تحقق من رمز OTP أو ألغِ استبدال النقاط':'Verify the OTP or cancel the points redemption'); return;
+  }
+  if((payMethod==='cash'||payMethod==='split')&&parseFloat(npInput||0)<amountDue()){
+    toast(lang==='ar'?'المبلغ المدفوع غير كافٍ':'Amount tendered is less than total'); return;
+  }
+  settleLoyalty();
+  closePay();
+  setTimeout(()=>showReceipt(),200);
+}
+function closePay(e){ if(e&&e.target!==document.getElementById('pay-modal')) return; document.getElementById('pay-modal').classList.add('hidden'); }
+
+// ═══════════════════════════════════════════════════════════
+// RECEIPT
+// ═══════════════════════════════════════════════════════════
+function showReceipt(){
+  const now=new Date();
+  const dateStr=now.toLocaleDateString()+'  '+now.toLocaleTimeString();
+  const sub=getSubtotal(), disc=getDiscount(), tot=getTotal();
+  const due=lastLoy?lastLoy.due:tot;
+  const paid=parseFloat(npInput||due), change=Math.max(0,paid-due);
+  const orderNum=`ORD-${String(orderCounter).padStart(4,'0')}`;
+  let html=`
+    <div class="r-center"><div class="r-brand">🍽 Pizza Palace</div>
+    <div>Mall Branch</div>
+    <div style="font-size:10px;color:#666;">Tel: +966 50 000 0000</div></div>
+    <div class="r-div"></div>
+    <div class="r-row"><span>${lang==='ar'?'رقم الطلب':'Order#'}</span><span>${orderNum}</span></div>
+    <div class="r-row"><span>${lang==='ar'?'التاريخ':'Date'}</span><span style="font-size:10px;">${dateStr}</span></div>
+    <div class="r-row"><span>${lang==='ar'?'الكاشير':'Cashier'}</span><span>Javed Iqbal</span></div>
+    <div class="r-row"><span>${lang==='ar'?'نوع الطلب':'Type'}</span><span>${orderType==='dine-in'?`Table ${selectedTable}`:orderType}</span></div>
+    <div class="r-div"></div>
+    ${cart.map(c=>`
+      <div class="r-row"><span>${lang==='ar'?c.nameAr:c.name} x${c.qty}</span><span>${fmt(c.price*c.qty)}</span></div>
+      ${c.mods.map(m=>`<div style="padding-left:8px;color:#666;">+ ${lang==='ar'?m.nameAr||m.name:m.name}</div>`).join('')}
+    `).join('')}
+    <div class="r-div"></div>
+    <div class="r-row"><span>${lang==='ar'?'المجموع':'Subtotal'}</span><span>${fmt(sub)}</span></div>
+    ${disc>0?`<div class="r-row"><span>${lang==='ar'?'الخصم':'Discount'}</span><span>- ${fmt(disc)}</span></div>`:''}
+    <div class="r-row r-total"><span>${lang==='ar'?'الإجمالي':'TOTAL'}</span><span>${fmt(tot)}</span></div>
+    ${lastLoy&&lastLoy.redeemed?`<div class="r-row"><span>${lang==='ar'?'نقاط':'Points'} (${ptsFmt(lastLoy.redeemed)})</span><span>- ${fmt(lastLoy.redeemValue)}</span></div>
+    <div class="r-row r-total"><span>${lang==='ar'?'المستحق':'DUE'}</span><span>${fmt(due)}</span></div>`:''}
+    <div class="r-row"><span>${lang==='ar'?'طريقة الدفع':'Payment'}</span><span>${payMethod.toUpperCase()}${lastLoy&&lastLoy.redeemed?' + PTS':''}</span></div>
+    ${payMethod==='cash'?`<div class="r-row"><span>${lang==='ar'?'مدفوع':'Paid'}</span><span>${fmt(paid)}</span></div>
+    <div class="r-row"><span>${lang==='ar'?'الباقي':'Change'}</span><span>${fmt(change)}</span></div>`:''}
+    ${lastLoy?receiptLoyaltyBlock():''}
+    <div class="r-div"></div>
+    <div class="r-footer"><div>*** ${lang==='ar'?'شكراً لزيارتكم':'Thank you for visiting!'} ***</div>
+    <div style="margin-top:4px;">VAT No: 300000000000003</div></div>`;
+  document.getElementById('receipt-content').innerHTML=html;
+  document.getElementById('receipt-modal').classList.remove('hidden');
+  if(lastLoy&&lastLoy.earned) toast(lang==='ar'?`⭐ +${ptsFmt(lastLoy.earned)} نقطة للعميل`:`⭐ +${ptsFmt(lastLoy.earned)} points earned`);
+  // Mark table as occupied
+  if(orderType==='dine-in'&&selectedTable){
+    const tbl=TABLES.find(t=>t.id===selectedTable);
+    if(tbl){tbl.status='occ';tbl.covers=cart.reduce((s,c)=>s+c.qty,0);}
+    renderTables();
+  }
+}
+function closeReceipt(e){ if(e&&e.target!==document.getElementById('receipt-modal')) return; document.getElementById('receipt-modal').classList.add('hidden'); }
+function newOrder(){
+  closeReceipt();
+  orderCounter++;
+  document.getElementById('order-num').textContent=`#ORD-${String(orderCounter).padStart(4,'0')}`;
+  cart=[]; discount={type:'percent',value:0}; selectedTable=null; npInput='';
+  member=null; lastLoy=null; redeemPts=0; otpSent=false; redeemVerified=false;
+  document.getElementById('cust-name').value=''; document.getElementById('cust-phone').value='';
+  document.getElementById('cart-table-label').textContent='';
+  renderLoyaltyBar();
+  renderCart();
+  toast(lang==='ar'?'طلب جديد 🎉':'New order started 🎉');
+}
+
+// ═══════════════════════════════════════════════════════════
+// VOID MODAL
+// ═══════════════════════════════════════════════════════════
+function openVoid(){
+  if(!cart.length){ toast(lang==='ar'?'لا توجد أصناف للإلغاء':'No items to void'); return; }
+  voidSelectedItem=null; voidSelectedReason=null;
+  const itemList = document.getElementById('void-item-list');
+  itemList.innerHTML = `<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">${lang==='ar'?'اختر الصنف:':'Select item:'}</div>`+
+    cart.map((c,i)=>`
+      <div class="vr" id="vi-${i}" onclick="selectVoidItem(${i})">${lang==='ar'?c.nameAr:c.name} ×${c.qty} — ${fmt(c.price*c.qty)}</div>`).join('');
+  document.getElementById('void-reasons').innerHTML =
+    `<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">${lang==='ar'?'السبب:':'Reason:'}</div>`+
+    VOID_REASONS[lang].map((r,i)=>`<div class="vr" id="vr-${i}" onclick="selectVoidReason(${i})">${r}</div>`).join('');
+  document.getElementById('void-modal').classList.remove('hidden');
+}
+function selectVoidItem(i){
+  voidSelectedItem=i;
+  document.querySelectorAll('#void-item-list .vr').forEach(r=>r.classList.remove('selected'));
+  document.getElementById(`vi-${i}`).classList.add('selected');
+}
+function selectVoidReason(i){
+  voidSelectedReason=i;
+  document.querySelectorAll('#void-reasons .vr').forEach(r=>r.classList.remove('selected'));
+  document.getElementById(`vr-${i}`).classList.add('selected');
+}
+function confirmVoid(){
+  if(voidSelectedItem===null){ toast(lang==='ar'?'اختر الصنف':'Select an item'); return; }
+  if(voidSelectedReason===null){ toast(lang==='ar'?'اختر السبب':'Select a reason'); return; }
+  const name = lang==='ar'?cart[voidSelectedItem].nameAr:cart[voidSelectedItem].name;
+  cart.splice(voidSelectedItem,1);
+  closeVoid();
+  renderCart();
+  toast(lang==='ar'?`تم إلغاء: ${name}`:`Voided: ${name}`);
+}
+function closeVoid(e){ if(e&&e.target!==document.getElementById('void-modal')) return; document.getElementById('void-modal').classList.add('hidden'); }
+
+// ═══════════════════════════════════════════════════════════
+// DISCOUNT MODAL
+// ═══════════════════════════════════════════════════════════
+function openDiscount(){
+  discType = discount.type;
+  document.getElementById('disc-val').value = discount.value||'';
+  document.getElementById('disc-suffix').textContent = discount.type==='percent'?'%':'SAR';
+  document.querySelectorAll('.dt').forEach(d=>d.classList.remove('active'));
+  document.getElementById(discount.type==='percent'?'dt-pct':'dt-fix').classList.add('active');
+  updateDiscPreview();
+  document.getElementById('disc-modal').classList.remove('hidden');
+}
+function setDiscType(type,el){
+  discType=type;
+  document.querySelectorAll('.dt').forEach(d=>d.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('disc-suffix').textContent = type==='percent'?'%':'SAR';
+  updateDiscPreview();
+}
+function setDiscPreset(v){
+  document.getElementById('disc-val').value=v;
+  discType='percent';
+  document.querySelectorAll('.dt').forEach(d=>d.classList.remove('active'));
+  document.getElementById('dt-pct').classList.add('active');
+  document.getElementById('disc-suffix').textContent='%';
+  updateDiscPreview();
+}
+function updateDiscPreview(){
+  const v=parseFloat(document.getElementById('disc-val').value||0);
+  const sub=getSubtotal();
+  const amt = discType==='percent' ? sub*(v/100) : Math.min(v,sub);
+  document.getElementById('disc-preview').textContent=fmt(amt);
+}
+function confirmDiscount(){
+  const v=parseFloat(document.getElementById('disc-val').value||0);
+  if(v<=0){ removeDiscount(); return; }
+  discount={type:discType,value:v};
+  closeDisc();
+  renderCart();
+  toast(lang==='ar'?'تم تطبيق الخصم':'Discount applied');
+}
+function removeDiscount(){
+  discount={type:'percent',value:0};
+  closeDisc();
+  renderCart();
+  toast(lang==='ar'?'تم إزالة الخصم':'Discount removed');
+}
+function closeDisc(e){ if(e&&e.target!==document.getElementById('disc-modal')) return; document.getElementById('disc-modal').classList.add('hidden'); }
+
+// ═══════════════════════════════════════════════════════════
+// KDS
+// ═══════════════════════════════════════════════════════════
+function sendToKDS(){
+  const unsent = cart.filter(c=>!c.sentToKDS);
+  if(!unsent.length){ toast(lang==='ar'?'جميع الأصناف أُرسلت للمطبخ':'All items already sent to KDS'); return; }
+  unsent.forEach(c=>c.sentToKDS=true);
+  document.getElementById('kds-msg').textContent = t('kdsMsg');
+  document.getElementById('kds-sub').textContent = t('kdsSub');
+  document.getElementById('kds-items').innerHTML =
+    `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">${lang==='ar'?'الأصناف المرسلة:':'Items sent:'}</div>`+
+    unsent.map(c=>`
+      <div style="display:flex;justify-content:space-between;padding:7px 12px;background:#f9f0ff;border-radius:7px;margin-bottom:5px;font-size:12px;">
+        <span style="font-weight:700;color:#7D3C98;">${lang==='ar'?c.nameAr:c.name}</span>
+        <span>×${c.qty}</span>
+      </div>`).join('');
+  document.getElementById('kds-modal').classList.remove('hidden');
+  renderCart();
+}
+function closeKDS(e){ if(e&&e.target!==document.getElementById('kds-modal')) return; document.getElementById('kds-modal').classList.add('hidden'); }
+
+// ═══════════════════════════════════════════════════════════
+// END SHIFT
+// ═══════════════════════════════════════════════════════════
+function endShift(){
+  if(cart.length&&!confirm(lang==='ar'?'يوجد طلب مفتوح. هل تريد إنهاء الوردية؟':'There is an open order. End shift anyway?')) return;
+  toast(lang==='ar'?'تم إنهاء الوردية — وداعاً 👋':'Shift ended — Goodbye 👋');
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOYALTY PROGRAM
+// ═══════════════════════════════════════════════════════════
+const esc = v => String(v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ptsFmt = n => Number(n).toLocaleString('en-US');
+function normPhone(v){
+  let d = String(v||'').replace(/\D/g,'');
+  if(d.startsWith('966')) d = '0'+d.slice(3);
+  if(d.length===9 && d.startsWith('5')) d = '0'+d;
+  return d;
+}
+const maskPhone = p => p.length>6 ? p.slice(0,3)+'••••'+p.slice(-3) : p;
+function tierOf(m){ return [...LOYALTY.tiers].reverse().find(t=>m.yearPts>=t.min); }
+function nextTier(m){ return LOYALTY.tiers.find(t=>t.min>m.yearPts); }
+const tierLabel = t => lang==='ar'?t.ar:t.en;
+const tierBadge = t => `<span class="tier tier-${t.id}">${t.id==='gold'?'🥇':t.id==='silver'?'🥈':'🥉'} ${tierLabel(t)}</span>`;
+const mName = m => lang==='ar'?(m.nameAr||m.name):m.name;
+const initials = n => n.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+
+function earnEligible(){
+  if(!member) return false;
+  // Aggregator orders (Talabat/Deliveroo/Jahez) don't earn — platform owns the customer
+  return !(orderType==='delivery' && document.getElementById('plat-select').value!=='direct');
+}
+function pointsFor(amount){ return member ? Math.floor(amount*LOYALTY.earnPerSar*tierOf(member).mult) : 0; }
+function redeemValue(){ return redeemVerified ? redeemPts*LOYALTY.ptValue : 0; }
+function amountDue(){ return Math.max(0, getTotal()-redeemValue()); }
+function maxRedeemable(){
+  if(!member) return 0;
+  const byBill = Math.floor(getTotal()*LOYALTY.maxRedeemPct/100/LOYALTY.ptValue);
+  return Math.min(member.points, byBill);
+}
+
+// ── Cart bar ──
+function renderLoyaltyBar(){
+  const bar = document.getElementById('loy-bar');
+  if(!member){
+    bar.innerHTML = `<button class="loy-add" onclick="openLoy()">⭐ ${lang==='ar'?'إضافة عضو الولاء (رقم الجوال)':'Add Loyalty Member (mobile no.)'}</button>`;
+    return;
+  }
+  const t = tierOf(member);
+  bar.innerHTML = `
+    <div class="loy-card">
+      <div class="loy-av">${esc(initials(member.name))}</div>
+      <div class="loy-info">
+        <div class="loy-name">${esc(mName(member))}</div>
+        <div class="loy-meta">${tierBadge(t)} <span>${maskPhone(member.phone)}</span></div>
+      </div>
+      <div class="loy-pts">${ptsFmt(member.points)} <small>${lang==='ar'?'نقطة':'pts'} · ${fmt(member.points*LOYALTY.ptValue)}</small></div>
+      <button class="loy-x" title="Remove" onclick="removeMember()">✕</button>
+    </div>`;
+}
+
+// ── Lookup / enrol modal ──
+function openLoy(){
+  loyState='search'; loyFound=null; loyPhone='';
+  renderLoy();
+  document.getElementById('loy-modal').classList.remove('hidden');
+  setTimeout(()=>{ const i=document.getElementById('loy-phone'); if(i) i.focus(); },50);
+}
+function closeLoy(e){ if(e&&e.target!==document.getElementById('loy-modal')) return; document.getElementById('loy-modal').classList.add('hidden'); }
+function renderLoy(){
+  const ar = lang==='ar';
+  document.getElementById('loy-title').textContent = ar?'⭐ عضو برنامج الولاء':'⭐ Loyalty Member';
+  const body = document.getElementById('loy-body'), foot = document.getElementById('loy-foot');
+  if(loyState==='search'){
+    body.innerHTML = `
+      <div class="pi-label">${ar?'رقم جوال العميل':'Customer mobile number'}</div>
+      <div class="loy-search">
+        <input id="loy-phone" type="tel" placeholder="05X XXX XXXX" value="${esc(loyPhone)}" onkeydown="if(event.key==='Enter')searchMember()">
+        <button class="btn btn-gold" onclick="searchMember()">🔍 ${ar?'بحث':'Search'}</button>
+      </div>
+      <div class="loy-demo">${ar?'أرقام تجريبية:':'Demo members:'}<br>
+        ${MEMBERS.slice(0,3).map(m=>`<a onclick="document.getElementById('loy-phone').value='${m.phone}';searchMember()">${m.phone}</a>`).join('')}
+        <br>${ar?'أي رقم آخر ← تسجيل عضو جديد':'Any other number → enrol a new member'}</div>`;
+    foot.innerHTML = `<button class="btn btn-ghost" style="flex:1;" onclick="closeLoy()">${ar?'إلغاء':'Cancel'}</button>`;
+  } else if(loyState==='found'){
+    const m = loyFound, t = tierOf(m), nt = nextTier(m);
+    const pct = nt ? Math.round((m.yearPts - t.min)/(nt.min - t.min)*100) : 100;
+    body.innerHTML = `
+      <div class="loy-profile">
+        <div class="loy-av">${esc(initials(m.name))}</div>
+        <div style="font-size:16px;font-weight:800;">${esc(mName(m))}</div>
+        <div style="margin-top:4px;">${tierBadge(t)} <span style="font-size:11px;color:var(--muted);">${m.phone}</span></div>
+      </div>
+      <div class="loy-stats">
+        <div class="loy-stat"><b style="color:var(--gold)">${ptsFmt(m.points)}</b><span>${ar?'رصيد النقاط':'Points'}</span></div>
+        <div class="loy-stat"><b>${fmt(m.points*LOYALTY.ptValue).replace(CURRENCY+' ','')}</b><span>${ar?'القيمة (ر.س)':'Value (SAR)'}</span></div>
+        <div class="loy-stat"><b>${m.visits}</b><span>${ar?'الزيارات':'Visits'}</span></div>
+      </div>
+      <div class="loy-next">${nt
+        ? (ar?`${ptsFmt(nt.min-m.yearPts)} نقطة للوصول إلى ${tierLabel(nt)}`:`${ptsFmt(nt.min-m.yearPts)} pts to ${tierLabel(nt)} · earning ${t.mult}× points`)
+        : (ar?`أعلى فئة · ${t.mult}× نقاط`:`Top tier · earning ${t.mult}× points`)}
+        <div class="loy-bar-track"><div class="loy-bar-fill" style="width:${pct}%"></div></div></div>`;
+    foot.innerHTML = `<button class="btn btn-ghost" style="flex:1;" onclick="loyState='search';renderLoy()">${ar?'رجوع':'Back'}</button>
+      <button class="btn btn-gold" style="flex:2;" onclick="attachMember(loyFound)">✓ ${ar?'إضافة إلى الطلب':'Attach to Order'}</button>`;
+  } else { // enrol
+    body.innerHTML = `
+      <div style="background:#FEF9E7;border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:14px;">
+        ${ar?`الرقم <b>${loyPhone}</b> غير مسجل. سجّل العميل واحصل على <b>${LOYALTY.signupBonus}</b> نقطة ترحيبية.`
+            :`<b>${loyPhone}</b> is not a member yet. Enrol now and the customer gets <b>${LOYALTY.signupBonus}</b> welcome points.`}</div>
+      <div class="oi-field"><label>${ar?'اسم العميل':'Customer Name'} *</label><input id="enr-name" type="text" placeholder="${ar?'الاسم':'Full name'}"></div>
+      <div class="oi-field"><label>${ar?'تاريخ الميلاد (اختياري)':'Birthday (optional)'}</label><input id="enr-bday" type="date"></div>
+      <label class="loy-consent"><input type="checkbox" id="enr-consent"> ${ar?'يوافق العميل على استلام العروض عبر الرسائل النصية':'Customer agrees to receive offers by SMS (marketing consent)'}</label>`;
+    foot.innerHTML = `<button class="btn btn-ghost" style="flex:1;" onclick="loyState='search';renderLoy()">${ar?'رجوع':'Back'}</button>
+      <button class="btn btn-gold" style="flex:2;" onclick="enrolMember()">＋ ${ar?'تسجيل وإضافة':'Enrol & Attach'}</button>`;
+    setTimeout(()=>document.getElementById('enr-name').focus(),50);
+  }
+}
+function searchMember(){
+  const ph = normPhone(document.getElementById('loy-phone').value);
+  if(!/^05\d{8}$/.test(ph)){ toast(lang==='ar'?'أدخل رقم جوال سعودي صحيح (05XXXXXXXX)':'Enter a valid Saudi mobile (05XXXXXXXX)'); return; }
+  loyPhone = ph;
+  loyFound = MEMBERS.find(m=>m.phone===ph) || null;
+  loyState = loyFound ? 'found' : 'enrol';
+  renderLoy();
+}
+function enrolMember(){
+  const name = document.getElementById('enr-name').value.trim();
+  if(!name){ toast(lang==='ar'?'الرجاء إدخال الاسم':'Please enter the customer name'); return; }
+  const m = {phone:loyPhone, name, nameAr:name, points:LOYALTY.signupBonus, yearPts:LOYALTY.signupBonus, visits:0,
+             birthday:document.getElementById('enr-bday').value||null, consent:document.getElementById('enr-consent').checked};
+  MEMBERS.push(m);
+  attachMember(m);
+  toast(lang==='ar'?`🎉 تم التسجيل — ${LOYALTY.signupBonus} نقطة ترحيبية`:`🎉 Enrolled — ${LOYALTY.signupBonus} welcome points added`);
+}
+function attachMember(m){
+  member = m;
+  document.getElementById('cust-name').value = m.name;
+  document.getElementById('cust-phone').value = m.phone;
+  closeLoy();
+  renderLoyaltyBar(); updateTotals();
+  if(!m.visits && m.points===LOYALTY.signupBonus) return;
+  toast(lang==='ar'?`⭐ ${mName(m)} — ${ptsFmt(m.points)} نقطة`:`⭐ ${m.name} attached — ${ptsFmt(m.points)} pts`);
+}
+function removeMember(){
+  member=null; redeemPts=0; otpSent=false; redeemVerified=false;
+  renderLoyaltyBar(); updateTotals();
+}
+
+// ── Redemption inside payment modal ──
+function renderRedeemBox(){
+  const box = document.getElementById('redeem-box');
+  if(!member){ box.innerHTML=''; return; }
+  const ar = lang==='ar', t = tierOf(member), max = maxRedeemable();
+  const head = `<div class="rb-head"><span>${tierBadge(t)} <b>${esc(mName(member))}</b></span>
+    <span style="color:var(--gold);font-weight:800;">${ptsFmt(member.points)} ${ar?'نقطة':'pts'} <span style="color:var(--muted);font-weight:600;">(${fmt(member.points*LOYALTY.ptValue)})</span></span></div>`;
+  let inner;
+  if(member.points < LOYALTY.minRedeem){
+    inner = `<div class="rb-note">${ar?`يلزم ${ptsFmt(LOYALTY.minRedeem)} نقطة على الأقل للاستبدال.`:`Needs at least ${ptsFmt(LOYALTY.minRedeem)} points to redeem.`}</div>`;
+  } else if(max < LOYALTY.minRedeem){
+    inner = `<div class="rb-note">${ar?`قيمة الفاتورة صغيرة للاستبدال (الحد الأقصى ${LOYALTY.maxRedeemPct}% من الفاتورة).`:`Bill too small to redeem — points can cover up to ${LOYALTY.maxRedeemPct}% of the bill (min ${ptsFmt(LOYALTY.minRedeem)} pts).`}</div>`;
+  } else if(redeemVerified){
+    inner = `<div class="rb-row"><span class="rb-ok">✓ ${ptsFmt(redeemPts)} ${ar?'نقطة مستبدلة':'pts applied'} (- ${fmt(redeemValue())})</span>
+      <button class="btn btn-ghost btn-sm" onclick="cancelRedeem()">${ar?'إزالة':'Remove'}</button></div>`;
+  } else if(otpSent){
+    inner = `<div class="rb-note" style="margin:0 0 6px;">${ar?`تم إرسال رمز التحقق إلى ${maskPhone(member.phone)}`:`OTP sent to ${maskPhone(member.phone)} — ask the customer for the code`}</div>
+      <div class="rb-row"><input id="otp-inp" maxlength="4" placeholder="• • • •" onkeydown="if(event.key==='Enter')verifyOtp()">
+      <button class="btn btn-gold btn-sm" onclick="verifyOtp()">${ar?'تحقق':'Verify'}</button>
+      <button class="btn btn-ghost btn-sm" onclick="cancelRedeem()">${ar?'إلغاء':'Cancel'}</button></div>
+      <div class="rb-note">${ar?'نموذج تجريبي — الرمز':'Prototype — demo code'}: <b>${LOYALTY.demoOtp}</b></div>`;
+  } else {
+    inner = `<div class="rb-row">
+      <input id="redeem-inp" type="number" min="${LOYALTY.minRedeem}" max="${max}" step="10" placeholder="${ar?'النقاط':'Points'}" oninput="previewRedeem()">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('redeem-inp').value=${max};previewRedeem()">Max ${ptsFmt(max)}</button>
+      <button class="btn btn-gold btn-sm" onclick="requestRedeem()">⭐ ${ar?'استبدال':'Redeem'}</button>
+      <span id="redeem-preview" style="font-size:12px;font-weight:700;color:var(--gold);"></span></div>
+      <div class="rb-note">${ar?`100 نقطة = ${fmt(100*LOYALTY.ptValue)} · الحد الأدنى ${ptsFmt(LOYALTY.minRedeem)} · حتى ${LOYALTY.maxRedeemPct}% من الفاتورة · يتطلب رمز OTP`
+        :`100 pts = ${fmt(100*LOYALTY.ptValue)} · min ${ptsFmt(LOYALTY.minRedeem)} · up to ${LOYALTY.maxRedeemPct}% of bill · OTP required`}</div>`;
+  }
+  box.innerHTML = `<div class="redeem-box">${head}${inner}</div>`;
+}
+function previewRedeem(){
+  const v = parseInt(document.getElementById('redeem-inp').value||0,10);
+  document.getElementById('redeem-preview').textContent = v>0 ? `= - ${fmt(v*LOYALTY.ptValue)}` : '';
+}
+function requestRedeem(){
+  const v = parseInt(document.getElementById('redeem-inp').value||0,10), max = maxRedeemable();
+  if(!v || v < LOYALTY.minRedeem){ toast(lang==='ar'?`الحد الأدنى ${LOYALTY.minRedeem} نقطة`:`Minimum ${LOYALTY.minRedeem} points`); return; }
+  if(v > max){ toast(lang==='ar'?`الحد الأقصى ${ptsFmt(max)} نقطة`:`Maximum ${ptsFmt(max)} points for this bill`); return; }
+  redeemPts = v; otpSent = true;
+  renderRedeemBox();
+  setTimeout(()=>{ const i=document.getElementById('otp-inp'); if(i) i.focus(); },50);
+}
+function verifyOtp(){
+  const code = document.getElementById('otp-inp').value.trim();
+  if(code!==LOYALTY.demoOtp){ toast(lang==='ar'?'رمز غير صحيح':'Incorrect code'); return; }
+  redeemVerified = true; npInput='';
+  renderRedeemBox(); renderPaySummary(); updatePayDisplay();
+  toast(lang==='ar'?'✓ تم تطبيق النقاط':'✓ Points applied');
+}
+function cancelRedeem(){
+  redeemPts=0; otpSent=false; redeemVerified=false; npInput='';
+  renderRedeemBox(); renderPaySummary(); updatePayDisplay();
+}
+
+// ── Post points on settlement ──
+function settleLoyalty(){
+  if(!member){ lastLoy=null; return; }
+  const before = tierOf(member);
+  const due = amountDue();
+  const redeemed = redeemVerified ? redeemPts : 0;
+  const earned = earnEligible() ? pointsFor(due) : 0;   // no points on the part paid with points
+  lastLoy = {redeemed, redeemValue:redeemValue(), earned, due, eligible:earnEligible(), mult:before.mult};
+  member.points = member.points - redeemed + earned;
+  member.yearPts += earned;
+  member.visits++;
+  const after = tierOf(member);
+  lastLoy.tierUp = after.id!==before.id ? after : null;
+  lastLoy.balance = member.points;
+  lastLoy.name = member.name; lastLoy.tier = after;
+  renderLoyaltyBar();
+}
+function receiptLoyaltyBlock(){
+  const L = lastLoy, ar = lang==='ar';
+  return `<div class="r-div"></div><div class="r-loy">
+    <div class="r-center" style="font-weight:700;">⭐ ${ar?'برنامج الولاء':'LOYALTY REWARDS'}</div>
+    <div class="r-row"><span>${ar?'العضو':'Member'}</span><span>${esc(L.name)}</span></div>
+    <div class="r-row"><span>${ar?'الفئة':'Tier'}</span><span>${tierLabel(L.tier)}</span></div>
+    ${L.redeemed?`<div class="r-row"><span>${ar?'نقاط مستبدلة':'Points redeemed'}</span><span>-${ptsFmt(L.redeemed)}</span></div>`:''}
+    <div class="r-row"><span>${ar?'نقاط مكتسبة':'Points earned'}${L.eligible&&L.mult>1?` (${L.mult}×)`:''}</span><span>${L.eligible?'+'+ptsFmt(L.earned):(ar?'غير مؤهل':'n/a (platform)')}</span></div>
+    <div class="r-row" style="font-weight:700;"><span>${ar?'الرصيد الجديد':'New balance'}</span><span>${ptsFmt(L.balance)} ${ar?'نقطة':'pts'}</span></div>
+    ${L.tierUp?`<div class="r-center" style="margin-top:4px;font-weight:700;">🎉 ${ar?`تمت الترقية إلى ${tierLabel(L.tierUp)}!`:`Upgraded to ${tierLabel(L.tierUp)}!`}</div>`:''}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+renderCats();
+renderMenu();
+renderTables();
+renderLoyaltyBar();
+renderCart();
+</script>
+</body>
+</html>

@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Brand F&B POS System — Technical Proposal</title>
+<style>
+  :root {
+    --primary: #1B4F72;
+    --accent: #2E86C1;
+    --light: #D6EAF8;
+    --mid: #AED6F1;
+    --row-alt: #EBF5FB;
+    --green: #1E8449;
+    --orange: #D35400;
+    --red: #922B21;
+    --dark: #1a1a2e;
+    --text: #2C3E50;
+    --muted: #7F8C8D;
+    --border: #D5E8F0;
+    --white: #ffffff;
+    --sidebar-w: 280px;
+    --header-h: 64px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: #f4f7fb;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: var(--sidebar-w);
+    background: var(--primary);
+    min-height: 100vh;
+    position: fixed;
+    top: 0; left: 0;
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .sidebar-logo .brand { font-size: 11px; color: var(--mid); letter-spacing: 2px; text-transform: uppercase; }
+  .sidebar-logo h2 { color: #fff; font-size: 15px; font-weight: 700; margin-top: 4px; line-height: 1.3; }
+
+  .sidebar-nav { padding: 12px 0; flex: 1; }
+  .nav-section-label {
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(255,255,255,0.4); padding: 16px 20px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 20px; color: rgba(255,255,255,0.75);
+    text-decoration: none; font-size: 13px;
+    transition: background 0.15s, color 0.15s;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+  }
+  .nav-item:hover, .nav-item.active {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border-left-color: var(--mid);
+  }
+  .nav-item .num {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+    color: #fff;
+  }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 11px; color: rgba(255,255,255,0.4);
+  }
+
+  /* ── MAIN ── */
+  #main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BAR ── */
+  #topbar {
+    height: var(--header-h);
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 36px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  #topbar .breadcrumb { font-size: 13px; color: var(--muted); }
+  #topbar .breadcrumb span { color: var(--primary); font-weight: 600; }
+  .badge {
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .badge-draft { background: #FEF9E7; color: #B7950B; border: 1px solid #F7DC6F; }
+  .badge-v1   { background: var(--light); color: var(--primary); border: 1px solid var(--mid); margin-right: 8px; }
+
+  /* ── CONTENT ── */
+  #content { padding: 40px 36px 80px; max-width: 1100px; }
+
+  /* ── COVER ── */
+  .cover {
+    background: linear-gradient(135deg, var(--primary) 0%, #154360 60%, #1A5276 100%);
+    border-radius: 16px; padding: 64px 56px;
+    color: #fff; margin-bottom: 48px;
+    position: relative; overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute; top: -60px; right: -60px;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .cover::after {
+    content: '';
+    position: absolute; bottom: -80px; left: 40%;
+    width: 400px; height: 400px; border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+  }
+  .cover-tag { font-size: 11px; letter-spacing: 3px; color: var(--mid); text-transform: uppercase; margin-bottom: 16px; }
+  .cover h1 { font-size: 42px; font-weight: 800; line-height: 1.1; margin-bottom: 8px; }
+  .cover h1 span { color: var(--mid); }
+  .cover-sub { font-size: 16px; color: rgba(255,255,255,0.7); margin: 16px 0 40px; }
+  .cover-meta {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    background: rgba(255,255,255,0.08); border-radius: 10px; padding: 24px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .cover-meta-item label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.5); display: block; margin-bottom: 4px; }
+  .cover-meta-item span { font-size: 14px; font-weight: 600; color: #fff; }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 56px; scroll-margin-top: 80px; }
+
+  .section-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 28px; padding-bottom: 16px;
+    border-bottom: 2px solid var(--light);
+  }
+  .section-num {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; flex-shrink: 0;
+  }
+  .section-header h2 { font-size: 24px; font-weight: 700; color: var(--primary); }
+
+  h3 { font-size: 16px; font-weight: 700; color: var(--accent); margin: 28px 0 14px; }
+  h4 { font-size: 14px; font-weight: 700; color: var(--text); margin: 20px 0 10px; }
+
+  p { line-height: 1.7; color: var(--text); margin-bottom: 12px; }
+
+  /* ── CARDS ── */
+  .card-grid { display: grid; gap: 16px; margin: 20px 0; }
+  .card-grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .card-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+    transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: 0 4px 16px rgba(27,79,114,0.1); }
+  .card-icon { font-size: 24px; margin-bottom: 10px; }
+  .card h4 { margin: 0 0 6px; font-size: 13px; font-weight: 700; color: var(--primary); }
+  .card p { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.5; }
+  .card-accent { border-left: 4px solid var(--accent); }
+  .card-green  { border-left: 4px solid var(--green); }
+  .card-orange { border-left: 4px solid var(--orange); }
+
+  /* ── TABLES ── */
+  .table-wrap { overflow-x: auto; margin: 16px 0 24px; border-radius: 10px; box-shadow: 0 1px 8px rgba(0,0,0,0.06); }
+  table { width: 100%; border-collapse: collapse; background: var(--white); }
+  thead tr { background: var(--primary); }
+  thead th {
+    padding: 12px 14px; font-size: 12px; font-weight: 700;
+    color: #fff; text-align: left; letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  thead th:first-child { border-radius: 10px 0 0 0; }
+  thead th:last-child  { border-radius: 0 10px 0 0; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:nth-child(even) { background: var(--row-alt); }
+  tbody tr:hover { background: #e8f4fd; }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 10px 14px; font-size: 13px; vertical-align: top; line-height: 1.5; }
+  td.bold { font-weight: 700; color: var(--primary); white-space: nowrap; }
+  td.center { text-align: center; }
+  td.mono { font-family: 'Consolas', 'Courier New', monospace; font-size: 12px; color: var(--text); }
+
+  .method { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .method-GET    { background: #EAF2FF; color: var(--primary); }
+  .method-POST   { background: #E9F7EF; color: var(--green); }
+  .method-PUT    { background: #FEF5E7; color: var(--orange); }
+  .method-PATCH  { background: #FEF5E7; color: var(--orange); }
+  .method-DELETE { background: #FDEDEC; color: var(--red); }
+
+  /* ── BULLETS / LISTS ── */
+  .bullet-list { list-style: none; padding: 0; margin: 12px 0 20px; }
+  .bullet-list li {
+    padding: 7px 0 7px 24px; position: relative;
+    color: var(--text); font-size: 13px; line-height: 1.6;
+    border-bottom: 1px solid var(--border);
+  }
+  .bullet-list li:last-child { border-bottom: none; }
+  .bullet-list li::before {
+    content: '▸'; position: absolute; left: 0;
+    color: var(--accent); font-size: 11px; top: 9px;
+  }
+
+  .num-list { list-style: none; padding: 0; margin: 12px 0 20px; counter-reset: steps; }
+  .num-list li {
+    padding: 10px 12px 10px 52px; position: relative;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 8px;
+    font-size: 13px; line-height: 1.6;
+    counter-increment: steps;
+  }
+  .num-list li::before {
+    content: counter(steps);
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+
+  /* ── KV LIST ── */
+  .kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border-radius: 10px; overflow: hidden; margin: 16px 0; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
+  .kv-item { display: contents; }
+  .kv-item .kv-key   { background: #f0f7ff; padding: 10px 16px; font-weight: 700; font-size: 12px; color: var(--primary); }
+  .kv-item .kv-val   { background: var(--white); padding: 10px 16px; font-size: 13px; color: var(--text); }
+  .kv-item:nth-child(even) .kv-key { background: #e4f0fb; }
+  .kv-item:nth-child(even) .kv-val { background: var(--row-alt); }
+
+  /* ── PHASE CARDS ── */
+  .phase-list { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+  .phase {
+    display: grid; grid-template-columns: 80px 120px 1fr auto;
+    align-items: center; gap: 0;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+  }
+  .phase-num {
+    background: var(--primary); color: #fff;
+    font-size: 22px; font-weight: 800;
+    text-align: center; padding: 20px 0;
+    height: 100%; display: flex; align-items: center; justify-content: center;
+  }
+  .phase-dur {
+    background: var(--light); color: var(--primary);
+    font-size: 12px; font-weight: 700;
+    text-align: center; padding: 20px 12px;
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    border-right: 1px solid var(--border);
+  }
+  .phase-body { padding: 16px 20px; }
+  .phase-body strong { display: block; font-size: 13px; color: var(--primary); margin-bottom: 4px; }
+  .phase-body p { font-size: 12px; color: var(--muted); margin: 0; }
+  .phase-milestone { padding: 16px 20px; border-left: 1px solid var(--border); min-width: 200px; }
+  .phase-milestone label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
+  .phase-milestone span { font-size: 12px; font-weight: 600; color: var(--green); }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: #1e2330; color: #abb2bf;
+    border-radius: 10px; padding: 20px 24px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px; line-height: 1.7;
+    overflow-x: auto; margin: 16px 0;
+  }
+  .code-block .kw  { color: #c678dd; }
+  .code-block .str { color: #98c379; }
+  .code-block .cm  { color: #5c6370; font-style: italic; }
+  .code-block .hl  { color: #61afef; }
+
+  /* ── ARCH DIAGRAM ── */
+  .arch-diagram {
+    display: grid; gap: 0;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; margin: 20px 0;
+  }
+  .arch-layer {
+    display: grid; grid-template-columns: 140px 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .arch-layer:last-child { border-bottom: none; }
+  .arch-label {
+    background: var(--primary); color: #fff;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; padding: 16px 14px;
+    display: flex; align-items: center;
+  }
+  .arch-items { padding: 12px 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .arch-chip {
+    background: var(--light); color: var(--primary);
+    border: 1px solid var(--mid); border-radius: 6px;
+    padding: 5px 12px; font-size: 12px; font-weight: 600;
+  }
+  .arch-arrow { color: var(--muted); font-size: 16px; }
+
+  /* ── MODULE GRID ── */
+  .module-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+  .module-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+    border-top: 3px solid var(--accent);
+  }
+  .module-card .mod-num { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1px; }
+  .module-card .mod-name { font-size: 13px; font-weight: 700; color: var(--primary); margin: 4px 0; }
+  .module-card .mod-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .module-card .mod-tags { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .mod-tag { background: var(--light); color: var(--accent); font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 600; }
+
+  /* ── SCHEMA BOX ── */
+  .schema-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 16px 0; }
+  .schema-box {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+  }
+  .schema-box-header {
+    background: var(--primary); padding: 10px 14px;
+    font-weight: 700; font-size: 13px; color: #fff;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .schema-box-header .table-icon { font-size: 14px; }
+  .schema-box-body { padding: 0; }
+  .schema-field {
+    display: grid; grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .schema-field:last-child { border-bottom: none; }
+  .schema-field .sf-name { padding: 8px 12px; font-family: 'Consolas', monospace; color: var(--accent); background: #f8fbff; }
+  .schema-field .sf-type { padding: 8px 12px; color: var(--muted); }
+  .sf-pk   { background: #FEF9E7 !important; color: #B7950B !important; font-weight: 700; }
+  .sf-fk   { background: #F0F9FF !important; color: var(--accent) !important; }
+
+  /* ── DECISION TABLE ── */
+  .decision-grid { display: grid; gap: 10px; margin: 16px 0; }
+  .decision-row {
+    display: grid; grid-template-columns: 220px 220px 1fr;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  .decision-row > div { padding: 12px 16px; }
+  .decision-row .dr-dec { background: #f0f7ff; font-weight: 700; font-size: 12px; color: var(--primary); border-right: 1px solid var(--border); }
+  .decision-row .dr-choice { background: #f9f9f9; font-size: 12px; font-weight: 600; color: var(--text); border-right: 1px solid var(--border); }
+  .decision-row .dr-why { font-size: 12px; color: var(--muted); }
+
+  /* ── NEXT STEPS ── */
+  .next-steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 16px 0; }
+  .step-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 16px 16px 52px;
+    position: relative; counter-increment: steps2;
+  }
+  .step-card::before {
+    content: counter(steps2);
+    position: absolute; left: 14px; top: 18px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .next-steps { counter-reset: steps2; }
+  .step-card strong { display: block; font-size: 13px; color: var(--primary); margin-bottom: 4px; }
+  .step-card p { font-size: 12px; color: var(--muted); margin: 0; }
+
+  /* ── PERF TARGETS ── */
+  .perf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+  .perf-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px;
+    text-align: center;
+  }
+  .perf-val { font-size: 22px; font-weight: 800; color: var(--primary); }
+  .perf-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* ── FLOW STEPS ── */
+  .flow { display: flex; flex-direction: column; gap: 0; margin: 16px 0; }
+  .flow-step {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 12px 0;
+  }
+  .flow-step:not(:last-child) .flow-icon-wrap::after {
+    content: ''; display: block;
+    width: 2px; height: calc(100% + 12px);
+    background: var(--border); margin: 4px auto 0; 
+  }
+  .flow-icon-wrap { display: flex; flex-direction: column; align-items: center; width: 36px; flex-shrink: 0; }
+  .flow-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--light); border: 2px solid var(--accent);
+    color: var(--primary); font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .flow-content strong { display: block; font-size: 13px; font-weight: 700; color: var(--primary); }
+  .flow-content p { font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: var(--light); border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0; padding: 14px 18px;
+    margin: 16px 0; font-size: 13px; line-height: 1.6;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    #sidebar, #topbar { display: none; }
+    #main { margin-left: 0; }
+    .section { page-break-inside: avoid; }
+  }
+
+  /* ── SCROLLBAR ── */
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">Technical Proposal</div>
+    <h2>Multi-Brand F&B POS System</h2>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Document</div>
+    <a class="nav-item active" onclick="scrollTo('cover')">
+      <span class="num">★</span> Cover & Overview
+    </a>
+    <div class="nav-section-label">Sections</div>
+    <a class="nav-item" onclick="scrollTo('s1')"><span class="num">1</span> Executive Summary</a>
+    <a class="nav-item" onclick="scrollTo('s2')"><span class="num">2</span> System Architecture</a>
+    <a class="nav-item" onclick="scrollTo('s3')"><span class="num">3</span> System Modules</a>
+    <a class="nav-item" onclick="scrollTo('s4')"><span class="num">4</span> Database Schema</a>
+    <a class="nav-item" onclick="scrollTo('s5')"><span class="num">5</span> API Structure</a>
+    <a class="nav-item" onclick="scrollTo('s6')"><span class="num">6</span> Frontend Application</a>
+    <a class="nav-item" onclick="scrollTo('s7')"><span class="num">7</span> Roadmap & Stack</a>
+    <a class="nav-item" onclick="scrollTo('s8')"><span class="num">8</span> Security & NFRs</a>
+    <a class="nav-item" onclick="scrollTo('s9')"><span class="num">9</span> Folder Structure</a>
+    <a class="nav-item" onclick="scrollTo('s10')"><span class="num">10</span> Design Decisions</a>
+    <a class="nav-item" onclick="scrollTo('s11')"><span class="num">11</span> Next Steps</a>
+  </div>
+  <div class="sidebar-footer">
+    Version 1.1 &nbsp;·&nbsp; September 2026<br>Draft for Review
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div id="main">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="breadcrumb">POS Development &nbsp;/&nbsp; <span>Technical Proposal v1.1</span></div>
+    <div>
+      <span class="badge badge-v1">v1.1</span>
+      <span class="badge badge-draft">Draft</span>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- ── COVER ── -->
+    <div class="cover" id="cover">
+      <div class="cover-tag">System Design & Technical Proposal</div>
+      <h1>Multi-Brand F&B<br><span>Point of Sale System</span></h1>
+      <div class="cover-sub">A complete, scalable POS platform for multi-brand restaurant groups — covering orders, kitchen, inventory, recipes, purchasing, customer loyalty, and analytics in Arabic & English.</div>
+      <div class="cover-meta">
+        <div class="cover-meta-item"><label>Platform</label><span>Web App (React + Node.js)</span></div>
+        <div class="cover-meta-item"><label>Languages</label><span>Arabic (RTL) + English (LTR)</span></div>
+        <div class="cover-meta-item"><label>Version / Status</label><span>1.1 — Draft for Review (adds Loyalty Program)</span></div>
+        <div class="cover-meta-item"><label>Order Types</label><span>Dine-In · Takeaway · Delivery</span></div>
+        <div class="cover-meta-item"><label>Timeline</label><span>28–37 Weeks · 6 Phases</span></div>
+        <div class="cover-meta-item"><label>Date</label><span>September 2026</span></div>
+      </div>
+    </div>
+
+    <!-- ── S1: EXECUTIVE SUMMARY ── -->
+    <div class="section" id="s1">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <h2>Executive Summary</h2>
+      </div>
+      <p>This document presents the complete system design and technical proposal for a modern, web-based <strong>Multi-Brand Food & Beverage Point of Sale (POS)</strong> system. The platform is designed to support multiple brands operating across multiple branches, with full bilingual support in Arabic and English.</p>
+      <p>The system goes beyond a traditional POS to deliver an integrated operations platform covering the full restaurant lifecycle — from order placement and kitchen management, to inventory tracking, recipe costing, purchase management, customer loyalty, and business analytics. It is built to scale from a single outlet to a large F&B group with dozens of brands and branches.</p>
+
+      <h3>Key Capabilities</h3>
+      <div class="card-grid card-grid-3">
+        <div class="card card-accent"><div class="card-icon">🏢</div><h4>Multi-Brand & Multi-Branch</h4><p>Centralized group control with independent branch configuration, pricing, and operations.</p></div>
+        <div class="card card-accent"><div class="card-icon">🛒</div><h4>All Order Types</h4><p>Dine-in, takeaway, and delivery in a single platform. Auto-sync from Talabat, Deliveroo, Jahez.</p></div>
+        <div class="card card-accent"><div class="card-icon">🍳</div><h4>Kitchen Display (KDS)</h4><p>Real-time order routing per station. Sub-second updates via Socket.io.</p></div>
+        <div class="card card-green"><div class="card-icon">📦</div><h4>Inventory Management</h4><p>Full stock tracking, inter-branch transfers, reorder alerts, and variance reports.</p></div>
+        <div class="card card-green"><div class="card-icon">📋</div><h4>Recipe & Cost Management</h4><p>Link items to ingredients with yield factors. Real-time food cost per portion.</p></div>
+        <div class="card card-green"><div class="card-icon">🛒</div><h4>Purchase Management</h4><p>Suppliers, purchase orders, goods received notes, and auto stock updates.</p></div>
+        <div class="card card-orange"><div class="card-icon">🌐</div><h4>Arabic & English (RTL/LTR)</h4><p>Fully bilingual UI, switchable per user. All content stored bilingually in the database.</p></div>
+        <div class="card card-orange"><div class="card-icon">📊</div><h4>Reports & Analytics</h4><p>Sales, food cost, stock variance, staff performance — per brand, branch, or group.</p></div>
+        <div class="card card-orange"><div class="card-icon">🔐</div><h4>Role-Based Access</h4><p>Group Admin, Brand Manager, Branch Manager, Cashier, Kitchen, Purchaser, Marketing roles.</p></div>
+        <div class="card card-accent"><div class="card-icon">⭐</div><h4>Customer Loyalty Program</h4><p>Points on every visit, Bronze/Silver/Gold tiers, and points redeemable as payment across all brands. Members identified by mobile number.</p></div>
+      </div>
+    </div>
+
+    <!-- ── S2: ARCHITECTURE ── -->
+    <div class="section" id="s2">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <h2>System Architecture</h2>
+      </div>
+
+      <h3>Architecture Layers</h3>
+      <div class="arch-diagram">
+        <div class="arch-layer">
+          <div class="arch-label">Frontend</div>
+          <div class="arch-items">
+            <span class="arch-chip">React 18 + TypeScript</span>
+            <span class="arch-chip">Vite</span>
+            <span class="arch-chip">Tailwind CSS (RTL)</span>
+            <span class="arch-chip">Zustand</span>
+            <span class="arch-chip">TanStack Query</span>
+            <span class="arch-chip">Socket.io Client</span>
+            <span class="arch-chip">i18next (AR/EN)</span>
+          </div>
+        </div>
+        <div class="arch-layer">
+          <div class="arch-label">API Layer</div>
+          <div class="arch-items">
+            <span class="arch-chip">Node.js v20 LTS</span>
+            <span class="arch-chip">Express.js + TypeScript</span>
+            <span class="arch-chip">JWT Auth</span>
+            <span class="arch-chip">Socket.io Server</span>
+            <span class="arch-chip">Prisma ORM</span>
+          </div>
+        </div>
+        <div class="arch-layer">
+          <div class="arch-label">Data Layer</div>
+          <div class="arch-items">
+            <span class="arch-chip">PostgreSQL 16</span>
+            <span class="arch-chip">Redis 7</span>
+            <span class="arch-chip">AWS S3 / MinIO</span>
+          </div>
+        </div>
+        <div class="arch-layer">
+          <div class="arch-label">Integrations</div>
+          <div class="arch-items">
+            <span class="arch-chip">Talabat API</span>
+            <span class="arch-chip">Deliveroo API</span>
+            <span class="arch-chip">Jahez API</span>
+            <span class="arch-chip">ESC/POS Print Bridge</span>
+            <span class="arch-chip">SendGrid / Nodemailer</span>
+            <span class="arch-chip">SMS Gateway (Loyalty OTP)</span>
+          </div>
+        </div>
+        <div class="arch-layer">
+          <div class="arch-label">DevOps</div>
+          <div class="arch-items">
+            <span class="arch-chip">Docker + Compose</span>
+            <span class="arch-chip">GitHub Actions CI/CD</span>
+            <span class="arch-chip">Sentry</span>
+            <span class="arch-chip">Grafana</span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Multi-Tenancy Model</h3>
+      <p>Shared database with <strong>row-level tenant isolation</strong>. Each Brand is the top-level tenant; Branches belong to a Brand. All operational tables carry <code>brand_id</code> and <code>branch_id</code>, enforced at the API middleware level.</p>
+      <div class="kv-grid">
+        <div class="kv-item"><div class="kv-key">Tenant Level</div><div class="kv-val">Brand (e.g., "Pizza Palace", "Burger Hub")</div></div>
+        <div class="kv-item"><div class="kv-key">Operational Level</div><div class="kv-val">Branch (e.g., "Pizza Palace — Mall Branch")</div></div>
+        <div class="kv-item"><div class="kv-key">Data Isolation</div><div class="kv-val">Row-level via brand_id + branch_id on all tables</div></div>
+        <div class="kv-item"><div class="kv-key">Cross-Brand Access</div><div class="kv-val">Group Admin role only, scoped by JWT claims</div></div>
+        <div class="kv-item"><div class="kv-key">Branch Config</div><div class="kv-val">Independent menu pricing, operating hours, and printer settings per branch</div></div>
+      </div>
+
+      <h3>Bilingual Architecture (AR / EN)</h3>
+      <div class="info-box">All UI strings use <strong>i18next</strong>. Database content stores translations inline as JSONB: <code>name: { "en": "Grilled Chicken", "ar": "دجاج مشوي" }</code>. The frontend applies <code>dir="rtl"</code> or <code>dir="ltr"</code> based on user preference. Tailwind RTL plugin handles automatic layout mirroring.</div>
+    </div>
+
+    <!-- ── S3: MODULES ── -->
+    <div class="section" id="s3">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <h2>System Modules</h2>
+      </div>
+      <div class="module-grid">
+        <div class="module-card"><div class="mod-num">MODULE 01</div><div class="mod-name">Brand & Branch Management</div><div class="mod-desc">Create brands and branches, configure operating hours, printers, and branch-level overrides.</div><div class="mod-tags"><span class="mod-tag">Brands</span><span class="mod-tag">Branches</span><span class="mod-tag">Settings</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 02</div><div class="mod-name">User & Access Control</div><div class="mod-desc">Staff accounts, role-based permissions, PIN login for cashiers, full audit logs.</div><div class="mod-tags"><span class="mod-tag">Users</span><span class="mod-tag">Roles</span><span class="mod-tag">Audit</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 03</div><div class="mod-name">Menu Management</div><div class="mod-desc">Bilingual menus, modifiers/variants, branch pricing, availability scheduling.</div><div class="mod-tags"><span class="mod-tag">Categories</span><span class="mod-tag">Items</span><span class="mod-tag">Modifiers</span><span class="mod-tag">Combos</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 04</div><div class="mod-name">Order Management</div><div class="mod-desc">Dine-in, takeaway, and delivery orders. Split bills, voids, order status lifecycle.</div><div class="mod-tags"><span class="mod-tag">Dine-In</span><span class="mod-tag">Takeaway</span><span class="mod-tag">Delivery</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 05</div><div class="mod-name">Kitchen Display (KDS)</div><div class="mod-desc">Real-time order display per station, bump/recall, priority flags, course management.</div><div class="mod-tags"><span class="mod-tag">KDS Screen</span><span class="mod-tag">Routing</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 06</div><div class="mod-name">Payment Processing</div><div class="mod-desc">Cash, card, wallet, voucher — including split payment and daily cash reconciliation.</div><div class="mod-tags"><span class="mod-tag">Cash</span><span class="mod-tag">Card</span><span class="mod-tag">Split</span><span class="mod-tag">Refunds</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 07</div><div class="mod-name">Delivery Management</div><div class="mod-desc">Delivery zone mapping, 3rd-party platform sync, driver assignment and status tracking.</div><div class="mod-tags"><span class="mod-tag">Zones</span><span class="mod-tag">Integrations</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 08</div><div class="mod-name">Table Management</div><div class="mod-desc">Visual floor plan editor, table assignment, merge/split tables, occupancy status.</div><div class="mod-tags"><span class="mod-tag">Floor Plan</span><span class="mod-tag">Reservations</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 09</div><div class="mod-name">Inventory Management</div><div class="mod-desc">Stock tracking per branch, movements log, inter-branch transfers, reorder alerts, variance reports.</div><div class="mod-tags"><span class="mod-tag">Stock</span><span class="mod-tag">Transfers</span><span class="mod-tag">Alerts</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 10</div><div class="mod-name">Recipe Management</div><div class="mod-desc">Link menu items to ingredients. Sub-recipes, yield factors, real-time cost per portion.</div><div class="mod-tags"><span class="mod-tag">Recipes</span><span class="mod-tag">Costing</span><span class="mod-tag">Yield</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 11</div><div class="mod-name">Purchase Management</div><div class="mod-desc">Supplier directory, purchase orders, goods received notes, auto stock and cost updates.</div><div class="mod-tags"><span class="mod-tag">Suppliers</span><span class="mod-tag">PO</span><span class="mod-tag">GRN</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 12</div><div class="mod-name">Shift Management</div><div class="mod-desc">Open/close register, cash float entry, end-of-shift report, discrepancy tracking.</div><div class="mod-tags"><span class="mod-tag">Shifts</span><span class="mod-tag">Float</span><span class="mod-tag">Reconciliation</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 13</div><div class="mod-name">Reporting & Analytics</div><div class="mod-desc">Revenue, item performance, food cost %, stock consumption vs. actual, staff reports.</div><div class="mod-tags"><span class="mod-tag">Sales</span><span class="mod-tag">Food Cost</span><span class="mod-tag">Variance</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 14</div><div class="mod-name">Promotions & Discounts</div><div class="mod-desc">Discount rules, voucher codes, time-based and combo promotions, scoped per brand/branch.</div><div class="mod-tags"><span class="mod-tag">Vouchers</span><span class="mod-tag">Happy Hour</span><span class="mod-tag">Combos</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 15</div><div class="mod-name">Notifications & Alerts</div><div class="mod-desc">Low-stock alerts, printer errors, order delays, daily summary email reports.</div><div class="mod-tags"><span class="mod-tag">Stock Alerts</span><span class="mod-tag">System</span></div></div>
+        <div class="module-card"><div class="mod-num">MODULE 16</div><div class="mod-name">Customer Loyalty & CRM</div><div class="mod-desc">Member profiles by mobile number, points earning and redemption, tiers, point expiry, birthday rewards, and loyalty campaigns.</div><div class="mod-tags"><span class="mod-tag">Members</span><span class="mod-tag">Points</span><span class="mod-tag">Tiers</span><span class="mod-tag">Rewards</span></div></div>
+      </div>
+
+      <h3>Loyalty Program</h3>
+      <p>The loyalty program rewards repeat customers across every brand in the group. Customers join at the POS with their mobile number — no app or card is needed. Points are held in a <strong>group-wide wallet</strong> by default, so a guest can earn at one brand and redeem at another; each brand can instead be set to run its own separate program. All values below are defaults and can be changed from the Management Console without code changes.</p>
+      <div class="kv-grid">
+        <div class="kv-item"><div class="kv-key">Member ID</div><div class="kv-val">Mobile number (unique); optional name, email, birthday, and marketing consent</div></div>
+        <div class="kv-item"><div class="kv-key">Scope</div><div class="kv-val">Group-wide points wallet (default) or brand-only, configurable per brand</div></div>
+        <div class="kv-item"><div class="kv-key">Earn Rate</div><div class="kv-val">1 point per SAR 1 paid, after discounts, multiplied by the member's tier. Not earned on the part paid with points</div></div>
+        <div class="kv-item"><div class="kv-key">Redemption Value</div><div class="kv-val">100 points = SAR 5, used as a payment tender at checkout</div></div>
+        <div class="kv-item"><div class="kv-key">Redemption Limits</div><div class="kv-val">Minimum 500 points; up to 50% of the bill; one-time SMS code (OTP) required</div></div>
+        <div class="kv-item"><div class="kv-key">Point Expiry</div><div class="kv-val">12 months after the points were earned (oldest points used first)</div></div>
+        <div class="kv-item"><div class="kv-key">Bonuses</div><div class="kv-val">Sign-up bonus (50 pts), birthday reward, and double-points campaigns via the Promotions engine</div></div>
+        <div class="kv-item"><div class="kv-key">Delivery Platforms</div><div class="kv-val">Talabat / Deliveroo / Jahez orders do not earn by default (the platform owns the customer); direct delivery orders do</div></div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tier</th><th>Qualifying Points (rolling 12 months)</th><th>Earn Multiplier</th><th>Example Benefits</th></tr></thead>
+          <tbody>
+            <tr><td class="bold">🥉 Bronze</td><td>0 – 1,999</td><td>1.0×</td><td>Sign-up bonus, birthday reward</td></tr>
+            <tr><td class="bold">🥈 Silver</td><td>2,000 – 4,999</td><td>1.25×</td><td>All Bronze benefits + member-only offers</td></tr>
+            <tr><td class="bold">🥇 Gold</td><td>5,000+</td><td>1.5×</td><td>All Silver benefits + priority reservations, free item on birthday</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Loyalty Flow at the POS</h3>
+      <div class="flow">
+        <div class="flow-step"><div class="flow-icon-wrap"><div class="flow-icon">1</div></div><div class="flow-content"><strong>Identify Member</strong><p>Cashier enters the customer's mobile number. The member's name, tier, and points balance appear on the order. New customers are enrolled in one step.</p></div></div>
+        <div class="flow-step"><div class="flow-icon-wrap"><div class="flow-icon">2</div></div><div class="flow-content"><strong>Build the Order</strong><p>Items, modifiers, and discounts are added as normal. The cart shows the points the customer will earn.</p></div></div>
+        <div class="flow-step"><div class="flow-icon-wrap"><div class="flow-icon">3</div></div><div class="flow-content"><strong>Redeem (Optional)</strong><p>At payment, points are applied as a tender. An OTP is sent to the member's mobile and entered by the cashier to confirm.</p></div></div>
+        <div class="flow-step"><div class="flow-icon-wrap"><div class="flow-icon">4</div></div><div class="flow-content"><strong>Earn & Receipt</strong><p>When the order is settled, points are posted to the member's account. The receipt shows points earned, points redeemed, and the new balance.</p></div></div>
+        <div class="flow-step"><div class="flow-icon-wrap"><div class="flow-icon">5</div></div><div class="flow-content"><strong>Voids & Refunds</strong><p>Refunding or voiding a settled order automatically reverses the points earned and returns any points redeemed.</p></div></div>
+      </div>
+
+      <h3>Order Flow by Type</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Order Type</th><th>Flow</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="bold">Dine-In</td><td>Select Table → Add Items → Send to KDS → Settle Bill</td><td>Multi-course support, table merge/split, hold & fire</td></tr>
+            <tr><td class="bold">Takeaway</td><td>Create Order → Add Items → Payment → Print Receipt</td><td>Queue number printing, estimated ready time display</td></tr>
+            <tr><td class="bold">Delivery</td><td>Order In (POS or Platform) → KDS → Dispatch</td><td>Manual entry or auto-sync from Talabat/Deliveroo/Jahez</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Purchase Cycle</h3>
+      <div class="flow">
+        <div class="flow-step"><div class="flow-icon-wrap"><div class="flow-icon">1</div></div><div class="flow-content"><strong>Supplier Setup</strong><p>Register supplier with contacts, payment terms, and linked stock items.</p></div></div>
+        <div class="flow-step"><div class="flow-icon-wrap"><div class="flow-icon">2</div></div><div class="flow-content"><strong>Purchase Request</strong><p>Branch manager raises a request from reorder alerts or ad-hoc need.</p></div></div>
+        <div class="flow-step"><div class="flow-icon-wrap"><div class="flow-icon">3</div></div><div class="flow-content"><strong>Purchase Order</strong><p>HQ approves and converts to a formal PO sent to the supplier.</p></div></div>
+        <div class="flow-step"><div class="flow-icon-wrap"><div class="flow-icon">4</div></div><div class="flow-content"><strong>Goods Receipt (GRN)</strong><p>Branch records received quantities and notes any variances against the PO.</p></div></div>
+        <div class="flow-step"><div class="flow-icon-wrap"><div class="flow-icon">5</div></div><div class="flow-content"><strong>Auto Stock Update</strong><p>System updates branch stock levels and records the new weighted average cost.</p></div></div>
+        <div class="flow-step"><div class="flow-icon-wrap"><div class="flow-icon">6</div></div><div class="flow-content"><strong>Invoice Matching</strong><p>Match supplier invoice to GRN for accounts payable reconciliation.</p></div></div>
+      </div>
+    </div>
+
+    <!-- ── S4: DATABASE SCHEMA ── -->
+    <div class="section" id="s4">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <h2>Database Schema Design</h2>
+      </div>
+      <p>The schema is built around the <strong>Brand → Branch</strong> hierarchy. Menu entities are defined at brand level and overridden at branch level. All transactional tables carry <code>brand_id</code> and <code>branch_id</code> for row-level isolation.</p>
+
+      <h3>Organization & Access</h3>
+      <div class="schema-grid">
+        <div class="schema-box">
+          <div class="schema-box-header"><span class="table-icon">🗂</span> brands</div>
+          <div class="schema-box-body">
+            <div class="schema-field"><div class="sf-name sf-pk">id</div><div class="sf-type">uuid PK</div></div>
+            <div class="schema-field"><div class="sf-name">name</div><div class="sf-type">varchar</div></div>
+            <div class="schema-field"><div class="sf-name">logo_url</div><div class="sf-type">text</div></div>
+            <div class="schema-field"><div class="sf-name">settings</div><div class="sf-type">jsonb</div></div>
+            <div class="schema-field"><div class="sf-name">created_at</div><div class="sf-type">timestamptz</div></div>
+          </div>
+        </div>
+        <div class="schema-box">
+          <div class="schema-box-header"><span class="table-icon">🏪</span> branches</div>
+          <div class="schema-box-body">
+            <div class="schema-field"><div class="sf-name sf-pk">id</div><div class="sf-type">uuid PK</div></div>
+            <div class="schema-field"><div class="sf-name sf-fk">brand_id</div><div class="sf-type">uuid FK → brands</div></div>
+            <div class="schema-field"><div class="sf-name">name</div><div class="sf-type">varchar</div></div>
+            <div class="schema-field"><div class="sf-name">address</div><div class="sf-type">text</div></div>
+            <div class="schema-field"><div class="sf-name">timezone</div><div class="sf-type">varchar</div></div>
+            <div class="schema-field"><div class="sf-name">config</div><div class="sf-type">jsonb</div></div>
+          </div>
+        </div>
+        <div class="schema-box">
+          <div class="schema-box-header"><span class="table-icon">👤</span> users</div>
+          <div class="schema-box-body">
+            <div class="schema-field"><div class="sf-name sf-pk">id</div><div class="sf-type">uuid PK</div></div>
+            <div class="schema-field"><div class="sf-name">name</div><div class="sf-type">varchar</div></div>
+            <div class="schema-field"><div class="sf-name">email</div><div class="sf-type">varchar unique</div></div>
+            <div class="schema-field"><div class="sf-name">password_hash</div><div class="sf-type">text</div></div>
+            <div class="schema-field"><div class="sf-name">pin_hash</div><div class="sf-type">text</div></div>
+          </div>
+        </div>
+        <div class="schema-box">
+          <div class="schema-box-header"><span class="table-icon">🔑</span> roles</div>
+          <div class="schema-box-body">
+            <div class="schema-field"><div class="sf-name sf-pk">id</div><div class="sf-type">uuid PK</div></div>
+            <div class="schema-field"><div class="sf-name">name</div><div class="sf-type">varchar</div></div>
+            <div class="schema-field"><div class="sf-name">permissions</div><div class="sf-type">jsonb</div></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Menu & Pricing</h3>
+      <div class="schema-grid">
+        <div class="schema-box">
+          <div class="schema-box-header"><span class="table-icon">📂</span> menu_categories</div>
+          <div class="schema-box-body">
+            <div class="schema-field"><div class="sf-name sf-pk">id</div><div class="sf-type">uuid PK</div></div>
+            <div class="schema-field"><div class="sf-name sf-fk">brand_id</div><div class="sf-type">uuid FK</div></div>
+            <div class="schema-field"><div class="sf-name">name</div><div class="sf-type">jsonb (AR/EN)</div></div>
+            <div class="schema-field"><div class="sf-name">sort_order</div><div class="sf-type">integer</div></div>
+          </div>
+        </div>
+        <div class="schema-box">
+          <div class="schema-box-header"><span class="table-icon">🍔</span> menu_items</div>
+          <div class="schema-box-body">
+            <div class="schema-field"><div class="sf-name sf-pk">id</div><div class="sf-type">uuid PK</div></div>
+            <div class="schema-field"><div class="sf-name sf-fk">brand_id</div><div class="sf-type">uuid FK</div></div>
+            <div class="schema-field"><div class="sf-name sf-fk">category_id</div><div class="sf-type">uuid FK</div></div>
+            <div class="schema-field"><div class="sf-name">name</div><div class="sf-type">jsonb (AR/EN)</div></div>
+            <div class="schema-field"><div class="sf-name">base_price</div><div class="sf-type">numeric(10,3)</div></div>
+            <div class="schema-field"><div class="sf-name">image_url</div><div class="sf-type">text</div></div>
+          </div>
+        </div>
+        <div class="schema-box">
+          <div class="schema-box-header"><span class="table-icon">🏪</span> branch_menu_items</div>
+          <div class="schema-box-body">
+            <div class="schema-field"><div class="sf-name sf-fk">branch_id</div><div class="sf-type">uuid FK</div></div>
+            <div class="schema-field"><div class="sf-name sf-fk">item_id</div><div class="sf-type">uuid FK</div></div>
+            <div class="schema-field"><div class="sf-name">price_override</div><div class="sf-type">numeric(10,3)</div></div>
+            <div class="schema-field"><div class="sf-name">is_available</div><div class="sf-type">boolean</div></div>
+          </div>
+        </div>
+        <div class="schema-box">
+          <div class="schema-box-header"><span class="table-icon">⚙️</span> modifier_groups</div>
+          <div class="schema-box-body">
+            <div class="schema-field"><div class="sf-name sf-pk">id</div><div class="sf-type">uuid PK</div></div>
+            <div class="schema-field"><div class="sf-name sf-fk">item_id</div><div class="sf-type">uuid FK</div></div>
+            <div class="schema-field"><div class="sf-name">name</div><div class="sf-type">jsonb (AR/EN)</div></div>
+            <div class="schema-field"><div class="sf-name">min_select</div><div class="sf-type">integer</div></div>
+            <div class="schema-field"><div class="sf-name">max_select</div><div class="sf-type">integer</div></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Orders & Payments</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Table</th><th>Key Columns</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="bold">orders</td><td class="mono">id, branch_id, type, status, table_id, customer_id, source, delivery_info</td><td>type: dine_in | takeaway | delivery. source: pos | talabat | deliveroo | jahez. customer_id is optional (loyalty member)</td></tr>
+            <tr><td class="bold">order_items</td><td class="mono">id, order_id, item_id, qty, unit_price, notes, status</td><td>Price snapshotted at order time. status: pending | sent | ready | served</td></tr>
+            <tr><td class="bold">order_item_modifiers</td><td class="mono">order_item_id, modifier_id, name_snapshot, price_snapshot</td><td>Modifier selections; name and price snapshotted at order time</td></tr>
+            <tr><td class="bold">payments</td><td class="mono">id, order_id, method, amount, reference, created_by</td><td>method: cash | card | wallet | voucher | loyalty_points. Multiple rows for split payment</td></tr>
+            <tr><td class="bold">voids</td><td class="mono">id, order_item_id, reason, voided_by, approved_by</td><td>All voids tracked with manager approval reference</td></tr>
+            <tr><td class="bold">discounts</td><td class="mono">id, order_id, type, value, promo_id, approved_by</td><td>type: percent | fixed | promo_code</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Inventory, Recipes & Purchasing</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Table</th><th>Key Columns</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="bold">stock_items</td><td class="mono">id, brand_id, name (JSONB), unit, category, sku</td><td>Master ingredient/packaging catalog at brand level</td></tr>
+            <tr><td class="bold">branch_stock</td><td class="mono">branch_id, item_id, qty_on_hand, reorder_level, unit_cost</td><td>Current qty per branch. Alert fires when below reorder_level</td></tr>
+            <tr><td class="bold">stock_movements</td><td class="mono">id, branch_id, item_id, type, qty, ref_id, ref_type</td><td>type: purchase | sale | wastage | transfer_in | transfer_out | adjustment</td></tr>
+            <tr><td class="bold">recipes</td><td class="mono">id, menu_item_id, yield_qty, yield_unit, notes</td><td>One recipe per item; can reference sub-recipes</td></tr>
+            <tr><td class="bold">recipe_ingredients</td><td class="mono">recipe_id, stock_item_id, qty, unit, yield_factor</td><td>Ingredient with quantity, UOM, and cooking yield loss factor</td></tr>
+            <tr><td class="bold">suppliers</td><td class="mono">id, brand_id, name, contact_info (JSONB), payment_terms</td><td>Supplier directory at brand level</td></tr>
+            <tr><td class="bold">purchase_orders</td><td class="mono">id, branch_id, supplier_id, status, total_amount</td><td>status: draft | sent | partial | received | closed</td></tr>
+            <tr><td class="bold">po_items</td><td class="mono">po_id, stock_item_id, qty_ordered, unit_cost</td><td>Line items on each PO</td></tr>
+            <tr><td class="bold">grn</td><td class="mono">id, po_id, branch_id, received_at, received_by</td><td>Goods Received Note header</td></tr>
+            <tr><td class="bold">grn_items</td><td class="mono">grn_id, po_item_id, qty_received, unit_cost, variance_note</td><td>Actual received qty; updates branch_stock on confirmation</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Customers & Loyalty</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Table</th><th>Key Columns</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="bold">customers</td><td class="mono">id, phone, name, email, birth_date, preferred_lang, marketing_opt_in, created_at</td><td>phone is unique (E.164 format). PII fields encrypted at rest</td></tr>
+            <tr><td class="bold">loyalty_programs</td><td class="mono">id, scope, brand_id, earn_rate, points_per_currency, min_redeem, max_redeem_pct, expiry_months</td><td>scope: group | brand. brand_id set only for brand-only programs</td></tr>
+            <tr><td class="bold">loyalty_tiers</td><td class="mono">id, program_id, name (JSONB), min_points, earn_multiplier, benefits (JSONB)</td><td>Bilingual tier names; qualifying points over a rolling 12 months</td></tr>
+            <tr><td class="bold">loyalty_accounts</td><td class="mono">id, customer_id, program_id, points_balance, qualifying_points, tier_id</td><td>One account per customer per program. Balance is a cached total of the ledger</td></tr>
+            <tr><td class="bold">loyalty_transactions</td><td class="mono">id, account_id, order_id, branch_id, type, points, value, expires_at, created_by</td><td>Append-only ledger. type: earn | redeem | bonus | expire | reverse | adjust</td></tr>
+            <tr><td class="bold">loyalty_otps</td><td class="mono">id, account_id, order_id, code_hash, expires_at, attempts</td><td>Redemption codes; valid 5 minutes, max 3 attempts</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── S5: API ── -->
+    <div class="section" id="s5">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <h2>API Structure</h2>
+      </div>
+
+      <h3>Design Principles</h3>
+      <div class="kv-grid">
+        <div class="kv-item"><div class="kv-key">Base URL</div><div class="kv-val">/api/v1/ — versioned from day one</div></div>
+        <div class="kv-item"><div class="kv-key">Authentication</div><div class="kv-val">JWT Bearer token; 15-min access + 7-day refresh with rotation</div></div>
+        <div class="kv-item"><div class="kv-key">Scoping</div><div class="kv-val">brand_id and branch_id enforced via JWT claims — no cross-tenant leakage</div></div>
+        <div class="kv-item"><div class="kv-key">Pagination</div><div class="kv-val">Cursor-based on all list endpoints</div></div>
+        <div class="kv-item"><div class="kv-key">Error Format</div><div class="kv-val">{ error: { code, message, details } } — consistent across all endpoints</div></div>
+        <div class="kv-item"><div class="kv-key">Rate Limiting</div><div class="kv-val">1,000 req/min per token; stricter limits on auth endpoints</div></div>
+      </div>
+
+      <h3>Core Endpoints</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/auth/login</td><td>Login with email+password or cashier PIN</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/auth/refresh</td><td>Refresh JWT access token</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/brands</td><td>List all brands (group admin only)</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/brands/:id/branches</td><td>List branches for a brand</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/menu/categories</td><td>List categories with bilingual names</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/menu/items</td><td>Create menu item with AR+EN translations</td></tr>
+            <tr><td><span class="method method-PUT">PUT</span></td><td class="mono">/menu/items/:id/branch-override</td><td>Set branch price or toggle availability</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/orders</td><td>Create a new order</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/orders/:id</td><td>Get order with items and modifiers</td></tr>
+            <tr><td><span class="method method-PATCH">PATCH</span></td><td class="mono">/orders/:id/status</td><td>Update order status (e.g., sent, ready, closed)</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/orders/:id/payment</td><td>Process payment; supports split tenders</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/orders/:id/void-item</td><td>Void order item (requires manager approval)</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/inventory/stock</td><td>Current stock levels for the branch</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/inventory/adjustments</td><td>Manual stock adjustment with reason code</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/inventory/transfers</td><td>Initiate inter-branch stock transfer</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/inventory/movements</td><td>Full audit log of stock movements</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/recipes</td><td>Create or update item recipe</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/recipes/:itemId/cost</td><td>Calculate current cost per portion</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/purchases/orders</td><td>Create purchase order</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/purchases/grn</td><td>Record goods received; auto-updates stock</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/reports/sales</td><td>Sales summary by date, item, or category</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/reports/food-cost</td><td>Theoretical vs. actual food cost report</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/reports/stock-variance</td><td>Stock variance report by period</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/customers?phone=</td><td>Look up a loyalty member by mobile number</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/customers</td><td>Enroll a new loyalty member (applies sign-up bonus)</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/customers/:id/loyalty</td><td>Points balance, tier, and transaction history</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/loyalty/otp</td><td>Send a redemption OTP to the member's mobile</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/orders/:id/loyalty/redeem</td><td>Apply points as a payment tender (OTP required)</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/loyalty/adjustments</td><td>Manual points adjustment (manager approval, audit-logged)</td></tr>
+            <tr><td><span class="method method-PUT">PUT</span></td><td class="mono">/loyalty/program</td><td>Update earn/redeem rules, tiers, and expiry settings</td></tr>
+            <tr><td><span class="method method-GET">GET</span></td><td class="mono">/reports/loyalty</td><td>Members, points issued/redeemed, outstanding points liability</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/integrations/orders/ingest</td><td>Webhook: receive order from delivery platform</td></tr>
+            <tr><td><span class="method method-POST">POST</span></td><td class="mono">/integrations/menu/push</td><td>Push menu updates to delivery platforms</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── S6: FRONTEND ── -->
+    <div class="section" id="s6">
+      <div class="section-header">
+        <div class="section-num">6</div>
+        <h2>Frontend Application</h2>
+      </div>
+
+      <h3>Interface Contexts</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Interface</th><th>Route</th><th>Primary Users</th></tr></thead>
+          <tbody>
+            <tr><td class="bold">POS Terminal</td><td class="mono">/pos</td><td>Cashiers — order taking, payment, receipt printing</td></tr>
+            <tr><td class="bold">Kitchen Display (KDS)</td><td class="mono">/kds</td><td>Kitchen staff — live ticket management per station</td></tr>
+            <tr><td class="bold">Table Management</td><td class="mono">/tables</td><td>Floor staff — occupancy, assignment, floor plan view</td></tr>
+            <tr><td class="bold">Management Console</td><td class="mono">/admin</td><td>Brand/branch managers — menu, staff, reports, inventory, purchasing</td></tr>
+            <tr><td class="bold">Loyalty & Customers</td><td class="mono">/admin/loyalty</td><td>Marketing and brand managers — program rules, tiers, member lookup, campaigns</td></tr>
+            <tr><td class="bold">Group Dashboard</td><td class="mono">/group</td><td>Group owners — cross-brand analytics and global config</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Technology Choices</h3>
+      <div class="kv-grid">
+        <div class="kv-item"><div class="kv-key">UI Framework</div><div class="kv-val">React 18 + TypeScript 5</div></div>
+        <div class="kv-item"><div class="kv-key">Build Tool</div><div class="kv-val">Vite v5 — fast HMR and optimized production builds</div></div>
+        <div class="kv-item"><div class="kv-key">Styling</div><div class="kv-val">Tailwind CSS v3 + tailwindcss-rtl plugin for Arabic layout</div></div>
+        <div class="kv-item"><div class="kv-key">Client State</div><div class="kv-val">Zustand — lightweight, ideal for POS cart and session state</div></div>
+        <div class="kv-item"><div class="kv-key">Server State</div><div class="kv-val">TanStack Query (React Query) — caching, refetching, mutations</div></div>
+        <div class="kv-item"><div class="kv-key">Routing</div><div class="kv-val">React Router v6</div></div>
+        <div class="kv-item"><div class="kv-key">Forms</div><div class="kv-val">React Hook Form + Zod for schema validation</div></div>
+        <div class="kv-item"><div class="kv-key">Internationalization</div><div class="kv-val">i18next + react-i18next with AR and EN locale JSON files</div></div>
+        <div class="kv-item"><div class="kv-key">Real-time</div><div class="kv-val">Socket.io client — KDS order updates, stock alerts</div></div>
+        <div class="kv-item"><div class="kv-key">Charts</div><div class="kv-val">Recharts — sales dashboards and analytics</div></div>
+        <div class="kv-item"><div class="kv-key">Component Library</div><div class="kv-val">shadcn/ui + Radix UI primitives (accessible, unstyled base)</div></div>
+      </div>
+
+      <h3>POS Terminal Workflow</h3>
+      <ol class="num-list">
+        <li>Cashier authenticates via PIN pad on the terminal</li>
+        <li>Select order type: Dine-In, Takeaway, or Delivery</li>
+        <li>For Dine-In: select table from the interactive floor plan</li>
+        <li>Optionally attach a loyalty member by mobile number — tier and points balance shown on the order</li>
+        <li>Browse menu by category; search by item name in Arabic or English</li>
+        <li>Add items, select required/optional modifiers, add per-item notes</li>
+        <li>Send to Kitchen at any point — items routed to the correct KDS station</li>
+        <li>Process payment — select one or multiple tender types for split payment, including loyalty points (OTP-verified)</li>
+        <li>Print receipt to thermal printer and/or send a digital receipt (shows points earned and new balance)</li>
+        <li>Order closed; ingredient deductions trigger automatically from stock and loyalty points are posted to the member</li>
+      </ol>
+    </div>
+
+    <!-- ── S7: ROADMAP ── -->
+    <div class="section" id="s7">
+      <div class="section-header">
+        <div class="section-num">7</div>
+        <h2>Implementation Roadmap & Tech Stack</h2>
+      </div>
+
+      <p>Estimated total timeline: <strong>28–37 weeks</strong> across 6 phases, depending on scope confirmations and client feedback cycles.</p>
+
+      <div class="phase-list" style="margin-top:20px;">
+        <div class="phase">
+          <div class="phase-num">1</div>
+          <div class="phase-dur">6–8 Weeks</div>
+          <div class="phase-body"><strong>Foundation & Menu Management</strong><p>Monorepo setup, DB schema, auth system, brand/branch/user management, bilingual menu management (CRUD)</p></div>
+          <div class="phase-milestone"><label>Milestone</label><span>Admin configures brands, branches & menus in AR+EN</span></div>
+        </div>
+        <div class="phase">
+          <div class="phase-num">2</div>
+          <div class="phase-dur">6–8 Weeks</div>
+          <div class="phase-body"><strong>POS & Kitchen</strong><p>POS terminal UI, order management (dine-in + takeaway), payment processing, receipt printing, KDS</p></div>
+          <div class="phase-milestone"><label>Milestone</label><span>Cashier takes orders; kitchen sees live tickets</span></div>
+        </div>
+        <div class="phase">
+          <div class="phase-num">3</div>
+          <div class="phase-dur">4–6 Weeks</div>
+          <div class="phase-body"><strong>Inventory & Recipes</strong><p>Inventory management, recipe builder, automatic stock deduction on sales, transfers, alerts</p></div>
+          <div class="phase-milestone"><label>Milestone</label><span>Sales auto-reduce stock; low-stock alerts fire live</span></div>
+        </div>
+        <div class="phase">
+          <div class="phase-num">4</div>
+          <div class="phase-dur">4–5 Weeks</div>
+          <div class="phase-body"><strong>Purchasing & Delivery</strong><p>Purchase management (suppliers, POs, GRN), delivery order type, delivery platform integration layer</p></div>
+          <div class="phase-milestone"><label>Milestone</label><span>Full procurement live; delivery orders sync from platforms</span></div>
+        </div>
+        <div class="phase">
+          <div class="phase-num">5</div>
+          <div class="phase-dur">5–6 Weeks</div>
+          <div class="phase-body"><strong>Reporting, Promotions & Loyalty</strong><p>Reporting & analytics, promotions engine, customer loyalty program (members, points, tiers, OTP redemption), shift management, table floor plan editor, group dashboard</p></div>
+          <div class="phase-milestone"><label>Milestone</label><span>Full business visibility; promotions and loyalty live at the POS</span></div>
+        </div>
+        <div class="phase">
+          <div class="phase-num">6</div>
+          <div class="phase-dur">3–4 Weeks</div>
+          <div class="phase-body"><strong>QA, UAT & Launch</strong><p>QA, UAT, performance optimization, CI/CD pipeline, deployment, staff training, documentation</p></div>
+          <div class="phase-milestone"><label>Milestone</label><span>Production launch across all brands & branches</span></div>
+        </div>
+      </div>
+
+      <h3>Full Technology Stack</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>Technology</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="bold">Frontend Framework</td><td>React 18 + TypeScript 5</td><td>Component-based UI</td></tr>
+            <tr><td class="bold">Build Tool</td><td>Vite v5</td><td>Fast dev + optimized builds</td></tr>
+            <tr><td class="bold">CSS</td><td>Tailwind CSS v3 + RTL plugin</td><td>Bilingual layout support</td></tr>
+            <tr><td class="bold">Client State</td><td>Zustand</td><td>POS cart and session state</td></tr>
+            <tr><td class="bold">Server State</td><td>TanStack Query</td><td>API cache + mutations</td></tr>
+            <tr><td class="bold">Backend Runtime</td><td>Node.js v20 LTS</td><td>Stable, long-term support</td></tr>
+            <tr><td class="bold">Backend Framework</td><td>Express.js + TypeScript</td><td>REST API</td></tr>
+            <tr><td class="bold">ORM</td><td>Prisma v5</td><td>PostgreSQL adapter with migrations</td></tr>
+            <tr><td class="bold">Database</td><td>PostgreSQL 16</td><td>Primary data store</td></tr>
+            <tr><td class="bold">Cache / PubSub</td><td>Redis 7</td><td>Session cache + real-time pub/sub</td></tr>
+            <tr><td class="bold">Real-time</td><td>Socket.io v4</td><td>KDS order push</td></tr>
+            <tr><td class="bold">Authentication</td><td>JWT + bcrypt</td><td>Access + refresh token pattern</td></tr>
+            <tr><td class="bold">File Storage</td><td>AWS S3 / MinIO</td><td>MinIO for self-hosted option</td></tr>
+            <tr><td class="bold">Email / Notifications</td><td>Nodemailer / SendGrid</td><td>Configurable provider</td></tr>
+            <tr><td class="bold">SMS / OTP</td><td>Unifonic / Twilio</td><td>Loyalty redemption codes and member notifications</td></tr>
+            <tr><td class="bold">Testing</td><td>Vitest + Playwright</td><td>Unit + end-to-end tests</td></tr>
+            <tr><td class="bold">Containerization</td><td>Docker + Docker Compose</td><td>Dev/prod parity</td></tr>
+            <tr><td class="bold">CI/CD</td><td>GitHub Actions</td><td>Auto-deploy on merge to main</td></tr>
+            <tr><td class="bold">Monitoring</td><td>Sentry + Grafana</td><td>Error tracking + metrics dashboards</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── S8: SECURITY ── -->
+    <div class="section" id="s8">
+      <div class="section-header">
+        <div class="section-num">8</div>
+        <h2>Security & Non-Functional Requirements</h2>
+      </div>
+
+      <h3>Security Controls</h3>
+      <ul class="bullet-list">
+        <li>JWT access tokens expire in 15 minutes; refresh tokens rotate on every use</li>
+        <li>Cashier PIN login: 4–6 digit PIN, bcrypt-hashed, lockout after 5 failed attempts</li>
+        <li>Role-based permissions enforced at both API middleware and Prisma query level</li>
+        <li>All PII fields encrypted at rest; database connections over TLS only</li>
+        <li>Rate limiting and brute-force protection on all authentication endpoints</li>
+        <li>Full audit log for sensitive operations: voids, discounts, refunds, stock adjustments, loyalty point adjustments</li>
+        <li>Loyalty redemption requires a one-time SMS code (5-minute expiry, 3 attempts); manual point adjustments need manager approval</li>
+        <li>Customer data handled in line with the Saudi Personal Data Protection Law (PDPL); marketing consent captured explicitly at enrolment</li>
+        <li>Branch-scoped API: JWT claims prevent access to data outside assigned branches</li>
+      </ul>
+
+      <h3>Performance Targets</h3>
+      <div class="perf-grid">
+        <div class="perf-card"><div class="perf-val">&lt; 300ms</div><div class="perf-label">POS order API response</div></div>
+        <div class="perf-card"><div class="perf-val">&lt; 1s</div><div class="perf-label">Menu load (Redis cached)</div></div>
+        <div class="perf-card"><div class="perf-val">&lt; 500ms</div><div class="perf-label">KDS update latency</div></div>
+        <div class="perf-card"><div class="perf-val">&lt; 5s</div><div class="perf-label">Daily sales report</div></div>
+        <div class="perf-card"><div class="perf-val">100+</div><div class="perf-label">Concurrent POS sessions</div></div>
+        <div class="perf-card"><div class="perf-val">99.9%</div><div class="perf-label">Target SLA uptime</div></div>
+      </div>
+
+      <h3>Offline Resilience</h3>
+      <div class="info-box">The POS terminal uses a <strong>Service Worker</strong> and <strong>IndexedDB</strong> local cache for the active menu and open orders. If internet connectivity is lost, the terminal continues processing orders and cash payments. All transactions sync automatically when connectivity is restored, with conflict detection for concurrent edits. Loyalty points <em>earned</em> offline are queued and posted on sync; points <em>redemption</em> requires a live connection to prevent the same points being spent twice.</div>
+    </div>
+
+    <!-- ── S9: FOLDER STRUCTURE ── -->
+    <div class="section" id="s9">
+      <div class="section-header">
+        <div class="section-num">9</div>
+        <h2>Repository & Folder Structure</h2>
+      </div>
+      <p>A <strong>monorepo</strong> using npm workspaces manages the frontend, backend, and shared packages together while keeping them independently deployable.</p>
+      <div class="code-block"><span class="hl">pos-system/</span>
+├── <span class="kw">apps/</span>
+│   ├── <span class="hl">web/</span>                    <span class="cm"># React frontend</span>
+│   │   └── src/
+│   │       ├── <span class="kw">features/</span>       <span class="cm"># Feature slices (orders, menu, inventory, loyalty, reports…)</span>
+│   │       │   └── orders/
+│   │       │       ├── OrderPage.tsx
+│   │       │       ├── useOrders.ts
+│   │       │       └── orderStore.ts
+│   │       ├── <span class="kw">components/</span>     <span class="cm"># Shared UI components</span>
+│   │       ├── <span class="kw">hooks/</span>          <span class="cm"># Custom React hooks</span>
+│   │       ├── <span class="kw">stores/</span>         <span class="cm"># Zustand global stores</span>
+│   │       ├── <span class="kw">i18n/</span>           <span class="cm"># Locale files</span>
+│   │       │   ├── <span class="str">en.json</span>
+│   │       │   └── <span class="str">ar.json</span>
+│   │       ├── <span class="kw">pages/</span>          <span class="cm"># Route-level page components</span>
+│   │       └── <span class="kw">lib/</span>            <span class="cm"># API client, utils, constants</span>
+│   │
+│   └── <span class="hl">api/</span>                    <span class="cm"># Node.js REST API</span>
+│       ├── src/
+│       │   ├── <span class="kw">modules/</span>        <span class="cm"># Feature modules (auth, orders, menu, inventory, loyalty…)</span>
+│       │   │   └── orders/
+│       │   │       ├── orders.router.ts
+│       │   │       ├── orders.service.ts
+│       │   │       ├── orders.schema.ts
+│       │   │       └── orders.test.ts
+│       │   ├── <span class="kw">middleware/</span>     <span class="cm"># Auth, tenant scope, error handler, rate limit</span>
+│       │   ├── <span class="kw">lib/</span>            <span class="cm"># Prisma client, Redis, Socket.io setup</span>
+│       │   └── app.ts
+│       └── <span class="kw">prisma/</span>
+│           ├── schema.prisma
+│           └── migrations/
+│
+├── <span class="kw">packages/</span>
+│   └── <span class="hl">shared/</span>                 <span class="cm"># Shared TypeScript types and Zod schemas</span>
+│
+├── docker-compose.yml
+├── .github/
+│   └── workflows/
+│       ├── <span class="str">ci.yml</span>
+│       └── <span class="str">deploy.yml</span>
+└── package.json                <span class="cm"># Workspace root (npm workspaces)</span></div>
+    </div>
+
+    <!-- ── S10: DECISIONS ── -->
+    <div class="section" id="s10">
+      <div class="section-header">
+        <div class="section-num">10</div>
+        <h2>Key Design Decisions</h2>
+      </div>
+      <div class="decision-grid">
+        <div class="decision-row"><div class="dr-dec">Multi-tenancy strategy</div><div class="dr-choice">Shared DB + row-level isolation</div><div class="dr-why">Simpler ops than schema-per-tenant; scales to many brands without migration complexity</div></div>
+        <div class="decision-row"><div class="dr-dec">Translation storage</div><div class="dr-choice">JSONB per translatable field</div><div class="dr-why">Avoids join-heavy translation tables; fast reads; trivial to extend to a third language</div></div>
+        <div class="decision-row"><div class="dr-dec">Real-time layer</div><div class="dr-choice">Socket.io over REST polling</div><div class="dr-why">Sub-second KDS updates are critical for kitchen efficiency and order accuracy</div></div>
+        <div class="decision-row"><div class="dr-dec">Inventory deduction</div><div class="dr-choice">Event-driven on payment settle</div><div class="dr-why">Stock deducted only on confirmed sale — avoids ghost deductions from abandoned orders</div></div>
+        <div class="decision-row"><div class="dr-dec">Recipe cost calculation</div><div class="dr-choice">Dynamic on request, Redis-cached 5 min</div><div class="dr-why">Always reflects latest ingredient cost; cache avoids recalculation on every page load</div></div>
+        <div class="decision-row"><div class="dr-dec">Offline POS mode</div><div class="dr-choice">Service Worker + IndexedDB</div><div class="dr-why">Branch operations must survive internet outages; sync-on-reconnect handles reconciliation</div></div>
+        <div class="decision-row"><div class="dr-dec">Delivery platform sync</div><div class="dr-choice">Webhook-first, polling fallback</div><div class="dr-why">Webhooks give real-time ingestion; polling fallback for platforms without webhook support</div></div>
+        <div class="decision-row"><div class="dr-dec">Frontend state split</div><div class="dr-choice">Zustand (cart) + TanStack Query</div><div class="dr-why">POS cart needs instant local updates; server data benefits from automatic cache + refetch</div></div>
+        <div class="decision-row"><div class="dr-dec">Print architecture</div><div class="dr-choice">Node bridge on local network</div><div class="dr-why">Browsers cannot access COM/USB ports; lightweight local Node process bridges ESC/POS</div></div>
+        <div class="decision-row"><div class="dr-dec">Loyalty points storage</div><div class="dr-choice">Append-only ledger + cached balance</div><div class="dr-why">Every point movement is traceable for audit, expiry, and reversals; the cached balance keeps POS lookups instant</div></div>
+        <div class="decision-row"><div class="dr-dec">Loyalty scope</div><div class="dr-choice">Group-wide wallet, brand-configurable</div><div class="dr-why">Cross-brand earning and redemption drives traffic between the group's brands; brands can opt out to run their own program</div></div>
+        <div class="decision-row"><div class="dr-dec">Tax module</div><div class="dr-choice">Schema-ready, UI-disabled</div><div class="dr-why">tax_rate and tax_inclusive columns exist in schema for future enablement without migration</div></div>
+      </div>
+    </div>
+
+    <!-- ── S11: NEXT STEPS ── -->
+    <div class="section" id="s11">
+      <div class="section-header">
+        <div class="section-num">11</div>
+        <h2>Recommended Next Steps</h2>
+      </div>
+      <div class="next-steps">
+        <div class="step-card"><strong>Review & Approve Proposal</strong><p>Confirm module scope and phasing. Flag any modules to add, defer, or modify.</p></div>
+        <div class="step-card"><strong>Finalise Delivery Integrations</strong><p>Confirm which platforms to prioritize: Talabat, Deliveroo, Jahez, HungerStation.</p></div>
+        <div class="step-card"><strong>Confirm Loyalty Rules</strong><p>Approve earn rate, redemption value, tiers, expiry, and whether points are shared across all brands.</p></div>
+        <div class="step-card"><strong>Confirm Hosting Environment</strong><p>Cloud provider (AWS, GCP, Azure) or self-hosted. Affects CI/CD and storage config.</p></div>
+        <div class="step-card"><strong>Set Up Development Tooling</strong><p>Repository, CI/CD pipeline, and dev/staging/prod environments.</p></div>
+        <div class="step-card"><strong>Begin Phase 1</strong><p>Scaffold monorepo, implement auth and brand/branch/user management.</p></div>
+        <div class="step-card"><strong>Establish Sprint Cadence</strong><p>Weekly sprint reviews and staging environment for ongoing UAT with stakeholders.</p></div>
+        <div class="step-card"><strong>Plan Bilingual Content Entry</strong><p>Coordinate Arabic menu content entry with the client operations team.</p></div>
+      </div>
+      <div class="info-box" style="margin-top:24px;">This proposal will be updated as decisions are confirmed. Each module will receive a dedicated technical specification document before its development phase begins.</div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+  function scrollTo(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+  }
+
+  // Auto-highlight nav on scroll
+  const sections = ['cover','s1','s2','s3','s4','s5','s6','s7','s8','s9','s10','s11'];
+  const navItems = document.querySelectorAll('.nav-item');
+  window.addEventListener('scroll', () => {
+    let current = 'cover';
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.getBoundingClientRect().top <= 100) current = id;
+    });
+    navItems.forEach(n => {
+      const fn = n.getAttribute('onclick') || '';
+      if (fn.includes("'" + current + "'")) n.classList.add('active');
+      else n.classList.remove('active');
+    });
+  });
+</script>
+</body>
+</html>
