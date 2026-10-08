@@ -1,0 +1,158 @@
+// Database schema. Tables and columns use snake_case; models use PascalCase.
+// Names that people read (brand, branch) are bilingual JSON: { "en": "...", "ar": "..." }.
+// See docs/specs/001-auth-and-tenancy.md for how scoping and sign-in use these tables.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoleScope {
+  GROUP
+  BRAND
+  BRANCH
+
+  @@map("role_scope")
+}
+
+enum Language {
+  en
+  ar
+
+  @@map("language")
+}
+
+model Brand {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  name      Json
+  logoUrl   String?  @map("logo_url")
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  branches Branch[]
+  users    User[]
+
+  @@map("brands")
+}
+
+model Branch {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  brandId   String   @map("brand_id") @db.Uuid
+  name      Json
+  address   String?
+  timezone  String   @default("Asia/Riyadh")
+  config    Json     @default("{}")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  brand       Brand        @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  assignments UserBranch[]
+
+  @@index([brandId])
+  @@map("branches")
+}
+
+// Built-in roles. They are written from code at startup (packages/shared systemRoles).
+model Role {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  key         String    @unique
+  name        String
+  scope       RoleScope
+  permissions Json
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id                  String    @id @default(uuid(7)) @db.Uuid
+  // Null for group-level users (Group Admin).
+  brandId             String?   @map("brand_id") @db.Uuid
+  roleId              String    @map("role_id") @db.Uuid
+  name                String
+  // Stored lower-case.
+  email               String?   @unique
+  passwordHash        String?   @map("password_hash")
+  // Staff code and PIN are how branch staff sign in at a terminal.
+  staffCode           String?   @map("staff_code")
+  pinHash             String?   @map("pin_hash")
+  preferredLang       Language  @default(en) @map("preferred_lang")
+  isActive            Boolean   @default(true) @map("is_active")
+  // Counts failed sign-ins in a row. Reset by a successful sign-in.
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime? @map("locked_until") @db.Timestamptz(3)
+  lastLoginAt         DateTime? @map("last_login_at") @db.Timestamptz(3)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  brand         Brand?         @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  role          Role           @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  branches      UserBranch[]
+  refreshTokens RefreshToken[]
+
+  @@unique([brandId, staffCode])
+  @@index([brandId])
+  @@map("users")
+}
+
+// Which branches a branch-scoped user works at.
+model UserBranch {
+  userId   String @map("user_id") @db.Uuid
+  branchId String @map("branch_id") @db.Uuid
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([userId, branchId])
+  @@index([branchId])
+  @@map("user_branches")
+}
+
+// One row per issued refresh token. Only the SHA-256 hash of the token is stored.
+// Tokens rotate inside a family; reusing an old token revokes the whole family.
+model RefreshToken {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  familyId  String    @map("family_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  // Set for PIN sessions, which are limited to the terminal's branch.
+  branchId  String?   @map("branch_id") @db.Uuid
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  ip        String?
+  userAgent String?   @map("user_agent")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+// Append-only record of sensitive actions. No foreign keys, so history outlives users.
+model AuditLog {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  brandId    String?  @map("brand_id") @db.Uuid
+  branchId   String?  @map("branch_id") @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json     @default("{}")
+  ip         String?
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([brandId, createdAt])
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}

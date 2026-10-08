@@ -3,3 +3,4 @@ coverage
 package-lock.json
 docs/proposal
 docs/prototype
+apps/api/src/generated

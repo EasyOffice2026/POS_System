@@ -52,7 +52,9 @@ The terminal knows its own branch. The cashier enters a staff code and a PIN of 
 
 Wrong credentials always return the same `INVALID_CREDENTIALS` error. This holds whether the account exists or not, and the response takes about the same time in both cases, so nobody can use it to find out which accounts exist.
 
-Passwords and PINs are stored as bcrypt hashes. The cost factor is 12 in production.
+Passwords and PINs are stored as scrypt hashes with a random salt each, using Node's built-in implementation (N=2^15, r=8, p=3, the OWASP recommendation). The technical proposal says bcrypt. scrypt was chosen instead because it needs no native package, runs off the main thread, and is memory-hard. The parameters are stored inside each hash, so they can be raised later without breaking old hashes.
+
+A PIN has few possible values, so anyone who steals a copy of the database could guess PINs offline whatever the hash. Lockout protects against online guessing only. A server-side secret mixed into PIN hashes would close this gap and can be added later.
 
 ## Tokens
 
