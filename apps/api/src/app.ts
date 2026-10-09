@@ -1,5 +1,6 @@
 import express from 'express';
 import type { Config } from './config';
+import { createMemoryMenuCache, type MenuCache } from './lib/menu-cache';
 import { createPasswordHasher, hashProfiles, type PasswordHasher } from './lib/password';
 import type { PrismaClient } from './lib/prisma';
 import { createTokenService } from './lib/tokens';
@@ -12,6 +13,8 @@ import { createBranchesRouter } from './modules/brands/branches.router';
 import { createBrandsRouter } from './modules/brands/brands.router';
 import { createBrandsService } from './modules/brands/brands.service';
 import { healthRouter } from './modules/health/health.router';
+import { createMenuRouter } from './modules/menu/menu.router';
+import { createMenuService } from './modules/menu/menu.service';
 import { createRolesRouter } from './modules/roles/roles.router';
 import { createUsersRouter } from './modules/users/users.router';
 import { createUsersService } from './modules/users/users.service';
@@ -21,9 +24,11 @@ export interface AppDeps {
   config: Config;
   // Tests pass their own hasher to watch how it is used.
   hasher?: PasswordHasher;
+  // Tests pass their own cache to watch it, or to move its clock.
+  menuCache?: MenuCache;
 }
 
-export function createApp({ prisma, config, hasher }: AppDeps) {
+export function createApp({ prisma, config, hasher, menuCache }: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', config.trustProxy);
@@ -39,6 +44,10 @@ export function createApp({ prisma, config, hasher }: AppDeps) {
   });
 
   const brandsService = createBrandsService({ prisma });
+  const menuService = createMenuService({
+    prisma,
+    cache: menuCache ?? createMemoryMenuCache({ ttlMs: config.menuCacheTtlSeconds * 1000 }),
+  });
 
   const v1 = express.Router();
   v1.use('/health', healthRouter);
@@ -51,6 +60,7 @@ export function createApp({ prisma, config, hasher }: AppDeps) {
   const protectedRoutes = [authenticate(tokens), withTenant(prisma)];
   v1.use('/brands', ...protectedRoutes, createBrandsRouter({ service: brandsService }));
   v1.use('/branches', ...protectedRoutes, createBranchesRouter({ service: brandsService }));
+  v1.use('/menu', ...protectedRoutes, createMenuRouter({ service: menuService }));
   v1.use('/users', ...protectedRoutes, createUsersRouter({ service: usersService }));
   v1.use('/roles', ...protectedRoutes, createRolesRouter());
   v1.use('/audit-logs', ...protectedRoutes, createAuditRouter());

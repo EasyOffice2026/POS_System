@@ -108,6 +108,8 @@ export function as(app: Express, token: string) {
       request(app).post(path).set('Authorization', bearer).send(body),
     patch: (path: string, body?: object) =>
       request(app).patch(path).set('Authorization', bearer).send(body),
+    put: (path: string, body?: object) =>
+      request(app).put(path).set('Authorization', bearer).send(body),
   };
 }
 
