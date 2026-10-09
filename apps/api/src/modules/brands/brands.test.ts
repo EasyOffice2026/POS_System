@@ -103,6 +103,17 @@ describe('GET /brands', () => {
     expect(brandPage.parse(res.body).data[0]?.name).toEqual({ en: 'Pizza', ar: 'Pizza (ar)' });
   });
 
+  it('says which brands are active, and still lists the ones that are not', async () => {
+    await prisma.brand.update({ where: { id: world.burger.id }, data: { isActive: false } });
+
+    const res = await get('/api/v1/brands', 'admin@x.io');
+
+    const active = Object.fromEntries(
+      brandPage.parse(res.body).data.map((b) => [b.id, b.isActive]),
+    );
+    expect(active).toEqual({ [world.pizza.id]: true, [world.burger.id]: false });
+  });
+
   it('is not allowed for roles without brands:read', async () => {
     for (const email of ['cashier@x.io', 'mall-manager@x.io']) {
       const res = await get('/api/v1/brands', email);

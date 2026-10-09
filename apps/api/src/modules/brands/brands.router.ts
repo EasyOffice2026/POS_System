@@ -15,6 +15,7 @@ function toBrand(row: BrandRow): Brand {
     id: row.id,
     name: localizedTextSchema.parse(row.name),
     logoUrl: row.logoUrl,
+    isActive: row.isActive,
     createdAt: row.createdAt.toISOString(),
   };
 }

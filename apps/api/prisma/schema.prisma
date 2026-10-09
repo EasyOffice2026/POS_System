@@ -31,6 +31,8 @@ model Brand {
   name      Json
   logoUrl   String?  @map("logo_url")
   settings  Json     @default("{}")
+  // Brands are never deleted once they hold data. An inactive brand keeps its history.
+  isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 

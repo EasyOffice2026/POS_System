@@ -74,6 +74,7 @@ export const pizzaBrand: Brand = {
   id: ids.pizza,
   name: { en: 'Pizza Palace', ar: 'بيتزا بالاس' },
   logoUrl: null,
+  isActive: true,
   createdAt: '2026-10-01T00:00:00.000Z',
 };
 
@@ -81,6 +82,7 @@ export const burgerBrand: Brand = {
   id: ids.burger,
   name: { en: 'Burger Hub', ar: 'برجر هب' },
   logoUrl: null,
+  isActive: true,
   createdAt: '2026-10-01T00:00:00.000Z',
 };
 
