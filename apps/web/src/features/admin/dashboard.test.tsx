@@ -42,6 +42,24 @@ describe('dashboard for a group admin', () => {
     expect(burger.closest('section')).toHaveTextContent('Burger Hub - Airport Branch');
   });
 
+  it('marks a brand and a branch that are not active', async () => {
+    mockApi({
+      [REFRESH]: () => json(sessionFor(groupAdmin)),
+      [BRANDS]: () => json(page([pizzaBrand, { ...burgerBrand, isActive: false }])),
+      [branchesOf(pizzaBrand.id)]: () =>
+        json(page([pizzaMall, { ...pizzaDowntown, isActive: false }])),
+      [branchesOf(burgerBrand.id)]: () => json(page([burgerAirport])),
+    });
+    renderApp('/admin');
+
+    expect(
+      await screen.findByRole('heading', { name: 'Burger Hub - Branches (inactive)' }),
+    ).toBeInTheDocument();
+    const pizza = await screen.findByRole('heading', { name: 'Pizza Palace - Branches' });
+    expect(pizza.closest('section')).toHaveTextContent('Pizza Palace - Downtown Branch(inactive)');
+    expect(pizza.closest('section')).not.toHaveTextContent('Pizza Palace - Mall Branch(inactive)');
+  });
+
   it('shows the person and their role in the header', async () => {
     openDashboard();
     renderApp('/admin');

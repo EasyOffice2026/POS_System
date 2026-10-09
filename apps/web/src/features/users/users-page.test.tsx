@@ -308,6 +308,8 @@ describe('the main menu', () => {
     const menu = within(screen.getByRole('navigation', { name: 'Main menu' }));
     expect(menu.getAllByRole('link').map((link) => link.textContent)).toEqual([
       'Dashboard',
+      'Brands',
+      'Branches',
       'Users',
       'Roles',
       'Audit log',

@@ -3,8 +3,11 @@ import {
   type AuditLog,
   type AuthUser,
   type Branch,
+  type BranchDetail,
   type Brand,
+  closedWeek,
   permissions,
+  type Printer,
   type RoleInfo,
   type SessionResponse,
   systemRoles,
@@ -199,6 +202,37 @@ export function auditRow(overrides: Partial<AuditLog> = {}): AuditLog {
     ip: '10.0.0.5',
     userAgent: 'TestBrowser/1.0',
     createdAt: '2026-10-08T10:15:00.000Z',
+    ...overrides,
+  };
+}
+
+// --- brands and branches, for the setup screens ---
+
+const brandManagerRole = systemRoles.find((role) => role.key === 'brand_manager');
+
+// A brand manager with every permission the role has, as the API gives it.
+export const fullBrandManager: AuthUser = {
+  ...brandManager,
+  permissions: [...(brandManagerRole?.permissions ?? [])],
+};
+
+// A branch as one branch is read, with its configuration. Closed all week and no printers, as a
+// branch that was never set up.
+export function branchDetail(overrides: Partial<BranchDetail> = {}): BranchDetail {
+  return {
+    ...pizzaMall,
+    config: { openingHours: closedWeek(), printers: [] },
+    ...overrides,
+  };
+}
+
+export function printer(n: number, overrides: Partial<Printer> = {}): Printer {
+  return {
+    id: `01990000-0000-7000-8000-0000000004${String(n).padStart(2, '0')}`,
+    name: `Printer ${n}`,
+    kind: 'receipt',
+    host: `192.168.1.${50 + n}`,
+    port: 9100,
     ...overrides,
   };
 }

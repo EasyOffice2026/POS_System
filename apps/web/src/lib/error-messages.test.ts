@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import { describe, expect, it } from 'vitest';
 import { ApiError } from './api';
-import { messageFor, problemsFrom } from './error-messages';
+import { fieldsFromIssues, fieldsUnder, messageFor, problemsFrom } from './error-messages';
 
 describe('problemsFrom', () => {
   it('puts each validation problem on the field it names', () => {
@@ -49,6 +49,16 @@ describe('problemsFrom', () => {
   it('keeps permission and not-found answers for the whole form', () => {
     expect(problemsFrom(new ApiError(403, 'FORBIDDEN', 'x')).form).toBe('FORBIDDEN');
     expect(problemsFrom(new ApiError(404, 'NOT_FOUND', 'x')).form).toBe('NOT_FOUND');
+  });
+
+  it('lets a form choose the sentence for a 404, so it does not talk about a person', () => {
+    const notFound = new ApiError(404, 'NOT_FOUND', 'x');
+
+    expect(problemsFrom(notFound, { notFound: 'ITEM_NOT_FOUND' }).form).toBe('ITEM_NOT_FOUND');
+    expect(problemsFrom(notFound).form).toBe('NOT_FOUND');
+    expect(
+      problemsFrom(new ApiError(403, 'FORBIDDEN', 'x'), { notFound: 'ITEM_NOT_FOUND' }).form,
+    ).toBe('FORBIDDEN');
   });
 
   it('calls any other answer a failed save', () => {
@@ -104,10 +114,71 @@ describe('messageFor', () => {
       'NOT_FOUND',
       'saveError',
       'network',
+      'ITEM_NOT_FOUND',
+      'NAME_REQUIRED',
+      'NAME_TOO_LONG',
+      'LOGO_URL_INVALID',
+      'ADDRESS_TOO_LONG',
+      'TIMEZONE_INVALID',
+      'HOURS_TIME_FORMAT',
+      'HOURS_RANGE_EMPTY',
+      'HOURS_RANGES_REQUIRED',
+      'HOURS_TOO_MANY_RANGES',
+      'HOURS_OVERLAP',
+      'PRINTER_NAME_REQUIRED',
+      'PRINTER_NAME_TOO_LONG',
+      'PRINTER_NAME_TAKEN',
+      'PRINTER_HOST_INVALID',
+      'PRINTER_PORT_INVALID',
+      'PRINTERS_TOO_MANY',
     ];
 
     for (const code of codes) {
       expect(messageFor(code, t), code).not.toBe('Check the highlighted fields.');
     }
+  });
+});
+
+describe('fieldsFromIssues', () => {
+  it('writes the path of each problem with dots, and keeps the first problem of a field', () => {
+    const fields = fieldsFromIssues([
+      { path: ['name', 'en'], message: 'NAME_REQUIRED' },
+      { path: ['name', 'en'], message: 'NAME_TOO_LONG' },
+      { path: ['monday', 'ranges', 0, 'close'], message: 'HOURS_RANGE_EMPTY' },
+      { path: [], message: 'PRINTERS_TOO_MANY' },
+    ]);
+
+    expect(fields).toEqual({
+      'name.en': 'NAME_REQUIRED',
+      'monday.ranges.0.close': 'HOURS_RANGE_EMPTY',
+      '': 'PRINTERS_TOO_MANY',
+    });
+  });
+
+  it('is empty when there is nothing wrong', () => {
+    expect(fieldsFromIssues([])).toEqual({});
+  });
+});
+
+describe('fieldsUnder', () => {
+  const fields = {
+    'config.printers.0.name': 'PRINTER_NAME_REQUIRED',
+    'config.printers.1.host': 'PRINTER_HOST_INVALID',
+    'config.printers': 'PRINTERS_TOO_MANY',
+    'config.openingHours.monday': 'HOURS_OVERLAP',
+    name: 'NAME_REQUIRED',
+  };
+
+  it('keeps the problems under a path and writes their paths from there', () => {
+    expect(fieldsUnder(fields, 'config.printers')).toEqual({
+      '0.name': 'PRINTER_NAME_REQUIRED',
+      '1.host': 'PRINTER_HOST_INVALID',
+      '': 'PRINTERS_TOO_MANY',
+    });
+    expect(fieldsUnder(fields, 'config.openingHours')).toEqual({ monday: 'HOURS_OVERLAP' });
+  });
+
+  it('does not take a path that only starts with the same letters', () => {
+    expect(fieldsUnder({ 'config.printersX.0': 'A' }, 'config.printers')).toEqual({});
   });
 });

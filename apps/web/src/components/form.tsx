@@ -3,6 +3,10 @@ import type { ReactNode } from 'react';
 export const fieldClass =
   'mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-start focus:ring-2 focus:ring-slate-400 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500';
 
+// For a control that shares a line with others. fieldClass is a whole row.
+export const compactFieldClass =
+  'rounded-md border border-slate-300 bg-white px-3 py-2 text-start focus:ring-2 focus:ring-slate-400 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500';
+
 export const primaryButtonClass =
   'rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60';
 

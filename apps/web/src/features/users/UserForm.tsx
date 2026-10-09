@@ -298,6 +298,7 @@ export function UserForm({ existing, me, roles, brands, branches }: UserFormProp
             {brands.map((brand) => (
               <option key={brand.id} value={brand.id}>
                 {localize(brand.name, i18n.language)}
+                {brand.isActive ? '' : ` ${t('common.inactiveSuffix')}`}
               </option>
             ))}
           </select>
@@ -326,6 +327,7 @@ export function UserForm({ existing, me, roles, brands, branches }: UserFormProp
                     }
                   />
                   {localize(branch.name, i18n.language)}
+                  {branch.isActive ? '' : ` ${t('common.inactiveSuffix')}`}
                 </label>
               ))}
             </div>

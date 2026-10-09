@@ -5,6 +5,11 @@ import { AuditLogPage } from '../features/audit/AuditLogPage';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RequireAuth } from '../features/auth/RequireAuth';
 import { RequirePermission } from '../features/auth/RequirePermission';
+import { BranchesPage } from '../features/branches/BranchesPage';
+import { BranchFormPage } from '../features/branches/BranchFormPage';
+import { BranchPage } from '../features/branches/BranchPage';
+import { BrandFormPage } from '../features/brands/BrandFormPage';
+import { BrandsPage } from '../features/brands/BrandsPage';
 import { RolesPage } from '../features/roles/RolesPage';
 import { UserFormPage } from '../features/users/UserFormPage';
 import { UsersPage } from '../features/users/UsersPage';
@@ -20,6 +25,54 @@ export const routes: RouteObject[] = [
         element: <AdminLayout />,
         children: [
           { index: true, element: <DashboardPage /> },
+          {
+            path: 'brands',
+            element: (
+              <RequirePermission permission="brands:read">
+                <BrandsPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'brands/new',
+            element: (
+              <RequirePermission permission="brands:write">
+                <BrandFormPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'brands/:id',
+            element: (
+              <RequirePermission permission="brands:write">
+                <BrandFormPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'branches',
+            element: (
+              <RequirePermission permission="branches:read">
+                <BranchesPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'branches/new',
+            element: (
+              <RequirePermission permission="branches:write">
+                <BranchFormPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'branches/:id',
+            element: (
+              <RequirePermission permission="branches:read">
+                <BranchPage />
+              </RequirePermission>
+            ),
+          },
           {
             path: 'users',
             element: (

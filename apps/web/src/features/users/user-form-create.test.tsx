@@ -90,6 +90,34 @@ describe('creating a person as a group admin', () => {
     expect(router.state.location.pathname).toBe('/admin/users');
   });
 
+  it('marks a brand and a branch that are not active in the choices', async () => {
+    const user = userEvent.setup();
+    mockApi({
+      [REFRESH]: () => json(sessionFor(groupAdmin)),
+      'GET /api/v1/roles': () => json({ data: rolesFor('group') }),
+      'GET /api/v1/users': () => json(page([sara])),
+      'GET /api/v1/brands': () => json(page([pizzaBrand, { ...burgerBrand, isActive: false }])),
+      [`GET /api/v1/brands/${pizzaBrand.id}/branches`]: () =>
+        json(page([pizzaMall, { ...pizzaDowntown, isActive: false }])),
+      [`GET /api/v1/brands/${burgerBrand.id}/branches`]: () => json(page([])),
+    });
+    renderApp('/admin/users/new');
+    await screen.findByLabelText('Name');
+    await user.selectOptions(screen.getByLabelText('Role'), 'cashier');
+
+    const brand = await screen.findByLabelText('Brand');
+    expect(
+      within(brand).getByRole('option', { name: 'Burger Hub (inactive)' }),
+    ).toBeInTheDocument();
+    expect(within(brand).getByRole('option', { name: 'Pizza Palace' })).toBeInTheDocument();
+
+    await user.selectOptions(brand, ids.pizza);
+    expect(
+      await screen.findByLabelText('Pizza Palace - Downtown Branch (inactive)'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Pizza Palace - Mall Branch')).toBeInTheDocument();
+  });
+
   it('leaves out what was not filled in', async () => {
     const user = userEvent.setup();
     const api = groupAdminApi();
@@ -121,7 +149,7 @@ describe('creating a person as a group admin', () => {
     await user.selectOptions(screen.getByLabelText('Role'), 'group_admin');
 
     expect(screen.queryByLabelText('Brand')).not.toBeInTheDocument();
-    expect(screen.queryByText('Branches')).not.toBeInTheDocument();
+    expect(screen.queryByText('Branches', { selector: 'legend' })).not.toBeInTheDocument();
   });
 
   it('shows the brand and branches only for the roles that need them', async () => {
@@ -133,10 +161,10 @@ describe('creating a person as a group admin', () => {
 
     await user.selectOptions(screen.getByLabelText('Role'), 'brand_manager');
     expect(await screen.findByLabelText('Brand')).toBeInTheDocument();
-    expect(screen.queryByText('Branches')).not.toBeInTheDocument();
+    expect(screen.queryByText('Branches', { selector: 'legend' })).not.toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText('Role'), 'cashier');
-    expect(screen.getByText('Branches')).toBeInTheDocument();
+    expect(screen.getByText('Branches', { selector: 'legend' })).toBeInTheDocument();
   });
 
   it('lists only the branches of the chosen brand, and clears the choice when the brand changes', async () => {

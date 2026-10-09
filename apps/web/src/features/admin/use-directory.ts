@@ -26,6 +26,7 @@ export function useDirectory() {
     combine: (results) => ({
       items: results.flatMap((result) => result.data ?? []),
       isLoading: results.some((result) => result.isLoading),
+      isError: results.some((result) => result.isError),
     }),
   });
 
@@ -33,5 +34,6 @@ export function useDirectory() {
     brands: brands.data ?? [],
     branches: branches.items,
     isLoading: brands.isLoading || branches.isLoading,
+    isError: brands.isError || branches.isError,
   };
 }

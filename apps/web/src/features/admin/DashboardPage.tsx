@@ -42,6 +42,9 @@ function BranchList({ brandId, title }: { brandId: string; title: string }) {
         {branches.data?.map((branch) => (
           <li key={branch.id} className="text-sm text-slate-700">
             {localize(branch.name, i18n.language)}
+            {!branch.isActive && (
+              <span className="ms-2 text-xs text-slate-500">{t('common.inactiveSuffix')}</span>
+            )}
           </li>
         ))}
       </ul>
@@ -52,8 +55,9 @@ function BranchList({ brandId, title }: { brandId: string; title: string }) {
 function BrandPanel({ brand }: { brand: Brand }) {
   const { t, i18n } = useTranslation();
   const name = localize(brand.name, i18n.language);
+  const suffix = brand.isActive ? '' : ` ${t('common.inactiveSuffix')}`;
 
-  return <BranchList brandId={brand.id} title={`${name} - ${t('dashboard.branches')}`} />;
+  return <BranchList brandId={brand.id} title={`${name} - ${t('dashboard.branches')}${suffix}`} />;
 }
 
 export function DashboardPage() {

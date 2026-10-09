@@ -15,14 +15,21 @@
     "copied": "Copied",
     "noPermission": "You do not have permission to open this page.",
     "loadError": "Could not load the data.",
-    "saveError": "Could not save. Try again."
+    "saveError": "Could not save. Try again.",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "inactiveSuffix": "(inactive)",
+    "nameEnglish": "Name (English)",
+    "nameArabic": "Name (Arabic)"
   },
   "nav": {
     "label": "Main menu",
     "dashboard": "Dashboard",
     "users": "Users",
     "roles": "Roles",
-    "audit": "Audit log"
+    "audit": "Audit log",
+    "brands": "Brands",
+    "branches": "Branches"
   },
   "language": {
     "switchTo": "Switch language",
@@ -179,7 +186,24 @@
     "EMAIL_TAKEN": "This email is already used.",
     "STAFF_CODE_TAKEN": "This staff code is already used.",
     "FORBIDDEN": "You are not allowed to do this.",
-    "NOT_FOUND": "This person does not exist or you cannot see them."
+    "NOT_FOUND": "This person does not exist or you cannot see them.",
+    "NAME_REQUIRED": "Enter the name in this language.",
+    "NAME_TOO_LONG": "A name can have at most 100 characters.",
+    "LOGO_URL_INVALID": "Enter a web link that starts with http:// or https://.",
+    "ADDRESS_TOO_LONG": "An address can have at most 300 characters.",
+    "TIMEZONE_INVALID": "Choose a real time zone, for example Asia/Riyadh.",
+    "HOURS_TIME_FORMAT": "Enter a time.",
+    "HOURS_RANGE_EMPTY": "The closing time must differ from the opening time.",
+    "HOURS_RANGES_REQUIRED": "Add at least one range, or choose Closed.",
+    "HOURS_TOO_MANY_RANGES": "A day can have at most 6 ranges.",
+    "HOURS_OVERLAP": "These hours overlap with other hours.",
+    "PRINTER_NAME_REQUIRED": "Enter a name for the printer.",
+    "PRINTER_NAME_TOO_LONG": "A printer name can have at most 60 characters.",
+    "PRINTER_NAME_TAKEN": "Another printer at this branch has this name.",
+    "PRINTER_HOST_INVALID": "Enter an IP address or a host name, without http:// and without a port.",
+    "PRINTER_PORT_INVALID": "The port is a number from 1 to 65535.",
+    "PRINTERS_TOO_MANY": "A branch can have at most 20 printers.",
+    "ITEM_NOT_FOUND": "This item does not exist, or you cannot see it."
   },
   "rolesPage": {
     "title": "Roles",
@@ -226,5 +250,119 @@
   "notFound": {
     "title": "Page not found",
     "back": "Back to the dashboard"
+  },
+  "weekdays": {
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday"
+  },
+  "brands": {
+    "title": "Brands",
+    "newBrand": "New brand",
+    "editBrand": "Edit brand",
+    "empty": "There are no brands yet.",
+    "created": "Brand created.",
+    "saved": "Changes saved.",
+    "columns": {
+      "name": "Name",
+      "status": "Status",
+      "branches": "Branches"
+    },
+    "form": {
+      "logoUrl": "Logo link",
+      "logoUrlHint": "A link to a picture. Uploading a file comes later.",
+      "active": "Active",
+      "activeHint": "Leave this off to set the brand up before it opens."
+    },
+    "actions": {
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "viewBranches": "View branches"
+    },
+    "messages": {
+      "deactivated": "The brand is deactivated.",
+      "activated": "The brand is active again."
+    },
+    "deactivateHint": "A deactivated brand keeps its branches, people and history. Staff cannot sign in at its branches with a PIN."
+  },
+  "branches": {
+    "title": "Branches",
+    "newBranch": "New branch",
+    "editBranch": "Branch settings",
+    "empty": "There are no branches to show.",
+    "created": "Branch created. Next, set its opening hours and printers.",
+    "saved": "Changes saved.",
+    "filterBrand": "Brand",
+    "columns": {
+      "name": "Name",
+      "brand": "Brand",
+      "address": "Address",
+      "timezone": "Time zone",
+      "status": "Status"
+    },
+    "tabs": {
+      "label": "Branch settings",
+      "details": "Details",
+      "hours": "Opening hours",
+      "printers": "Printers"
+    },
+    "form": {
+      "address": "Address",
+      "timezone": "Time zone",
+      "brand": "Brand",
+      "chooseBrand": "Choose a brand",
+      "active": "Active",
+      "activeHint": "Leave this off to set the branch up before it opens."
+    },
+    "actions": {
+      "deactivate": "Deactivate",
+      "activate": "Activate"
+    },
+    "messages": {
+      "deactivated": "The branch is deactivated.",
+      "activated": "The branch is active again."
+    },
+    "deactivateHint": "A deactivated branch keeps its people and history. Staff cannot sign in at its terminals with a PIN.",
+    "readOnly": "You can see this branch but you cannot change it."
+  },
+  "hours": {
+    "intro": "Set the opening hours for each day. A range may end after midnight, and then it belongs to the day it started on.",
+    "modeLabel": "Hours on {{day}}",
+    "modes": {
+      "closed": "Closed",
+      "all_day": "Open 24 hours",
+      "ranges": "Specific hours"
+    },
+    "opensLabel": "{{day}}: opens (range {{n}})",
+    "closesLabel": "{{day}}: closes (range {{n}})",
+    "from": "From",
+    "to": "To",
+    "nextDay": "The next day",
+    "addRange": "Add hours",
+    "removeRange": "Remove range {{n}} of {{day}}",
+    "copyToAll": "Copy to all days",
+    "saved": "Opening hours saved."
+  },
+  "printers": {
+    "intro": "Network printers at this branch. A branch can have several printers of each kind.",
+    "empty": "This branch has no printers yet.",
+    "add": "Add printer",
+    "item": "Printer {{n}}",
+    "remove": "Remove printer {{n}}",
+    "name": "Name",
+    "kind": "Type",
+    "kinds": {
+      "receipt": "Receipts",
+      "kitchen": "Kitchen tickets"
+    },
+    "host": "Address",
+    "hostHint": "An IP address or a host name, for example 192.168.1.50.",
+    "port": "Port",
+    "portHint": "Usually 9100.",
+    "saved": "Printers saved."
   }
 }
