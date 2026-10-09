@@ -1,4 +1,11 @@
-import type { MenuCategory, MenuItem, MenuItemDetail } from '@pos/shared';
+import type {
+  BranchOverride,
+  MenuCategory,
+  MenuItem,
+  MenuItemDetail,
+  Modifier,
+  ModifierGroup,
+} from '@pos/shared';
 import { ids } from './fixtures';
 
 // Rows of the menu, as the API returns them, for the menu screens.
@@ -72,4 +79,88 @@ export const cola = menuItem({
 // An item as one item is read, with its modifier groups.
 export function itemDetail(overrides: Partial<MenuItemDetail> = {}): MenuItemDetail {
   return { ...menuItem(), modifierGroups: [], ...overrides };
+}
+
+export const groupIds = {
+  size: '01990000-0000-7000-8000-000000000601',
+  toppings: '01990000-0000-7000-8000-000000000602',
+};
+
+export const modifierIds = {
+  small: '01990000-0000-7000-8000-000000000701',
+  medium: '01990000-0000-7000-8000-000000000702',
+  large: '01990000-0000-7000-8000-000000000703',
+  cheese: '01990000-0000-7000-8000-000000000704',
+  olives: '01990000-0000-7000-8000-000000000705',
+};
+
+export function modifier(overrides: Partial<Modifier> = {}): Modifier {
+  return {
+    id: modifierIds.small,
+    groupId: groupIds.size,
+    name: { en: 'Small', ar: 'صغير' },
+    priceDelta: '-5.000',
+    isActive: true,
+    ...overrides,
+  };
+}
+
+export function modifierGroup(overrides: Partial<ModifierGroup> = {}): ModifierGroup {
+  return {
+    id: groupIds.size,
+    itemId: itemIds.margherita,
+    name: { en: 'Size', ar: 'الحجم' },
+    minSelect: 1,
+    maxSelect: 1,
+    isActive: true,
+    modifiers: [
+      modifier(),
+      modifier({
+        id: modifierIds.medium,
+        name: { en: 'Medium', ar: 'وسط' },
+        priceDelta: '0.000',
+      }),
+      modifier({
+        id: modifierIds.large,
+        name: { en: 'Large', ar: 'كبير' },
+        priceDelta: '6.000',
+      }),
+    ],
+    ...overrides,
+  };
+}
+
+export const sizeGroup = modifierGroup();
+
+export const toppingsGroup = modifierGroup({
+  id: groupIds.toppings,
+  name: { en: 'Extra toppings', ar: 'إضافات' },
+  minSelect: 0,
+  maxSelect: 3,
+  modifiers: [
+    modifier({
+      id: modifierIds.cheese,
+      groupId: groupIds.toppings,
+      name: { en: 'Extra cheese', ar: 'جبنة إضافية' },
+      priceDelta: '3.000',
+    }),
+    modifier({
+      id: modifierIds.olives,
+      groupId: groupIds.toppings,
+      name: { en: 'Olives', ar: 'زيتون' },
+      priceDelta: '2.000',
+      isActive: false,
+    }),
+  ],
+});
+
+export function branchOverride(overrides: Partial<BranchOverride> = {}): BranchOverride {
+  return {
+    itemId: itemIds.margherita,
+    branchId: ids.pizzaMall,
+    price: null,
+    isAvailable: true,
+    schedule: null,
+    ...overrides,
+  };
 }

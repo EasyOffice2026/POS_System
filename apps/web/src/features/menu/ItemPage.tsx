@@ -3,15 +3,22 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router';
 import { ActiveBadge } from '../../components/ActiveBadge';
 import { localize } from '../../i18n/localize';
+import { useDirectory } from '../admin/use-directory';
 import { useAuth } from '../auth/auth-context';
 import { ItemActions } from './ItemActions';
 import { ItemDetailsForm } from './ItemDetailsForm';
+import { ItemModifiersTab } from './ItemModifiersTab';
+import { ItemPricingTab } from './ItemPricingTab';
 import { getItem, listCategories, menuKeys } from './menu-api';
 import { useMenuBrand } from './use-menu-brand';
 
+const tabs = ['details', 'pricing', 'modifiers'] as const;
+type Tab = (typeof tabs)[number];
+
 // One item, or a new one. A new item is made in the brand that is chosen (in the address, for a
-// group admin); an item that exists shows its own brand. A person without menu:write can look at
-// everything but change nothing.
+// group admin); an item that exists shows its own brand. The settings of an item that exists are
+// in tabs: details, the price and availability at each branch, and modifiers. The tab is in the
+// address (?tab=pricing). A person without menu:write can look at everything but change nothing.
 export function ItemPage() {
   const { t, i18n } = useTranslation();
   const { id } = useParams();
@@ -20,6 +27,7 @@ export function ItemPage() {
   // Set by the form after it creates an item.
   const created = (useLocation().state as { notice?: string } | null)?.notice === 'created';
   const menuBrand = useMenuBrand();
+  const directory = useDirectory();
 
   const item = useQuery({
     queryKey: menuKeys.item(id ?? ''),
@@ -35,7 +43,10 @@ export function ItemPage() {
   });
 
   const canWrite = user?.permissions.includes('menu:write') ?? false;
-  const brand = menuBrand.brands.find((candidate) => candidate.id === brandId);
+  const brand = directory.brands.find((candidate) => candidate.id === brandId);
+  const branches = directory.branches.filter((branch) => branch.brandId === brandId);
+  const requested = searchParams.get('tab');
+  const tab: Tab = tabs.find((name) => name === requested) ?? 'details';
   // A new item starts in the category the list was filtered by, when that category exists.
   const requestedCategory = searchParams.get('categoryId') ?? '';
   const initialCategoryId = (categories.data ?? []).some(
@@ -89,15 +100,53 @@ export function ItemPage() {
           )}
           {!canWrite && <p className="text-sm text-slate-600">{t('menu.item.readOnly')}</p>}
 
-          <ItemDetailsForm
-            key={item.data?.id ?? 'new'}
-            existing={item.data ?? null}
-            brandId={brandId}
-            categories={categories.data ?? []}
-            initialCategoryId={initialCategoryId}
-            readOnly={!canWrite}
-          />
-          {item.data && canWrite && <ItemActions item={item.data} />}
+          {item.data && (
+            <nav
+              aria-label={t('menu.item.tabs.label')}
+              className="flex flex-wrap gap-1 border-b border-slate-200"
+            >
+              {tabs.map((name) => (
+                <Link
+                  key={name}
+                  to={{ search: name === 'details' ? '' : `?tab=${name}` }}
+                  replace
+                  aria-current={name === tab ? 'page' : undefined}
+                  className={`-mb-px rounded-t-md border-b-2 px-3 py-2 text-sm font-medium ${
+                    name === tab
+                      ? 'border-slate-900 text-slate-900'
+                      : 'border-transparent text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {t(`menu.item.tabs.${name}`)}
+                </Link>
+              ))}
+            </nav>
+          )}
+
+          {(tab === 'details' || !item.data) && (
+            <div className="space-y-4">
+              <ItemDetailsForm
+                key={item.data?.id ?? 'new'}
+                existing={item.data ?? null}
+                brandId={brandId}
+                categories={categories.data ?? []}
+                initialCategoryId={initialCategoryId}
+                readOnly={!canWrite}
+              />
+              {item.data && canWrite && <ItemActions item={item.data} />}
+            </div>
+          )}
+          {tab === 'pricing' && item.data && (
+            <ItemPricingTab
+              key={item.data.id}
+              item={item.data}
+              branches={branches}
+              readOnly={!canWrite}
+            />
+          )}
+          {tab === 'modifiers' && item.data && (
+            <ItemModifiersTab key={item.data.id} item={item.data} readOnly={!canWrite} />
+          )}
         </>
       )}
     </div>

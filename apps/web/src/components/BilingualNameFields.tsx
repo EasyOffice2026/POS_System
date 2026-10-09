@@ -8,6 +8,8 @@ interface BilingualNameFieldsProps {
   // The problems as sentences, ready to show.
   errors?: { en?: string | undefined; ar?: string | undefined };
   disabled?: boolean;
+  // The classes of the wrapper. "contents" lets a parent grid lay the two boxes out.
+  className?: string;
 }
 
 // A name in English and in Arabic, side by side. Each box is written in its own direction,
@@ -18,11 +20,12 @@ export function BilingualNameFields({
   onChange,
   errors = {},
   disabled = false,
+  className = 'grid gap-4 sm:grid-cols-2',
 }: BilingualNameFieldsProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className={className}>
       <FormField id={`${idPrefix}-name-en`} label={t('common.nameEnglish')} error={errors.en}>
         <input
           {...fieldAttributes(`${idPrefix}-name-en`, { error: Boolean(errors.en) })}

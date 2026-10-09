@@ -212,7 +212,7 @@
     "CATEGORY_NOT_FOUND": "This category does not exist in this brand.",
     "CATEGORY_LIMIT": "A brand can have at most 500 categories.",
     "ORDER_MISMATCH": "The categories changed in the meantime. Reload the page and try again.",
-    "MODIFIER_LIMIT": "A group can have at most 50 choices.",
+    "MODIFIER_LIMIT": "A group can have at most 50 modifiers.",
     "MIN_SELECT_INVALID": "Enter a whole number from 0 to 20.",
     "MAX_SELECT_INVALID": "Enter a whole number from 1 to 20.",
     "SELECT_RANGE_INVALID": "The most choices cannot be fewer than the least choices.",
@@ -473,7 +473,101 @@
         "deactivated": "The item is deactivated. It is no longer sold.",
         "activated": "The item is active again."
       },
-      "deactivateHint": "An item is never deleted: old orders keep its name and price. A deactivated item is not on any terminal."
+      "deactivateHint": "An item is never deleted: old orders keep its name and price. A deactivated item is not on any terminal.",
+      "tabs": {
+        "label": "Item settings",
+        "details": "Details",
+        "pricing": "Branch prices",
+        "modifiers": "Modifiers"
+      }
+    },
+    "schedule": {
+      "modeLabel": "Availability on {{day}}",
+      "modes": {
+        "closed": "Not available",
+        "all_day": "Available all day",
+        "ranges": "Available at certain times"
+      },
+      "opensLabel": "{{day}}: available from (range {{n}})",
+      "closesLabel": "{{day}}: available until (range {{n}})",
+      "everyDay": "Every day",
+      "allDay": "all day",
+      "never": "Never"
+    },
+    "pricing": {
+      "intro": "A branch can sell this item at its own price, switch it off, or sell it only at certain times. A branch you do not change uses the brand's settings.",
+      "empty": "There are no branches to show.",
+      "columns": {
+        "price": "Price",
+        "availability": "Availability",
+        "when": "When"
+      },
+      "brandPrice": "brand price",
+      "available": "Available",
+      "switchedOff": "Switched off",
+      "always": "Always",
+      "edit": "Edit",
+      "editFor": "Edit {{name}}",
+      "form": {
+        "price": "Price at this branch",
+        "priceHint": "Leave empty to use the brand price ({{price}}).",
+        "available": "Available at this branch",
+        "when": "When can it be sold?",
+        "always": "Always",
+        "certainTimes": "Only at certain times",
+        "scheduleHint": "The times are read on the clock of the branch.",
+        "reset": "Use the brand settings"
+      },
+      "messages": {
+        "saved": "Saved for {{name}}.",
+        "reset": "{{name}} now uses the brand settings."
+      }
+    },
+    "modifiers": {
+      "intro": "Modifiers are the choices a guest makes for this item, such as a size or extra toppings. A group whose fewest choices is 1 or more must be answered before the item is added.",
+      "empty": "This item has no modifiers yet.",
+      "rule": {
+        "required": "Required: choose {{min}}",
+        "requiredRange": "Required: choose {{min}} to {{max}}",
+        "optional": "Optional: up to {{max}}"
+      },
+      "noModifiers": "This group has no modifiers yet.",
+      "addGroupTitle": "Add a modifier group",
+      "addGroupButton": "Add group",
+      "addModifierTitle": "Add a modifier",
+      "addModifierButton": "Add modifier",
+      "group": {
+        "minSelect": "Fewest choices",
+        "minSelectHint": "0 makes the group optional. 1 or more makes it required.",
+        "maxSelect": "Most choices",
+        "maxSelectHint": "How many modifiers a guest can pick from this group."
+      },
+      "modifier": {
+        "priceDelta": "Price change",
+        "priceDeltaHint": "What it adds to the price of the item. Use a minus sign for a discount, for example -2.000."
+      },
+      "edit": "Edit",
+      "editGroupFor": "Edit group {{name}}",
+      "editFor": "Edit {{name}}",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "deactivateGroupFor": "Deactivate group {{name}}",
+      "activateGroupFor": "Activate group {{name}}",
+      "deactivateFor": "Deactivate {{name}}",
+      "activateFor": "Activate {{name}}",
+      "hint": "Nothing is deleted. A group or a modifier that is deactivated is not on the terminals, and old orders keep it.",
+      "messages": {
+        "saved": "Saved."
+      }
     }
+  },
+  "weekdaysShort": {
+    "sunday": "Sun",
+    "monday": "Mon",
+    "tuesday": "Tue",
+    "wednesday": "Wed",
+    "thursday": "Thu",
+    "friday": "Fri",
+    "saturday": "Sat"
   }
 }
