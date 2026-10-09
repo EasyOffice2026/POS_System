@@ -13,6 +13,10 @@ export const auditActions = [
   'user.updated',
   'user.credentials_reset',
   'user.unlocked',
+  'brand.created',
+  'brand.updated',
+  'branch.created',
+  'branch.updated',
 ] as const;
 
 export type AuditAction = (typeof auditActions)[number];

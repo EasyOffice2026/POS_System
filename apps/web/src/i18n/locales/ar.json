@@ -220,7 +220,11 @@
       "user_created": "إنشاء مستخدم",
       "user_updated": "تعديل مستخدم",
       "user_credentials_reset": "تعيين كلمة مرور أو رقم سري",
-      "user_unlocked": "فك قفل مستخدم"
+      "user_unlocked": "فك قفل مستخدم",
+      "brand_created": "إنشاء علامة تجارية",
+      "brand_updated": "تعديل علامة تجارية",
+      "branch_created": "إنشاء فرع",
+      "branch_updated": "تعديل فرع"
     }
   },
   "notFound": {

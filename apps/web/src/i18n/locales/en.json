@@ -216,7 +216,11 @@
       "user_created": "User created",
       "user_updated": "User changed",
       "user_credentials_reset": "Password or PIN set",
-      "user_unlocked": "User unlocked"
+      "user_unlocked": "User unlocked",
+      "brand_created": "Brand created",
+      "brand_updated": "Brand changed",
+      "branch_created": "Branch created",
+      "branch_updated": "Branch changed"
     }
   },
   "notFound": {

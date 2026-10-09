@@ -19,6 +19,10 @@ const actionKeys = {
   'user.updated': 'audit.actions.user_updated',
   'user.credentials_reset': 'audit.actions.user_credentials_reset',
   'user.unlocked': 'audit.actions.user_unlocked',
+  'brand.created': 'audit.actions.brand_created',
+  'brand.updated': 'audit.actions.brand_updated',
+  'branch.created': 'audit.actions.branch_created',
+  'branch.updated': 'audit.actions.branch_updated',
 } as const satisfies Record<AuditAction, string>;
 
 type ActionKey = (typeof actionKeys)[AuditAction];
