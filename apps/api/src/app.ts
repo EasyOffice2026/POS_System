@@ -8,7 +8,9 @@ import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { createAuditRouter } from './modules/audit/audit.router';
 import { createAuthRouter } from './modules/auth/auth.router';
 import { createAuthService } from './modules/auth/auth.service';
+import { createBranchesRouter } from './modules/brands/branches.router';
 import { createBrandsRouter } from './modules/brands/brands.router';
+import { createBrandsService } from './modules/brands/brands.service';
 import { healthRouter } from './modules/health/health.router';
 import { createRolesRouter } from './modules/roles/roles.router';
 import { createUsersRouter } from './modules/users/users.router';
@@ -36,6 +38,8 @@ export function createApp({ prisma, config, hasher }: AppDeps) {
     revokeAllSessions: (userId) => authService.revokeAllSessions(userId),
   });
 
+  const brandsService = createBrandsService({ prisma });
+
   const v1 = express.Router();
   v1.use('/health', healthRouter);
   v1.use(
@@ -45,7 +49,8 @@ export function createApp({ prisma, config, hasher }: AppDeps) {
 
   // Routes below here need a signed-in person and get a database client limited to their data.
   const protectedRoutes = [authenticate(tokens), withTenant(prisma)];
-  v1.use('/brands', ...protectedRoutes, createBrandsRouter());
+  v1.use('/brands', ...protectedRoutes, createBrandsRouter({ service: brandsService }));
+  v1.use('/branches', ...protectedRoutes, createBranchesRouter({ service: brandsService }));
   v1.use('/users', ...protectedRoutes, createUsersRouter({ service: usersService }));
   v1.use('/roles', ...protectedRoutes, createRolesRouter());
   v1.use('/audit-logs', ...protectedRoutes, createAuditRouter());

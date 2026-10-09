@@ -30,8 +30,14 @@ export function withTenant(prisma: PrismaClient): RequestHandler {
   };
 }
 
+// The person asking, and a database client limited to what they may see.
+export interface ActorContext {
+  auth: AccessTokenClaims;
+  db: ScopedClient;
+}
+
 // For route handlers behind authenticate and withTenant.
-export function requestContext(req: Request): { auth: AccessTokenClaims; db: ScopedClient } {
+export function requestContext(req: Request): ActorContext {
   if (!req.auth || !req.db) throw errors.unauthenticated();
   return { auth: req.auth, db: req.db };
 }

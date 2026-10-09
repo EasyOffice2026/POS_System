@@ -1,62 +1,57 @@
-import { type Branch, type Brand, cursorQuerySchema, localizedTextSchema } from '@pos/shared';
+import {
+  createBranchRequestSchema,
+  createBrandRequestSchema,
+  cursorQuerySchema,
+  updateBrandRequestSchema,
+} from '@pos/shared';
 import { Router } from 'express';
 import { z } from 'zod';
-import type { Branch as BranchRow, Brand as BrandRow } from '../../generated/prisma/client';
-import { errors } from '../../lib/http-errors';
-import { cursorPageArgs, toPage } from '../../lib/pagination';
+import { requestMeta } from '../../lib/request-meta';
 import { parseWith } from '../../lib/validate';
 import { requestContext } from '../../middleware/authenticate';
 import { requirePermission } from '../../middleware/authorize';
+import type { BrandsService } from './brands.service';
 
-const brandParamsSchema = z.object({ id: z.uuid() });
+const idParamsSchema = z.object({ id: z.uuid() });
 
-function toBrand(row: BrandRow): Brand {
-  return {
-    id: row.id,
-    name: localizedTextSchema.parse(row.name),
-    logoUrl: row.logoUrl,
-    isActive: row.isActive,
-    createdAt: row.createdAt.toISOString(),
-  };
-}
-
-function toBranch(row: BranchRow): Branch {
-  return {
-    id: row.id,
-    brandId: row.brandId,
-    name: localizedTextSchema.parse(row.name),
-    address: row.address,
-    timezone: row.timezone,
-    isActive: row.isActive,
-  };
-}
-
-// Both routes read through the scoped client, so each person only gets their own data.
-export function createBrandsRouter(): Router {
+// Every route reads and writes through the scoped client, so each person only reaches their own
+// brand (a group admin reaches every brand). See docs/specs/002-brands-and-branches.md.
+export function createBrandsRouter({ service }: { service: BrandsService }): Router {
   const router = Router();
 
   router.get('/', requirePermission('brands:read'), async (req, res) => {
-    const { db } = requestContext(req);
-    const { limit, cursor } = parseWith(cursorQuerySchema, req.query);
+    const query = parseWith(cursorQuerySchema, req.query);
+    res.json(await service.listBrands(requestContext(req), query));
+  });
 
-    const rows = await db.brand.findMany(cursorPageArgs(limit, cursor));
-    res.json(toPage(rows, limit, toBrand));
+  router.post('/', requirePermission('brands:write'), async (req, res) => {
+    const input = parseWith(createBrandRequestSchema, req.body);
+    res.status(201).json(await service.createBrand(requestContext(req), input, requestMeta(req)));
+  });
+
+  router.get('/:id', requirePermission('brands:read'), async (req, res) => {
+    const { id } = parseWith(idParamsSchema, req.params);
+    res.json(await service.getBrand(requestContext(req), id));
+  });
+
+  router.patch('/:id', requirePermission('brands:write'), async (req, res) => {
+    const { id } = parseWith(idParamsSchema, req.params);
+    const input = parseWith(updateBrandRequestSchema, req.body);
+    res.json(await service.updateBrand(requestContext(req), id, input, requestMeta(req)));
   });
 
   router.get('/:id/branches', requirePermission('branches:read'), async (req, res) => {
-    const { db } = requestContext(req);
-    const { id } = parseWith(brandParamsSchema, req.params);
-    const { limit, cursor } = parseWith(cursorQuerySchema, req.query);
+    const { id } = parseWith(idParamsSchema, req.params);
+    const query = parseWith(cursorQuerySchema, req.query);
+    res.json(await service.listBranches(requestContext(req), id, query));
+  });
 
-    // A brand the person cannot see is answered like one that does not exist.
-    const brand = await db.brand.findUnique({ where: { id } });
-    if (!brand) throw errors.notFound('Brand');
-
-    const rows = await db.branch.findMany({
-      where: { brandId: id },
-      ...cursorPageArgs(limit, cursor),
-    });
-    res.json(toPage(rows, limit, toBranch));
+  router.post('/:id/branches', requirePermission('branches:write'), async (req, res) => {
+    const { id } = parseWith(idParamsSchema, req.params);
+    const input = parseWith(createBranchRequestSchema, req.body);
+    res
+      .status(201)
+      .json(await service.createBranch(requestContext(req), id, input, requestMeta(req)));
   });
 
   return router;

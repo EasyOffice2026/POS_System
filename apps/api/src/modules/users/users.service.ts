@@ -1,5 +1,4 @@
 import {
-  type AccessTokenClaims,
   type AdminUser,
   type CreateUserRequest,
   type CredentialsResult,
@@ -18,6 +17,7 @@ import { cursorPageArgs, splitPage } from '../../lib/pagination';
 import type { PasswordHasher } from '../../lib/password';
 import type { PrismaClient } from '../../lib/prisma';
 import type { RequestMeta } from '../../lib/request-meta';
+import type { ActorContext } from '../../middleware/authenticate';
 import type { ScopedClient } from '../../tenancy/scoped-client';
 
 // Who may give which role. A group admin can give any role, a brand manager any role except
@@ -26,12 +26,6 @@ export function canAssignScope(actor: RoleScope, role: RoleScope): boolean {
   if (actor === 'GROUP') return true;
   if (actor === 'BRAND') return role !== 'GROUP';
   return false;
-}
-
-// The person asking, and a database client limited to what they may see.
-export interface ActorContext {
-  auth: AccessTokenClaims;
-  db: ScopedClient;
 }
 
 export interface UsersDeps {
