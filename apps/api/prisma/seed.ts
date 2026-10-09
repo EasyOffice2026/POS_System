@@ -1,10 +1,11 @@
-// Demo data for local development: two brands, their branches and one account per role.
-// Safe to run again: it updates the same rows and clears any sign-in lockout.
+// Demo data for local development: two brands, their branches, a menu for each brand and one
+// account per role. Safe to run again: it updates the same rows and clears any sign-in lockout.
 import { branchConfigSchema, type OpeningHours, weekdays } from '@pos/shared';
 import { loadConfig } from '../src/config';
 import { createPasswordHasher, hashProfiles } from '../src/lib/password';
 import { createPrismaClient } from '../src/lib/prisma';
 import { syncSystemRoles } from '../src/lib/roles';
+import { seedDemoMenus } from './demo-menu';
 
 if (process.env.NODE_ENV === 'production') {
   throw new Error('The demo seed must not run in production.');
@@ -261,6 +262,8 @@ try {
       });
     }
   }
+
+  await seedDemoMenus(prisma, brandIds, branchIds);
 
   console.log('Demo data is ready (development only).');
   console.log(`\nEmail accounts, password "${DEV_PASSWORD}":`);
