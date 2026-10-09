@@ -248,7 +248,19 @@
       "brand_created": "إنشاء علامة تجارية",
       "brand_updated": "تعديل علامة تجارية",
       "branch_created": "إنشاء فرع",
-      "branch_updated": "تعديل فرع"
+      "branch_updated": "تعديل فرع",
+      "menu_category_created": "إنشاء فئة في القائمة",
+      "menu_category_updated": "تعديل فئة في القائمة",
+      "menu_category_reordered": "إعادة ترتيب فئات القائمة",
+      "menu_item_created": "إنشاء صنف في القائمة",
+      "menu_item_updated": "تعديل صنف في القائمة",
+      "menu_item_branch_override_set": "تحديد سعر الفرع أو توفره",
+      "menu_modifier_group_created": "إنشاء مجموعة خيارات",
+      "menu_modifier_group_updated": "تعديل مجموعة خيارات",
+      "menu_modifier_created": "إنشاء خيار",
+      "menu_modifier_updated": "تعديل خيار",
+      "menu_combo_created": "إنشاء كومبو",
+      "menu_combo_updated": "تعديل كومبو"
     }
   },
   "notFound": {

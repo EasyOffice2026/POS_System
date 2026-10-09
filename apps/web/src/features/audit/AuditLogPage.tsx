@@ -23,6 +23,18 @@ const actionKeys = {
   'brand.updated': 'audit.actions.brand_updated',
   'branch.created': 'audit.actions.branch_created',
   'branch.updated': 'audit.actions.branch_updated',
+  'menu.category.created': 'audit.actions.menu_category_created',
+  'menu.category.updated': 'audit.actions.menu_category_updated',
+  'menu.category.reordered': 'audit.actions.menu_category_reordered',
+  'menu.item.created': 'audit.actions.menu_item_created',
+  'menu.item.updated': 'audit.actions.menu_item_updated',
+  'menu.item.branch_override_set': 'audit.actions.menu_item_branch_override_set',
+  'menu.modifier_group.created': 'audit.actions.menu_modifier_group_created',
+  'menu.modifier_group.updated': 'audit.actions.menu_modifier_group_updated',
+  'menu.modifier.created': 'audit.actions.menu_modifier_created',
+  'menu.modifier.updated': 'audit.actions.menu_modifier_updated',
+  'menu.combo.created': 'audit.actions.menu_combo_created',
+  'menu.combo.updated': 'audit.actions.menu_combo_updated',
 } as const satisfies Record<AuditAction, string>;
 
 type ActionKey = (typeof actionKeys)[AuditAction];

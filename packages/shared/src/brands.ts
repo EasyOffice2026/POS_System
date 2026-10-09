@@ -6,6 +6,7 @@ import {
   timezoneSchema,
 } from './branch-config';
 import { localizedNameSchema, localizedTextSchema } from './localized';
+import { webLinkSchema } from './web-link';
 
 export const brandSchema = z.object({
   id: z.uuid(),
@@ -37,18 +38,8 @@ export type BranchDetail = z.infer<typeof branchDetailSchema>;
 // ---------------------------------------------------------------------------------------------
 // Requests. Unknown fields are refused, so a request cannot slip in a field it should not control.
 
-const webUrl = z.url({ protocol: /^https?$/ });
-
-// Until files can be stored, a logo is a link to a picture somewhere else. Only web links are
-// accepted, and not ones that carry a user name and password.
-export const logoUrlSchema = z
-  .string()
-  .trim()
-  .max(2048, 'LOGO_URL_INVALID')
-  .refine(
-    (value) => webUrl.safeParse(value).success && !/^https?:\/\/[^/?#]*@/i.test(value),
-    'LOGO_URL_INVALID',
-  );
+// Until files can be stored, a logo is a link to a picture somewhere else.
+export const logoUrlSchema = webLinkSchema('LOGO_URL_INVALID');
 
 // An empty address means none.
 const addressSchema = z

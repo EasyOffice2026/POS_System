@@ -244,7 +244,19 @@
       "brand_created": "Brand created",
       "brand_updated": "Brand changed",
       "branch_created": "Branch created",
-      "branch_updated": "Branch changed"
+      "branch_updated": "Branch changed",
+      "menu_category_created": "Menu category created",
+      "menu_category_updated": "Menu category changed",
+      "menu_category_reordered": "Menu categories re-ordered",
+      "menu_item_created": "Menu item created",
+      "menu_item_updated": "Menu item changed",
+      "menu_item_branch_override_set": "Branch price or availability set",
+      "menu_modifier_group_created": "Modifier group created",
+      "menu_modifier_group_updated": "Modifier group changed",
+      "menu_modifier_created": "Modifier created",
+      "menu_modifier_updated": "Modifier changed",
+      "menu_combo_created": "Combo created",
+      "menu_combo_updated": "Combo changed"
     }
   },
   "notFound": {

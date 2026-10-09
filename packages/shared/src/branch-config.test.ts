@@ -3,8 +3,11 @@ import {
   branchConfigChangeSchema,
   closedWeek,
   DEFAULT_PRINTER_PORT,
+  isOpenAt,
+  isOpenAtInstant,
   isPrinterHost,
   isTimeZone,
+  localTimeIn,
   MAX_PRINTERS,
   MAX_RANGES_PER_DAY,
   type OpeningHours,
@@ -429,5 +432,90 @@ describe('branchConfigChangeSchema', () => {
       'openingHours.monday:HOURS_OVERLAP',
       'printers.0.host:PRINTER_HOST_INVALID',
     ]);
+  });
+});
+
+describe('isOpenAt', () => {
+  const minutes = (hour: number, minute = 0) => hour * 60 + minute;
+
+  it('is closed on a closed day and open all day on a day open all day', () => {
+    const hours = week({ monday: { kind: 'all_day' } });
+
+    expect(isOpenAt(hours, 'tuesday', minutes(12))).toBe(false);
+    expect(isOpenAt(hours, 'monday', 0)).toBe(true);
+    expect(isOpenAt(hours, 'monday', minutes(23, 59))).toBe(true);
+  });
+
+  it('is open from the opening minute up to, but not at, the closing minute', () => {
+    const hours = week({ monday: ranges(['09:00', '17:00']) });
+
+    expect(isOpenAt(hours, 'monday', minutes(8, 59))).toBe(false);
+    expect(isOpenAt(hours, 'monday', minutes(9))).toBe(true);
+    expect(isOpenAt(hours, 'monday', minutes(16, 59))).toBe(true);
+    expect(isOpenAt(hours, 'monday', minutes(17))).toBe(false);
+  });
+
+  it('knows the break between two ranges of a day', () => {
+    const hours = week({ monday: ranges(['09:00', '14:00'], ['17:00', '23:00']) });
+
+    expect(isOpenAt(hours, 'monday', minutes(13))).toBe(true);
+    expect(isOpenAt(hours, 'monday', minutes(15))).toBe(false);
+    expect(isOpenAt(hours, 'monday', minutes(18))).toBe(true);
+  });
+
+  it('stays open after midnight for a range that runs past it, then closes', () => {
+    const hours = week({ friday: ranges(['14:00', '01:00']) });
+
+    expect(isOpenAt(hours, 'friday', minutes(23))).toBe(true);
+    expect(isOpenAt(hours, 'saturday', minutes(0, 30))).toBe(true);
+    expect(isOpenAt(hours, 'saturday', minutes(1))).toBe(false);
+    expect(isOpenAt(hours, 'friday', minutes(1))).toBe(false);
+  });
+
+  it('is open on Sunday morning for a range that runs past the end of Saturday', () => {
+    const hours = week({ saturday: ranges(['22:00', '03:00']) });
+
+    expect(isOpenAt(hours, 'saturday', minutes(23))).toBe(true);
+    expect(isOpenAt(hours, 'sunday', minutes(2, 59))).toBe(true);
+    expect(isOpenAt(hours, 'sunday', minutes(3))).toBe(false);
+  });
+});
+
+describe('localTimeIn', () => {
+  it('gives the day and the minute of the day on the clocks of a time zone', () => {
+    const moment = new Date('2026-10-09T09:30:00Z');
+
+    expect(localTimeIn(moment, 'Asia/Riyadh')).toEqual({ weekday: 'friday', minuteOfDay: 750 });
+    expect(localTimeIn(moment, 'UTC')).toEqual({ weekday: 'friday', minuteOfDay: 570 });
+  });
+
+  it('moves to the next day when the clocks are ahead', () => {
+    expect(localTimeIn(new Date('2026-10-09T22:30:00Z'), 'Asia/Riyadh')).toEqual({
+      weekday: 'saturday',
+      minuteOfDay: 90,
+    });
+  });
+
+  it('writes midnight as minute 0, not as 24:00', () => {
+    expect(localTimeIn(new Date('2026-10-08T21:00:00Z'), 'Asia/Riyadh')).toEqual({
+      weekday: 'friday',
+      minuteOfDay: 0,
+    });
+  });
+});
+
+describe('isOpenAtInstant', () => {
+  const hours = week({ friday: ranges(['14:00', '01:00']) });
+
+  it('reads the hours on the clocks of the time zone', () => {
+    // 15:00 on Friday in Riyadh.
+    expect(isOpenAtInstant(hours, new Date('2026-10-09T12:00:00Z'), 'Asia/Riyadh')).toBe(true);
+    // The same moment is 12:00 in UTC, before the branch opens that day.
+    expect(isOpenAtInstant(hours, new Date('2026-10-09T12:00:00Z'), 'UTC')).toBe(false);
+  });
+
+  it('is still open just after midnight, and closed at one', () => {
+    expect(isOpenAtInstant(hours, new Date('2026-10-09T21:30:00Z'), 'Asia/Riyadh')).toBe(true);
+    expect(isOpenAtInstant(hours, new Date('2026-10-09T22:00:00Z'), 'Asia/Riyadh')).toBe(false);
   });
 });

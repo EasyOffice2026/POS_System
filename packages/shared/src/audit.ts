@@ -17,6 +17,18 @@ export const auditActions = [
   'brand.updated',
   'branch.created',
   'branch.updated',
+  'menu.category.created',
+  'menu.category.updated',
+  'menu.category.reordered',
+  'menu.item.created',
+  'menu.item.updated',
+  'menu.item.branch_override_set',
+  'menu.modifier_group.created',
+  'menu.modifier_group.updated',
+  'menu.modifier.created',
+  'menu.modifier.updated',
+  'menu.combo.created',
+  'menu.combo.updated',
 ] as const;
 
 export type AuditAction = (typeof auditActions)[number];

@@ -124,6 +124,41 @@ export function overlappingDays(hours: OpeningHours): Weekday[] {
   return weekdays.filter((day) => flagged.has(day));
 }
 
+// Whether the hours are open at a moment of the week, given as the day and the minute of that day
+// (0 to 1439). A range that runs past midnight is still open after it, and one that runs past the
+// end of Saturday is open on Sunday morning.
+export function isOpenAt(hours: OpeningHours, weekday: Weekday, minuteOfDay: number): boolean {
+  const point = weekdays.indexOf(weekday) * MINUTES_PER_DAY + minuteOfDay;
+
+  return spansOf(hours).some(
+    (span) =>
+      (span.start <= point && point < span.end) ||
+      (span.start <= point + MINUTES_PER_WEEK && point + MINUTES_PER_WEEK < span.end),
+  );
+}
+
+// The day and the minute of the day that a moment has on the clocks of a time zone.
+export function localTimeIn(at: Date, timeZone: string): { weekday: Weekday; minuteOfDay: number } {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    weekday: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(at);
+  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? '';
+
+  const weekday = weekdaySchema.parse(part('weekday').toLowerCase());
+  return { weekday, minuteOfDay: (Number(part('hour')) % 24) * 60 + Number(part('minute')) };
+}
+
+// Whether the hours are open at a moment, on the clocks of a time zone. This is how a terminal
+// decides whether an item is available now.
+export function isOpenAtInstant(hours: OpeningHours, at: Date, timeZone: string): boolean {
+  const { weekday, minuteOfDay } = localTimeIn(at, timeZone);
+  return isOpenAt(hours, weekday, minuteOfDay);
+}
+
 // Ranges in the order of the clock, so a day always reads the same.
 function sortRanges(hours: OpeningHours): OpeningHours {
   const sorted = { ...hours };
