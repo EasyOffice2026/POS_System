@@ -220,7 +220,8 @@
     "COMBO_NEEDS_SLOT": "A combo needs at least one choice.",
     "TOO_MANY_SLOTS": "A combo can have at most 10 choices.",
     "TOO_MANY_OPTIONS": "A choice can have at most 30 items.",
-    "OPTION_DUPLICATE": "This item is already in this choice."
+    "OPTION_DUPLICATE": "This item is already in this choice.",
+    "CATEGORY_REQUIRED": "Choose a category."
   },
   "rolesPage": {
     "title": "Roles",
@@ -428,6 +429,51 @@
         "activated": "The category is active again.",
         "reordered": "The new order is saved."
       }
+    },
+    "items": {
+      "search": "Search",
+      "searchPlaceholder": "Name in English or Arabic",
+      "filterCategory": "Category",
+      "filterStatus": "Status",
+      "newItem": "New item",
+      "needCategory": "Add a category first: every item belongs to a category.",
+      "goToCategories": "Go to categories",
+      "empty": "There are no items yet.",
+      "noMatch": "No item matches these filters.",
+      "columns": {
+        "name": "Name",
+        "category": "Category",
+        "price": "Price",
+        "status": "Status"
+      }
+    },
+    "item": {
+      "newTitle": "New item",
+      "created": "Item created. Next, set the prices of the branches and the modifiers.",
+      "saved": "Changes saved.",
+      "readOnly": "You can see this item but you cannot change it.",
+      "form": {
+        "category": "Category",
+        "chooseCategory": "Choose a category",
+        "descriptionEnglish": "Description (English)",
+        "descriptionArabic": "Description (Arabic)",
+        "descriptionHint": "Optional. Write it in both languages, or leave both empty.",
+        "basePrice": "Price",
+        "basePriceHint": "The price at every branch, unless a branch sets its own.",
+        "imageUrl": "Image link",
+        "imageUrlHint": "A link to a picture. Uploading a file comes later.",
+        "active": "Active",
+        "activeHint": "Leave this off to set the item up before it is sold."
+      },
+      "actions": {
+        "deactivate": "Deactivate",
+        "activate": "Activate"
+      },
+      "messages": {
+        "deactivated": "The item is deactivated. It is no longer sold.",
+        "activated": "The item is active again."
+      },
+      "deactivateHint": "An item is never deleted: old orders keep its name and price. A deactivated item is not on any terminal."
     }
   }
 }

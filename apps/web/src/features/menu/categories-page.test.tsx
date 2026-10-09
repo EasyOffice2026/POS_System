@@ -62,9 +62,9 @@ describe('the categories of the menu', () => {
     expect(within(rowOf('Pizzas')).getByText('البيتزا')).toHaveAttribute('lang', 'ar');
   });
 
-  it('asks for the categories of the brand, and the menu opens on this section', async () => {
+  it('asks for the categories of the brand, and marks the section as the current one', async () => {
     const mock = api();
-    renderApp('/admin/menu');
+    renderApp('/admin/menu/categories');
 
     await screen.findByText('Pizzas');
 

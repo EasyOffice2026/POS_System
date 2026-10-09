@@ -6,7 +6,7 @@ import { useAuth } from '../auth/auth-context';
 import type { MenuContext } from './menu-context';
 import { useMenuBrand } from './use-menu-brand';
 
-const tabs = ['categories'] as const;
+const tabs = ['items', 'categories'] as const;
 
 const tabClass = ({ isActive }: { isActive: boolean }) =>
   `-mb-px rounded-t-md border-b-2 px-3 py-2 text-sm font-medium ${
@@ -18,7 +18,7 @@ const tabClass = ({ isActive }: { isActive: boolean }) =>
 // /admin/menu opens the first section, and keeps the choice of brand.
 export function MenuIndexRedirect() {
   const { search } = useLocation();
-  return <Navigate to={{ pathname: 'categories', search }} replace />;
+  return <Navigate to={{ pathname: 'items', search }} replace />;
 }
 
 // The menu area: the brand the menu belongs to, and the sections of the menu. A group admin

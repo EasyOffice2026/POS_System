@@ -53,7 +53,7 @@ const tabs = () =>
 describe('the menu area for a group admin', () => {
   it('lets them choose the brand, and starts with the first one', async () => {
     const mock = asGroupAdmin();
-    renderApp('/admin/menu');
+    renderApp('/admin/menu/categories');
 
     const picker = await screen.findByLabelText('Brand');
     expect(await screen.findByText('Pizzas')).toBeInTheDocument();
@@ -72,14 +72,17 @@ describe('the menu area for a group admin', () => {
   it('shows the menu of another brand when it is chosen, and keeps the choice in the sections', async () => {
     const user = userEvent.setup();
     asGroupAdmin();
-    renderApp('/admin/menu');
+    renderApp('/admin/menu/categories');
     await screen.findByText('Pizzas');
 
     await user.selectOptions(screen.getByLabelText('Brand'), ids.burger);
 
     expect(await screen.findByText('Burgers')).toBeInTheDocument();
     expect(screen.queryByText('Pizzas')).not.toBeInTheDocument();
-    expect(tabs()).toEqual([`/admin/menu/categories?brandId=${ids.burger}`]);
+    expect(tabs()).toEqual([
+      `/admin/menu/items?brandId=${ids.burger}`,
+      `/admin/menu/categories?brandId=${ids.burger}`,
+    ]);
   });
 
   it('opens the brand named in the address', async () => {
@@ -99,7 +102,7 @@ describe('the menu area for a group admin', () => {
 
   it('marks a brand that is not active in the choice', async () => {
     asGroupAdmin({ [BRANDS]: () => json(page([pizzaBrand, { ...burgerBrand, isActive: false }])) });
-    renderApp('/admin/menu');
+    renderApp('/admin/menu/categories');
 
     const picker = await screen.findByLabelText('Brand');
 
@@ -110,11 +113,11 @@ describe('the menu area for a group admin', () => {
 
   it('does not ask for a brand when there is only one', async () => {
     asGroupAdmin({ [BRANDS]: () => json(page([pizzaBrand])) });
-    renderApp('/admin/menu');
+    renderApp('/admin/menu/categories');
 
     expect(await screen.findByText('Pizzas')).toBeInTheDocument();
     expect(screen.queryByLabelText('Brand')).not.toBeInTheDocument();
-    expect(tabs()).toEqual(['/admin/menu/categories']);
+    expect(tabs()).toEqual(['/admin/menu/items', '/admin/menu/categories']);
   });
 
   it('says so when there is no brand yet', async () => {
@@ -142,7 +145,7 @@ describe('the menu area for a person who belongs to a brand', () => {
       [branchesOf(ids.pizza)]: () => json(page([pizzaMall])),
       [LIST]: categoriesByBrand,
     });
-    renderApp('/admin/menu');
+    renderApp('/admin/menu/categories');
 
     expect(await screen.findByText('Pizzas')).toBeInTheDocument();
     expect(screen.queryByLabelText('Brand')).not.toBeInTheDocument();
@@ -157,7 +160,7 @@ describe('the menu area for a person who belongs to a brand', () => {
       [REFRESH]: () => json(sessionFor(cashier)),
       [LIST]: categoriesByBrand,
     });
-    renderApp('/admin/menu');
+    renderApp('/admin/menu/categories');
 
     expect(await screen.findByText('Pizzas')).toBeInTheDocument();
     expect(screen.getByText('You can see the menu but you cannot change it.')).toBeInTheDocument();
