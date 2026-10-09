@@ -30,6 +30,23 @@ Open the web address printed in the terminal (normally http://localhost:5173; Vi
 
 Everything has a working default, so copying `.env.example` to `.env` is optional. `.env` is never committed.
 
+### Without Docker
+
+If Docker is not installed, you can still try the project with a small PostgreSQL that Prisma runs for you. It is slower than the Docker one and meant for trying things out, not for real work.
+
+```
+npm install
+npx prisma dev --detach --name pos-dev
+```
+
+The second command prints the address of the database, for example `postgres://postgres:postgres@localhost:51214/template1?sslmode=disable`. Make a file named `.env` in the project folder with one line: that address with `&schema=demo` added at the end, so the demo data has a schema of its own.
+
+```
+DATABASE_URL=postgres://postgres:postgres@localhost:51214/template1?sslmode=disable&schema=demo
+```
+
+Then run `npm run db:setup` and `npm run dev` as above. Redis is not needed yet. `npx prisma dev ls` shows the address again, `npx prisma dev stop pos-dev` stops the database, and `npx prisma dev start pos-dev` starts it again with its data. To run the tests, set the same address in the terminal first, for example in PowerShell: `$env:DATABASE_URL = 'postgres://postgres:postgres@localhost:51214/template1?sslmode=disable'`.
+
 ### Demo accounts
 
 `npm run db:setup` creates two brands (Pizza Palace and Burger Hub) with two branches each, a menu for each brand, and one account per role. These are for development only. The seed refuses to run when `NODE_ENV` is `production`.
