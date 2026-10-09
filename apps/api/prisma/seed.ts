@@ -1,5 +1,6 @@
 // Demo data for local development: two brands, their branches and one account per role.
 // Safe to run again: it updates the same rows and clears any sign-in lockout.
+import { branchConfigSchema, type OpeningHours, weekdays } from '@pos/shared';
 import { loadConfig } from '../src/config';
 import { createPasswordHasher, hashProfiles } from '../src/lib/password';
 import { createPrismaClient } from '../src/lib/prisma';
@@ -28,26 +29,88 @@ const brands = [
   { id: brandIds.burger, name: { en: 'Burger Hub', ar: 'برجر هب' } },
 ];
 
+// Opening hours and printers for the demo branches. They are checked against the same rules the
+// screens and the API use, so a mistake here stops the seed.
+type Day = OpeningHours['sunday'];
+
+const ranges = (...pairs: [string, string][]): Day => ({
+  kind: 'ranges',
+  ranges: pairs.map(([open, close]) => ({ open, close })),
+});
+
+const everyDay = (day: Day, exceptions: Partial<OpeningHours> = {}): OpeningHours => ({
+  ...(Object.fromEntries(weekdays.map((name) => [name, day])) as OpeningHours),
+  ...exceptions,
+});
+
+const printer = (n: number, name: string, kind: 'receipt' | 'kitchen', host: string) => ({
+  id: `01990000-0000-7000-8000-0000000003${String(n).padStart(2, '0')}`,
+  name,
+  kind,
+  host,
+  port: 9100,
+});
+
 const branches = [
   {
     id: branchIds.pizzaMall,
     brandId: brandIds.pizza,
     name: { en: 'Pizza Palace - Mall Branch', ar: 'بيتزا بالاس - فرع المول' },
+    address: 'Level 1, City Mall, Riyadh',
+    // Friday opens in the afternoon and closes after midnight.
+    config: branchConfigSchema.parse({
+      openingHours: everyDay(ranges(['10:00', '23:00']), { friday: ranges(['14:00', '01:00']) }),
+      printers: [
+        printer(1, 'Cash desk', 'receipt', '192.168.10.50'),
+        printer(2, 'Pizza oven', 'kitchen', '192.168.10.51'),
+      ],
+    }),
   },
   {
     id: branchIds.pizzaDowntown,
     brandId: brandIds.pizza,
     name: { en: 'Pizza Palace - Downtown Branch', ar: 'بيتزا بالاس - فرع وسط المدينة' },
+    address: 'King Fahd Road, Riyadh',
+    // Lunch and dinner, with a break between.
+    config: branchConfigSchema.parse({
+      openingHours: everyDay(ranges(['11:00', '15:00'], ['18:00', '23:30']), {
+        friday: ranges(['18:00', '23:30']),
+      }),
+      printers: [
+        printer(3, 'Cash desk', 'receipt', '192.168.20.50'),
+        printer(4, 'Drive-through desk', 'receipt', '192.168.20.52'),
+        printer(5, 'Kitchen', 'kitchen', '192.168.20.51'),
+      ],
+    }),
   },
   {
     id: branchIds.burgerAirport,
     brandId: brandIds.burger,
     name: { en: 'Burger Hub - Airport Branch', ar: 'برجر هب - فرع المطار' },
+    address: 'Terminal 2, King Khalid Airport, Riyadh',
+    // An airport branch never closes.
+    config: branchConfigSchema.parse({
+      openingHours: everyDay({ kind: 'all_day' }),
+      printers: [
+        printer(6, 'Counter 1', 'receipt', '10.20.0.50'),
+        printer(7, 'Counter 2', 'receipt', '10.20.0.51'),
+        printer(8, 'Grill', 'kitchen', '10.20.0.60'),
+      ],
+    }),
   },
   {
     id: branchIds.burgerCorniche,
     brandId: brandIds.burger,
     name: { en: 'Burger Hub - Corniche Branch', ar: 'برجر هب - فرع الكورنيش' },
+    address: 'Corniche Road, Jeddah',
+    // Open until two in the morning.
+    config: branchConfigSchema.parse({
+      openingHours: everyDay(ranges(['12:00', '02:00'])),
+      printers: [
+        printer(9, 'Cash desk', 'receipt', '10.30.0.50'),
+        printer(10, 'Grill', 'kitchen', '10.30.0.60'),
+      ],
+    }),
   },
 ];
 
@@ -150,7 +213,7 @@ try {
   for (const brand of brands) {
     await prisma.brand.upsert({
       where: { id: brand.id },
-      update: { name: brand.name },
+      update: { name: brand.name, isActive: true },
       create: brand,
     });
   }
@@ -158,7 +221,13 @@ try {
   for (const branch of branches) {
     await prisma.branch.upsert({
       where: { id: branch.id },
-      update: { name: branch.name, brandId: branch.brandId },
+      update: {
+        name: branch.name,
+        brandId: branch.brandId,
+        address: branch.address,
+        config: branch.config,
+        isActive: true,
+      },
       create: branch,
     });
   }
