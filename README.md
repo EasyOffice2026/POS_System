@@ -2,7 +2,7 @@
 
 A web-based point of sale and operations platform for restaurant groups that run several brands across many branches. It covers orders, kitchen display, inventory, recipes, purchasing, customer loyalty and reporting, in Arabic (RTL) and English (LTR).
 
-**Status:** Phase 1 is under way. Sign-in, tenant isolation between brands and branches, the database schema, the web shell (login, dashboard, Arabic/English), user administration (users, roles, audit log) and the setup of brands and branches (opening hours, printers) are built. Menus, orders and the other product features are not built yet.
+**Status:** Phase 1 is under way. Sign-in, tenant isolation between brands and branches, the database schema, the web shell (login, dashboard, Arabic/English), user administration (users, roles, audit log), the setup of brands and branches (opening hours, printers) and the bilingual menu (categories, items with modifiers, prices and times per branch, combos, and the menu a branch terminal loads) are built. Orders and the other product features are not built yet.
 
 ## What the system will do
 
@@ -32,7 +32,7 @@ Everything has a working default, so copying `.env.example` to `.env` is optiona
 
 ### Demo accounts
 
-`npm run db:setup` creates two brands (Pizza Palace and Burger Hub) with two branches each, and one account per role. These are for development only. The seed refuses to run when `NODE_ENV` is `production`.
+`npm run db:setup` creates two brands (Pizza Palace and Burger Hub) with two branches each, a menu for each brand, and one account per role. These are for development only. The seed refuses to run when `NODE_ENV` is `production`.
 
 | Email                            | Role           | Sees                      |
 | -------------------------------- | -------------- | ------------------------- |
@@ -49,16 +49,17 @@ The password for all of them is `DevPassw0rd!`. Cashiers and kitchen staff sign 
 
 Sign in as `admin@pos.local` and use the menu under the header. Each link shows only when the person has its permission.
 
-| Screen    | What it does                                                                             | Needs                                        |
-| --------- | ---------------------------------------------------------------------------------------- | -------------------------------------------- |
-| Dashboard | The brands and branches the person can see                                               | Any signed-in person                         |
-| Brands    | The brands of the group: add one, rename it, set a logo link, deactivate or activate it  | `brands:read` (changing: `brands:write`)     |
-| Branches  | Branches of one brand or all. Settings in three tabs: details, opening hours, printers   | `branches:read` (changing: `branches:write`) |
-| Users     | Search and filter people, add and change them, deactivate, unlock, set a password or PIN | `users:read` (changing: `users:write`)       |
-| Roles     | What each built-in role may do                                                           | `roles:read`                                 |
-| Audit log | Who did what, newest first, filtered by action, days or person                           | `audit:read`                                 |
+| Screen    | What it does                                                                                                                                | Needs                                        |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Dashboard | The brands and branches the person can see                                                                                                  | Any signed-in person                         |
+| Brands    | The brands of the group: add one, rename it, set a logo link, deactivate or activate it                                                     | `brands:read` (changing: `brands:write`)     |
+| Branches  | Branches of one brand or all. Settings in three tabs: details, opening hours, printers                                                      | `branches:read` (changing: `branches:write`) |
+| Menu      | Categories (drag to re-order), items with modifiers, prices and times per branch, combos, and a preview of the menu a branch terminal loads | `menu:read` (changing: `menu:write`)         |
+| Users     | Search and filter people, add and change them, deactivate, unlock, set a password or PIN                                                    | `users:read` (changing: `users:write`)       |
+| Roles     | What each built-in role may do                                                                                                              | `roles:read`                                 |
+| Audit log | Who did what, newest first, filtered by action, days or person                                                                              | `audit:read`                                 |
 
-The demo branches already have opening hours and printers, so open one under Branches to see them: a branch that closes after midnight, one with a lunch break, one that is open all day, and two receipt printers at one branch. Deactivate a branch and a PIN sign-in there stops with a message for the terminal. Sign in as `pizza.manager@pos.local` to see that only Pizza Palace people, branches and events appear. A brand manager can set up the hours and printers of their branches, but cannot create a brand or a group admin. Sign in as `pizza.mall.manager@pos.local` to see a branch manager's view: the people at their own branch, with no way to change them. Switch the language with the button in the header to see the screens in Arabic, mirrored right to left.
+The demo branches already have opening hours and printers, so open one under Branches to see them: a branch that closes after midnight, one with a lunch break, one that is open all day, and two receipt printers at one branch. Deactivate a branch and a PIN sign-in there stops with a message for the terminal. Sign in as `pizza.manager@pos.local` to see that only Pizza Palace people, branches and events appear. A brand manager can set up the hours and printers of their branches, but cannot create a brand or a group admin. Sign in as `pizza.mall.manager@pos.local` to see a branch manager's view: the people at their own branch, with no way to change them. Open Menu to see the demo menus: Pizza Palace has sizes and extras, a lunch-only salad and a dessert that one branch does not sell; under Branch menu, choose a branch to see its prices and what it leaves out. Search the items in English or Arabic (try مارجريتا). Switch the language with the button in the header to see the screens in Arabic, mirrored right to left.
 
 ### Commands
 
@@ -102,7 +103,7 @@ The API tests need PostgreSQL, so run `npm run infra:up` first. They use their o
 ```
 pos-system/
 ├── apps/
-│   ├── web/            # React app: login, dashboard, brands, branches, users, roles, audit log
+│   ├── web/            # React app: login, dashboard, brands, branches, menu, users, roles, audit log
 │   ├── api/            # Node.js REST API (Express)
 │   │   ├── prisma/     # Database schema, migrations and demo seed
 │   │   └── src/        # modules/, middleware/, tenancy/, lib/
