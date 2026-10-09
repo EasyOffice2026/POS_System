@@ -1,5 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { createBranch, createBrand, createUser } from '../../test/factories';
+import {
+  createBranch,
+  createBrand,
+  createCategory,
+  createItem,
+  createUser,
+} from '../../test/factories';
 import { createTestPrisma, resetDatabase } from '../../test/helpers';
 import { createPasswordHasher, hashProfiles } from '../lib/password';
 import { syncSystemRoles } from '../lib/roles';
@@ -458,6 +464,286 @@ describe('what the scoped client refuses', () => {
   it('writes to the built-in roles, which are read-only', async () => {
     expect(await db().role.count()).toBe(7);
     await expect(db().role.deleteMany()).rejects.toThrow(/read-only/);
+  });
+});
+
+describe('the menu', () => {
+  let categoryA: { id: string };
+  let categoryB: { id: string };
+  let itemA: { id: string };
+  let itemB: { id: string };
+
+  beforeEach(async () => {
+    categoryA = await createCategory(prisma, world.brandA.id, 'Pizzas');
+    categoryB = await createCategory(prisma, world.brandB.id, 'Burgers');
+    itemA = await createItem(prisma, world.brandA.id, categoryA.id, 'Margherita');
+    itemB = await createItem(prisma, world.brandB.id, categoryB.id, 'Cheeseburger');
+  });
+
+  it('is only seen inside the brand by a brand-scoped person', async () => {
+    const db = brandScope(world.brandA.id);
+
+    expect((await db.menuCategory.findMany()).map((row) => row.id)).toEqual([categoryA.id]);
+    expect((await db.menuItem.findMany()).map((row) => row.id)).toEqual([itemA.id]);
+    expect(await db.menuItem.findUnique({ where: { id: itemB.id } })).toBeNull();
+    expect(await db.menuItem.count()).toBe(1);
+  });
+
+  it('is seen in every brand by a group user', async () => {
+    const items = await groupScope().menuItem.findMany();
+
+    expect(items.map((row) => row.id).sort()).toEqual([itemA.id, itemB.id].sort());
+  });
+
+  it('is read in full by a branch-scoped person, because the menu belongs to the brand', async () => {
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    expect((await db.menuItem.findMany()).map((row) => row.id)).toEqual([itemA.id]);
+    expect((await db.menuCategory.findMany()).map((row) => row.id)).toEqual([categoryA.id]);
+  });
+
+  it('cannot be changed by a branch-scoped person', async () => {
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    await expect(
+      db.menuCategory.create({
+        data: { brandId: world.brandA.id, name: { en: 'Sides', ar: 'جانبية' } },
+      }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+    await expect(
+      db.menuItem.update({ where: { id: itemA.id }, data: { isActive: false } }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+    await expect(db.menuItem.deleteMany()).rejects.toBeInstanceOf(TenantViolationError);
+
+    expect((await prisma.menuItem.findUniqueOrThrow({ where: { id: itemA.id } })).isActive).toBe(
+      true,
+    );
+  });
+
+  it('cannot be created for another brand by a brand-scoped person', async () => {
+    const db = brandScope(world.brandA.id);
+
+    await expect(
+      db.menuCategory.create({
+        data: { brandId: world.brandB.id, name: { en: 'Sides', ar: 'جانبية' } },
+      }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+  });
+
+  it('cannot be reached in another brand by id', async () => {
+    const db = brandScope(world.brandA.id);
+
+    await expect(
+      db.menuItem.update({ where: { id: itemB.id }, data: { isActive: false } }),
+    ).rejects.toThrow();
+    expect(
+      await db.menuItem.updateMany({ where: { id: itemB.id }, data: { isActive: false } }),
+    ).toEqual({
+      count: 0,
+    });
+    expect((await prisma.menuItem.findUniqueOrThrow({ where: { id: itemB.id } })).isActive).toBe(
+      true,
+    );
+  });
+
+  it('keeps the limit inside a transaction', async () => {
+    const db = brandScope(world.brandA.id);
+
+    const seen = await db.$transaction(async (tx) => tx.menuItem.findMany());
+
+    expect(seen.map((row) => row.id)).toEqual([itemA.id]);
+  });
+});
+
+describe('what a branch changes about the menu', () => {
+  let itemA: { id: string };
+
+  beforeEach(async () => {
+    const category = await createCategory(prisma, world.brandA.id, 'Pizzas');
+    itemA = await createItem(prisma, world.brandA.id, category.id, 'Margherita');
+    for (const branch of [world.branchA1, world.branchA2]) {
+      await prisma.branchMenuItem.create({
+        data: {
+          branchId: branch.id,
+          itemId: itemA.id,
+          brandId: world.brandA.id,
+          priceOverride: '22.500',
+        },
+      });
+    }
+  });
+
+  it('is seen for every branch of the brand by a brand-scoped person', async () => {
+    const rows = await brandScope(world.brandA.id).branchMenuItem.findMany();
+
+    expect(rows.map((row) => row.branchId).sort()).toEqual(
+      [world.branchA1.id, world.branchA2.id].sort(),
+    );
+  });
+
+  it('is seen only for their own branches by a branch-scoped person', async () => {
+    const rows = await branchScope(world.brandA.id, [world.branchA1.id]).branchMenuItem.findMany();
+
+    expect(rows.map((row) => row.branchId)).toEqual([world.branchA1.id]);
+  });
+
+  it('is not seen by another brand', async () => {
+    expect(await brandScope(world.brandB.id).branchMenuItem.findMany()).toEqual([]);
+  });
+
+  it('can be written for their own branch, and not for another, by a branch-scoped person', async () => {
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    await expect(
+      db.branchMenuItem.update({
+        where: { branchId_itemId: { branchId: world.branchA1.id, itemId: itemA.id } },
+        data: { isAvailable: false },
+      }),
+    ).resolves.toMatchObject({ isAvailable: false });
+    await expect(
+      db.branchMenuItem.update({
+        where: { branchId_itemId: { branchId: world.branchA2.id, itemId: itemA.id } },
+        data: { isAvailable: false },
+      }),
+    ).rejects.toThrow();
+  });
+});
+
+describe('what the database refuses in the menu', () => {
+  let categoryA: { id: string };
+  let categoryB: { id: string };
+  let itemA: { id: string };
+  let itemB: { id: string };
+
+  beforeEach(async () => {
+    categoryA = await createCategory(prisma, world.brandA.id, 'Pizzas');
+    categoryB = await createCategory(prisma, world.brandB.id, 'Burgers');
+    itemA = await createItem(prisma, world.brandA.id, categoryA.id, 'Margherita');
+    itemB = await createItem(prisma, world.brandB.id, categoryB.id, 'Cheeseburger');
+  });
+
+  const names = { en: 'X', ar: 'س' };
+
+  it('an item whose category belongs to another brand', async () => {
+    await expect(
+      prisma.menuItem.create({
+        data: {
+          brandId: world.brandB.id,
+          categoryId: categoryA.id,
+          name: names,
+          basePrice: '1.000',
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('a branch override that pairs a branch with an item of another brand', async () => {
+    await expect(
+      prisma.branchMenuItem.create({
+        data: { branchId: world.branchA1.id, itemId: itemB.id, brandId: world.brandA.id },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.branchMenuItem.create({
+        data: { branchId: world.branchB1.id, itemId: itemA.id, brandId: world.brandA.id },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('a modifier group on an item of another brand, and a modifier in a group of another brand', async () => {
+    await expect(
+      prisma.modifierGroup.create({
+        data: { brandId: world.brandB.id, itemId: itemA.id, name: names },
+      }),
+    ).rejects.toThrow();
+
+    const group = await prisma.modifierGroup.create({
+      data: { brandId: world.brandA.id, itemId: itemA.id, name: names },
+    });
+    await expect(
+      prisma.modifier.create({
+        data: { brandId: world.brandB.id, groupId: group.id, name: names },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('a combo option for an item of another brand', async () => {
+    const combo = await prisma.combo.create({
+      data: { brandId: world.brandA.id, name: names, price: '30.000' },
+    });
+    const slot = await prisma.comboSlot.create({
+      data: { brandId: world.brandA.id, comboId: combo.id, name: names },
+    });
+
+    await expect(
+      prisma.comboSlotOption.create({
+        data: { slotId: slot.id, itemId: itemB.id, brandId: world.brandA.id },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.comboSlotOption.create({
+        data: { slotId: slot.id, itemId: itemA.id, brandId: world.brandA.id },
+      }),
+    ).resolves.toBeTruthy();
+  });
+
+  it('a price below zero, for an item, a combo and a branch price', async () => {
+    await expect(
+      prisma.menuItem.create({
+        data: {
+          brandId: world.brandA.id,
+          categoryId: categoryA.id,
+          name: names,
+          basePrice: '-0.001',
+        },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.combo.create({ data: { brandId: world.brandA.id, name: names, price: '-1.000' } }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.branchMenuItem.create({
+        data: {
+          branchId: world.branchA1.id,
+          itemId: itemA.id,
+          brandId: world.brandA.id,
+          priceOverride: '-5.000',
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('a modifier with a price change below zero is fine', async () => {
+    const group = await prisma.modifierGroup.create({
+      data: { brandId: world.brandA.id, itemId: itemA.id, name: names },
+    });
+
+    await expect(
+      prisma.modifier.create({
+        data: { brandId: world.brandA.id, groupId: group.id, name: names, priceDelta: '-3.000' },
+      }),
+    ).resolves.toBeTruthy();
+  });
+
+  it('a smallest choice above the largest, or a largest below 1', async () => {
+    const group = (minSelect: number, maxSelect: number) =>
+      prisma.modifierGroup.create({
+        data: { brandId: world.brandA.id, itemId: itemA.id, name: names, minSelect, maxSelect },
+      });
+
+    await expect(group(3, 2)).rejects.toThrow();
+    await expect(group(0, 0)).rejects.toThrow();
+    await expect(group(-1, 2)).rejects.toThrow();
+    await expect(group(1, 1)).resolves.toBeTruthy();
+  });
+
+  it('the deletion of an item that has options, overrides or groups', async () => {
+    await prisma.modifierGroup.create({
+      data: { brandId: world.brandA.id, itemId: itemA.id, name: names },
+    });
+
+    await expect(prisma.menuItem.delete({ where: { id: itemA.id } })).rejects.toThrow();
+    await expect(prisma.menuCategory.delete({ where: { id: categoryA.id } })).rejects.toThrow();
   });
 });
 

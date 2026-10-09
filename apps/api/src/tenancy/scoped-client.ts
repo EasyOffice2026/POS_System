@@ -27,6 +27,9 @@ interface ModelRule {
   // For rows with no branch column of their own: a branch-scoped person only sees rows that are
   // linked to one of their branches through this to-many relation (users, through assignments).
   branchesThrough?: { relation: string; field: string };
+  // Rows that belong to the whole brand, such as the menu. A branch-scoped person may read them
+  // and can never change them.
+  brandWide?: boolean;
 }
 
 // Every table that holds tenant data needs an entry here. A model without one is refused.
@@ -36,6 +39,15 @@ const tenantModels: Record<string, ModelRule> = {
   User: { brand: 'brandId', branchesThrough: { relation: 'branches', field: 'branchId' } },
   AuditLog: { brand: 'brandId', branch: 'branchId' },
   UserBranch: { brand: 'brandId', branch: 'branchId' },
+  // The menu belongs to the brand. What a branch changes about it has a branch of its own.
+  MenuCategory: { brand: 'brandId', brandWide: true },
+  MenuItem: { brand: 'brandId', brandWide: true },
+  ModifierGroup: { brand: 'brandId', brandWide: true },
+  Modifier: { brand: 'brandId', brandWide: true },
+  Combo: { brand: 'brandId', brandWide: true },
+  ComboSlot: { brand: 'brandId', brandWide: true },
+  ComboSlotOption: { brand: 'brandId', brandWide: true },
+  BranchMenuItem: { brand: 'brandId', branch: 'branchId' },
 };
 
 // Reference data every signed-in person may read. Never writable through this client.
@@ -205,6 +217,10 @@ export function applyScope(
     throw new Error(
       `Model "${model}" has no tenant rules. Add it to tenantModels, or use the unscoped client on purpose.`,
     );
+  }
+
+  if (rule.brandWide && ctx.scope === 'BRANCH' && !readOperations.has(operation)) {
+    throw new TenantViolationError(`A branch-scoped user cannot change ${model} rows.`);
   }
 
   const filter = tenantFilter(rule, ctx);

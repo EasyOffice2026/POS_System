@@ -19,6 +19,14 @@ export function testConfig(overrides: Record<string, string> = {}): Config {
 
 // Empties every table except the built-in roles, children before parents.
 export async function resetDatabase(prisma: PrismaClient): Promise<void> {
+  await prisma.comboSlotOption.deleteMany();
+  await prisma.comboSlot.deleteMany();
+  await prisma.combo.deleteMany();
+  await prisma.branchMenuItem.deleteMany();
+  await prisma.modifier.deleteMany();
+  await prisma.modifierGroup.deleteMany();
+  await prisma.menuItem.deleteMany();
+  await prisma.menuCategory.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.refreshToken.deleteMany();
   await prisma.userBranch.deleteMany();

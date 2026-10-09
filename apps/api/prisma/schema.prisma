@@ -36,8 +36,10 @@ model Brand {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  branches Branch[]
-  users    User[]
+  branches       Branch[]
+  users          User[]
+  menuCategories MenuCategory[]
+  combos         Combo[]
 
   @@map("brands")
 }
@@ -53,8 +55,9 @@ model Branch {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  brand       Brand        @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  assignments UserBranch[]
+  brand         Brand            @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  assignments   UserBranch[]
+  menuOverrides BranchMenuItem[]
 
   // Lets tables that carry a brand id point at "this branch of this brand".
   @@unique([id, brandId])
@@ -163,4 +166,164 @@ model AuditLog {
   @@index([userId, createdAt])
   @@index([action, createdAt])
   @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------------------------
+// The menu. It belongs to a brand, and a branch only stores differences (BranchMenuItem). Every
+// table carries the brand, and each link to a parent includes it, so the database refuses a row
+// that mixes two brands. Nothing in the menu is deleted: it is made inactive, so old orders keep
+// their names and prices. Prices are numeric(10,3). See docs/specs/004-menu.md.
+
+model MenuCategory {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  brandId   String   @map("brand_id") @db.Uuid
+  name      Json
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  brand Brand      @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  items MenuItem[]
+
+  // Lets an item point at "this category of this brand".
+  @@unique([id, brandId])
+  @@index([brandId, sortOrder])
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  brandId     String   @map("brand_id") @db.Uuid
+  categoryId  String   @map("category_id") @db.Uuid
+  name        Json
+  description Json?
+  // Both names written plainly (see normalizeSearchText), English first. Searched, and sorted on.
+  searchText  String   @default("") @map("search_text")
+  basePrice   Decimal  @map("base_price") @db.Decimal(10, 3)
+  imageUrl    String?  @map("image_url")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  category       MenuCategory      @relation(fields: [categoryId, brandId], references: [id, brandId], onDelete: Restrict)
+  modifierGroups ModifierGroup[]
+  overrides      BranchMenuItem[]
+  comboOptions   ComboSlotOption[]
+
+  @@unique([id, brandId])
+  @@index([brandId, categoryId])
+  @@map("menu_items")
+}
+
+// What one branch changes about one item. A branch with no changes has no row.
+model BranchMenuItem {
+  branchId      String   @map("branch_id") @db.Uuid
+  itemId        String   @map("item_id") @db.Uuid
+  brandId       String   @map("brand_id") @db.Uuid
+  // Null means the brand's price.
+  priceOverride Decimal? @map("price_override") @db.Decimal(10, 3)
+  isAvailable   Boolean  @default(true) @map("is_available")
+  // The days and times the item can be sold, in the shape of opening hours. Null means always.
+  schedule      Json?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  branch Branch   @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
+  item   MenuItem @relation(fields: [itemId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@id([branchId, itemId])
+  @@index([itemId])
+  @@index([brandId])
+  @@map("branch_menu_items")
+}
+
+model ModifierGroup {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  brandId   String   @map("brand_id") @db.Uuid
+  itemId    String   @map("item_id") @db.Uuid
+  name      Json
+  // A minimum of 1 or more makes a choice required.
+  minSelect Int      @default(0) @map("min_select")
+  maxSelect Int      @default(1) @map("max_select")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  item      MenuItem   @relation(fields: [itemId, brandId], references: [id, brandId], onDelete: Restrict)
+  modifiers Modifier[]
+
+  @@unique([id, brandId])
+  @@index([itemId])
+  @@map("modifier_groups")
+}
+
+model Modifier {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  brandId    String   @map("brand_id") @db.Uuid
+  groupId    String   @map("group_id") @db.Uuid
+  name       Json
+  // What the modifier adds to the price of the item. It can be 0 or below.
+  priceDelta Decimal  @default(0) @map("price_delta") @db.Decimal(10, 3)
+  sortOrder  Int      @default(0) @map("sort_order")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  group ModifierGroup @relation(fields: [groupId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@index([groupId])
+  @@map("modifiers")
+}
+
+// A fixed price for a set of choices. Each slot is one choice, and its options are the items that
+// can fill it.
+model Combo {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  brandId   String   @map("brand_id") @db.Uuid
+  name      Json
+  price     Decimal  @db.Decimal(10, 3)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  brand Brand       @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  slots ComboSlot[]
+
+  @@unique([id, brandId])
+  @@index([brandId])
+  @@map("combos")
+}
+
+model ComboSlot {
+  id        String @id @default(uuid(7)) @db.Uuid
+  brandId   String @map("brand_id") @db.Uuid
+  comboId   String @map("combo_id") @db.Uuid
+  name      Json
+  sortOrder Int    @default(0) @map("sort_order")
+
+  combo   Combo             @relation(fields: [comboId, brandId], references: [id, brandId], onDelete: Restrict)
+  options ComboSlotOption[]
+
+  @@unique([id, brandId])
+  @@index([comboId])
+  @@map("combo_slots")
+}
+
+model ComboSlotOption {
+  slotId     String  @map("slot_id") @db.Uuid
+  itemId     String  @map("item_id") @db.Uuid
+  brandId    String  @map("brand_id") @db.Uuid
+  // What this choice adds to the price of the combo, for example a bigger drink.
+  priceDelta Decimal @default(0) @map("price_delta") @db.Decimal(10, 3)
+  sortOrder  Int     @default(0) @map("sort_order")
+
+  // The options go with their slot when a combo's slots are replaced.
+  slot ComboSlot @relation(fields: [slotId, brandId], references: [id, brandId], onDelete: Cascade)
+  item MenuItem  @relation(fields: [itemId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@id([slotId, itemId])
+  @@index([itemId])
+  @@map("combo_slot_options")
 }

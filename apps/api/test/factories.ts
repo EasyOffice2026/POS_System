@@ -1,4 +1,4 @@
-import type { RoleKey } from '@pos/shared';
+import { type RoleKey, searchTextOf } from '@pos/shared';
 import type { PasswordHasher } from '../src/lib/password';
 import type { PrismaClient } from '../src/lib/prisma';
 
@@ -10,6 +10,30 @@ export function createBrand(prisma: PrismaClient, name = 'Test Brand') {
 
 export function createBranch(prisma: PrismaClient, brandId: string, name = 'Test Branch') {
   return prisma.branch.create({ data: { brandId, name: { en: name, ar: `${name} (ar)` } } });
+}
+
+export function createCategory(
+  prisma: PrismaClient,
+  brandId: string,
+  name = 'Test Category',
+  sortOrder = 0,
+) {
+  return prisma.menuCategory.create({
+    data: { brandId, name: { en: name, ar: `${name} (ar)` }, sortOrder },
+  });
+}
+
+export function createItem(
+  prisma: PrismaClient,
+  brandId: string,
+  categoryId: string,
+  name = 'Test Item',
+  basePrice = '10.000',
+) {
+  const names = { en: name, ar: `${name} (ar)` };
+  return prisma.menuItem.create({
+    data: { brandId, categoryId, name: names, searchText: searchTextOf(names), basePrice },
+  });
 }
 
 interface UserInput {
