@@ -2,6 +2,7 @@
 // account per role. Safe to run again: it updates the same rows and clears any sign-in lockout.
 import { branchConfigSchema, type OpeningHours, weekdays } from '@pos/shared';
 import { loadConfig } from '../src/config';
+import { isLocalDatabase } from '../src/lib/database-url';
 import { createPasswordHasher, hashProfiles } from '../src/lib/password';
 import { createPrismaClient } from '../src/lib/prisma';
 import { syncSystemRoles } from '../src/lib/roles';
@@ -205,6 +206,17 @@ const users: DemoUser[] = [
 ];
 
 const config = loadConfig();
+
+// The demo accounts have a public password, so they must not end up in a database that holds real
+// data, such as a hosted one. "npm run admin:create" makes a real first admin instead.
+if (!isLocalDatabase(config.databaseUrl) && process.env.SEED_ALLOW_REMOTE !== '1') {
+  throw new Error(
+    `The demo seed only runs against a database on this computer, and this one is at ${new URL(config.databaseUrl).host}. ` +
+      'To make the first admin of a real database, run: npm run admin:create -- --email you@example.com --name "Your Name". ' +
+      'To add the demo data to this database on purpose, set SEED_ALLOW_REMOTE=1.',
+  );
+}
+
 const prisma = createPrismaClient(config.databaseUrl);
 const hasher = createPasswordHasher(hashProfiles[config.passwordHashProfile]);
 
