@@ -90,7 +90,7 @@ export function createAuthService({ prisma, hasher, tokens, config }: AuthDeps) 
   const audit = (event: AuditEvent, meta: RequestMeta) =>
     writeAudit(prisma, { ...event, ip: meta.ip, userAgent: meta.userAgent });
 
-  async function findCandidate(input: LoginRequest): Promise<Candidate | null> {
+  async function findCandidate(input: LoginRequest, meta: RequestMeta): Promise<Candidate | null> {
     if (input.type === 'password') {
       const user = await prisma.user.findUnique({
         where: { email: input.email },
@@ -100,8 +100,32 @@ export function createAuthService({ prisma, hasher, tokens, config }: AuthDeps) 
     }
 
     // PIN: the staff code is only unique inside a brand, so find the brand through the branch.
-    const branch = await prisma.branch.findUnique({ where: { id: input.branchId } });
-    if (!branch?.isActive) return null;
+    const branch = await prisma.branch.findUnique({
+      where: { id: input.branchId },
+      include: { brand: { select: { isActive: true } } },
+    });
+    if (!branch) return null;
+
+    // A terminal at a deactivated branch, or at a branch of a deactivated brand, is told so before
+    // any PIN is looked at, so it can show a message instead of "wrong PIN". No attempt is counted
+    // against anybody. The attempt is in the audit log, for the managers of that brand.
+    if (!branch.isActive || !branch.brand.isActive) {
+      await audit(
+        {
+          action: 'auth.login.failed',
+          brandId: branch.brandId,
+          branchId: branch.id,
+          metadata: {
+            type: input.type,
+            branchId: input.branchId,
+            staffCode: input.staffCode,
+            reason: 'branch_inactive',
+          },
+        },
+        meta,
+      );
+      throw errors.branchInactive();
+    }
 
     const user = await prisma.user.findFirst({
       where: { brandId: branch.brandId, staffCode: input.staffCode },
@@ -111,6 +135,16 @@ export function createAuthService({ prisma, hasher, tokens, config }: AuthDeps) 
     if (!user || user.role.scope !== 'BRANCH' || !worksHere) return null;
 
     return { user, storedHash: user.pinHash, sessionBranchId: branch.id };
+  }
+
+  // A PIN session belongs to one branch. It cannot be refreshed once that branch, or its brand,
+  // has been deactivated.
+  async function branchIsOpen(branchId: string): Promise<boolean> {
+    const branch = await prisma.branch.findUnique({
+      where: { id: branchId },
+      select: { isActive: true, brand: { select: { isActive: true } } },
+    });
+    return Boolean(branch?.isActive && branch.brand.isActive);
   }
 
   async function issueRefreshToken(
@@ -188,7 +222,7 @@ export function createAuthService({ prisma, hasher, tokens, config }: AuthDeps) 
           ? { type: input.type, email: input.email }
           : { type: input.type, branchId: input.branchId, staffCode: input.staffCode };
 
-      const candidate = await findCandidate(input);
+      const candidate = await findCandidate(input, meta);
 
       if (!candidate?.user.isActive || !candidate.storedHash) {
         // Unknown, inactive or incomplete account: spend the same time as a real check.
@@ -251,7 +285,8 @@ export function createAuthService({ prisma, hasher, tokens, config }: AuthDeps) 
       // A token that was already used is a sign it was copied: end the whole session.
       if (record.revokedAt) return reuse();
 
-      if (record.expiresAt <= new Date() || !record.user.isActive) {
+      const stale = record.expiresAt <= new Date() || !record.user.isActive;
+      if (stale || (record.branchId !== null && !(await branchIsOpen(record.branchId)))) {
         await revokeFamily(record.familyId);
         throw errors.invalidRefreshToken();
       }

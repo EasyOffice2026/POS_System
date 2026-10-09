@@ -48,7 +48,7 @@ One endpoint, two methods: `POST /api/v1/auth/login`.
 - **Password:** `{ "type": "password", "email": "...", "password": "..." }`
 - **PIN:** `{ "type": "pin", "branchId": "...", "staffCode": "...", "pin": "1234" }`
 
-The terminal knows its own branch. The cashier enters a staff code and a PIN of 4 to 6 digits. Only branch-scoped roles that are assigned to that branch can use a PIN. A PIN session is limited to that one branch.
+The terminal knows its own branch. The cashier enters a staff code and a PIN of 4 to 6 digits. Only branch-scoped roles that are assigned to that branch can use a PIN. A PIN session is limited to that one branch. At a branch that is not active, or whose brand is not active, the answer is `403 BRANCH_INACTIVE` before any PIN is looked at, so the terminal can show a message and no failed attempt is counted. A PIN session also ends at its next token refresh when its branch or brand is deactivated. People who sign in with a password are not affected.
 
 Wrong credentials always return the same `INVALID_CREDENTIALS` error. This holds whether the account exists or not, and the response takes about the same time in both cases, so nobody can use it to find out which accounts exist.
 
@@ -103,7 +103,7 @@ All data access in request handlers goes through a scoped database client built 
 
 List endpoints take `?limit=` (1 to 100, default 50) and `?cursor=` and return `{ "data": [...], "nextCursor": "..." | null }`.
 
-Errors use the standard body `{ "error": { "code", "message", "details" } }`. Codes: `VALIDATION_ERROR` (400), `INVALID_JSON` (400), `INVALID_CREDENTIALS` (401), `UNAUTHENTICATED` (401), `TOKEN_EXPIRED` (401), `INVALID_REFRESH_TOKEN` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `PAYLOAD_TOO_LARGE` (413), `ACCOUNT_LOCKED` (429), `RATE_LIMITED` (429), `INTERNAL_ERROR` (500).
+Errors use the standard body `{ "error": { "code", "message", "details" } }`. Codes: `VALIDATION_ERROR` (400), `INVALID_JSON` (400), `INVALID_CREDENTIALS` (401), `UNAUTHENTICATED` (401), `TOKEN_EXPIRED` (401), `INVALID_REFRESH_TOKEN` (401), `FORBIDDEN` (403), `BRANCH_INACTIVE` (403), `NOT_FOUND` (404), `PAYLOAD_TOO_LARGE` (413), `ACCOUNT_LOCKED` (429), `RATE_LIMITED` (429), `INTERNAL_ERROR` (500).
 
 ## Acceptance criteria
 

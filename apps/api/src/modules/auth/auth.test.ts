@@ -244,6 +244,154 @@ describe('POST /auth/login with a staff code and PIN', () => {
   });
 });
 
+describe('a branch or brand that is not active', () => {
+  const deactivateBranch = (id = world.branch.id) =>
+    prisma.branch.update({ where: { id }, data: { isActive: false } });
+  const deactivateBrand = (id = world.brand.id) =>
+    prisma.brand.update({ where: { id }, data: { isActive: false } });
+  const codeOf = (res: request.Response) => (res.body as { error: { code: string } }).error.code;
+
+  it('tells a terminal at an inactive branch, so it can show a message', async () => {
+    await deactivateBranch();
+
+    const res = await pinLogin(world.branch.id, '1001', '1234');
+
+    expect(res.status).toBe(403);
+    expect(codeOf(res)).toBe('BRANCH_INACTIVE');
+    expect(refreshTokenOf(res)).toBeUndefined();
+  });
+
+  it('tells a terminal at a branch of an inactive brand', async () => {
+    await deactivateBrand();
+
+    const res = await pinLogin(world.branch.id, '1001', '1234');
+
+    expect(res.status).toBe(403);
+    expect(codeOf(res)).toBe('BRANCH_INACTIVE');
+  });
+
+  it('answers before the PIN is looked at, so nobody collects failed attempts', async () => {
+    await deactivateBranch();
+
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      expect(codeOf(await pinLogin(world.branch.id, '1001', '0000'))).toBe('BRANCH_INACTIVE');
+    }
+
+    const cashier = await prisma.user.findFirstOrThrow({
+      where: { brandId: world.brand.id, staffCode: '1001' },
+    });
+    expect(cashier.failedLoginAttempts).toBe(0);
+    expect(cashier.lockedUntil).toBeNull();
+  });
+
+  it('lets staff sign in again when the branch is activated', async () => {
+    await deactivateBranch();
+    await pinLogin(world.branch.id, '1001', '1234');
+    await prisma.branch.update({ where: { id: world.branch.id }, data: { isActive: true } });
+
+    const res = await pinLogin(world.branch.id, '1001', '1234');
+
+    expect(res.status).toBe(200);
+  });
+
+  it('still answers an unknown branch like a wrong PIN, so only a real branch is told apart', async () => {
+    const res = await pinLogin('0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b', '1001', '1234');
+
+    expect(res.status).toBe(401);
+    expect(codeOf(res)).toBe('INVALID_CREDENTIALS');
+  });
+
+  it('records the attempt in the audit log, for the managers of that brand', async () => {
+    await deactivateBranch();
+
+    await pinLogin(world.branch.id, '1001', '1234');
+
+    const row = await prisma.auditLog.findFirstOrThrow({ where: { action: 'auth.login.failed' } });
+    expect(row).toMatchObject({
+      brandId: world.brand.id,
+      branchId: world.branch.id,
+      userId: null,
+    });
+    expect(row.metadata).toEqual({
+      type: 'pin',
+      branchId: world.branch.id,
+      staffCode: '1001',
+      reason: 'branch_inactive',
+    });
+  });
+
+  it('leaves the other branches of the brand working', async () => {
+    const downtown = await createBranch(prisma, world.brand.id, 'Downtown');
+    const cashier = await prisma.user.findFirstOrThrow({
+      where: { brandId: world.brand.id, staffCode: '1001' },
+    });
+    await prisma.userBranch.create({
+      data: { userId: cashier.id, branchId: downtown.id, brandId: world.brand.id },
+    });
+    await deactivateBranch();
+
+    const res = await pinLogin(downtown.id, '1001', '1234');
+
+    expect(res.status).toBe(200);
+  });
+
+  it('does not stop a person who signs in with a password, so a manager can reach an inactive brand', async () => {
+    await deactivateBrand();
+
+    const login = await passwordLogin('manager@pos.local');
+    const refreshed = await refreshWith(refreshTokenOf(login) ?? '');
+
+    expect(login.status).toBe(200);
+    expect(refreshed.status).toBe(200);
+  });
+
+  it('ends a PIN session at its next refresh when the branch is deactivated', async () => {
+    const login = await pinLogin(world.branch.id, '1001', '1234');
+    await deactivateBranch();
+
+    const res = await refreshWith(refreshTokenOf(login) ?? '');
+
+    expect(res.status).toBe(401);
+    expect(codeOf(res)).toBe('INVALID_REFRESH_TOKEN');
+  });
+
+  it('ends a PIN session at its next refresh when the brand is deactivated', async () => {
+    const login = await pinLogin(world.branch.id, '1001', '1234');
+    await deactivateBrand();
+
+    const res = await refreshWith(refreshTokenOf(login) ?? '');
+
+    expect(res.status).toBe(401);
+  });
+
+  it('keeps that session over after the branch is activated again', async () => {
+    const login = await pinLogin(world.branch.id, '1001', '1234');
+    await deactivateBranch();
+    await refreshWith(refreshTokenOf(login) ?? '');
+    await prisma.branch.update({ where: { id: world.branch.id }, data: { isActive: true } });
+
+    const res = await refreshWith(refreshTokenOf(login) ?? '');
+
+    expect(res.status).toBe(401);
+  });
+
+  it('lets a PIN session at another branch go on when a different branch is deactivated', async () => {
+    const downtown = await createBranch(prisma, world.brand.id, 'Downtown');
+    const cashier = await prisma.user.findFirstOrThrow({
+      where: { brandId: world.brand.id, staffCode: '1001' },
+    });
+    await prisma.userBranch.create({
+      data: { userId: cashier.id, branchId: downtown.id, brandId: world.brand.id },
+    });
+    const login = await pinLogin(world.branch.id, '1001', '1234');
+    await deactivateBranch(downtown.id);
+
+    const res = await refreshWith(refreshTokenOf(login) ?? '');
+
+    expect(res.status).toBe(200);
+  });
+});
+
 describe('timing of failed sign-ins', () => {
   it('checks a dummy hash for an unknown account, and a real one for a known account', async () => {
     const real = createPasswordHasher(hashProfiles.fast);

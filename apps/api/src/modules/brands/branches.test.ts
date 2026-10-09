@@ -494,6 +494,24 @@ describe('PATCH /branches/:id', () => {
     expect(row?.metadata).toEqual({ changed: ['isActive'], isActive: false });
   });
 
+  it('refuses PIN sign-in at the branch once a manager has deactivated it, until it is activated again', async () => {
+    const api = await asPizzaManager();
+    const pinAtMall = () =>
+      request(app)
+        .post('/api/v1/auth/login')
+        .send({ type: 'pin', branchId: world.mall.id, staffCode: '1001', pin: '4829' });
+    expect((await pinAtMall()).status).toBe(200);
+
+    await api.patch(`${BRANCHES}/${world.mall.id}`, { isActive: false });
+
+    const refused = await pinAtMall();
+    expect(refused.status).toBe(403);
+    expect(errorOf(refused).code).toBe('BRANCH_INACTIVE');
+
+    await api.patch(`${BRANCHES}/${world.mall.id}`, { isActive: true });
+    expect((await pinAtMall()).status).toBe(200);
+  });
+
   it('lists a deactivated branch, so a manager can activate it again', async () => {
     const api = await asPizzaManager();
     await api.patch(`${BRANCHES}/${world.mall.id}`, { isActive: false });
