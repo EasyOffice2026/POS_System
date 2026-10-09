@@ -11,7 +11,6 @@ import {
   updateModifierRequestSchema,
 } from '@pos/shared';
 import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { TFunction } from 'i18next';
 import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActiveBadge } from '../../components/ActiveBadge';
@@ -34,6 +33,7 @@ import {
   updateModifier,
   updateModifierGroup,
 } from './menu-api';
+import { describeChoices } from './modifier-rule';
 
 type Notice = { kind: 'saved' } | { kind: 'problem'; code: string };
 
@@ -487,15 +487,6 @@ function ModifierRow({ item, group, modifier, readOnly, onNotice }: ModifierRowP
   );
 }
 
-// What a guest has to do in the group: how many modifiers to choose.
-function ruleOf(group: ModifierGroup, t: TFunction): string {
-  if (group.minSelect === 0) return t('menu.modifiers.rule.optional', { max: group.maxSelect });
-  if (group.minSelect === group.maxSelect) {
-    return t('menu.modifiers.rule.required', { min: group.minSelect });
-  }
-  return t('menu.modifiers.rule.requiredRange', { min: group.minSelect, max: group.maxSelect });
-}
-
 interface GroupCardProps {
   item: MenuItemDetail;
   group: ModifierGroup;
@@ -538,7 +529,7 @@ function GroupCard({ item, group, readOnly, onNotice }: GroupCardProps) {
               {group.name[otherLanguage]}
             </bdi>
           </p>
-          <p className="mt-1 text-sm text-slate-700">{ruleOf(group, t)}</p>
+          <p className="mt-1 text-sm text-slate-700">{describeChoices(group, t)}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ActiveBadge isActive={group.isActive} />

@@ -82,6 +82,8 @@ describe('the menu area for a group admin', () => {
     expect(tabs()).toEqual([
       `/admin/menu/items?brandId=${ids.burger}`,
       `/admin/menu/categories?brandId=${ids.burger}`,
+      `/admin/menu/combos?brandId=${ids.burger}`,
+      `/admin/menu/preview?brandId=${ids.burger}`,
     ]);
   });
 
@@ -117,7 +119,12 @@ describe('the menu area for a group admin', () => {
 
     expect(await screen.findByText('Pizzas')).toBeInTheDocument();
     expect(screen.queryByLabelText('Brand')).not.toBeInTheDocument();
-    expect(tabs()).toEqual(['/admin/menu/items', '/admin/menu/categories']);
+    expect(tabs()).toEqual([
+      '/admin/menu/items',
+      '/admin/menu/categories',
+      '/admin/menu/combos',
+      '/admin/menu/preview',
+    ]);
   });
 
   it('says so when there is no brand yet', async () => {

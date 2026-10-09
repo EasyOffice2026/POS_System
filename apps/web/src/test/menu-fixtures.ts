@@ -1,5 +1,7 @@
 import type {
+  BranchMenu,
   BranchOverride,
+  Combo,
   MenuCategory,
   MenuItem,
   MenuItemDetail,
@@ -161,6 +163,135 @@ export function branchOverride(overrides: Partial<BranchOverride> = {}): BranchO
     price: null,
     isAvailable: true,
     schedule: null,
+    ...overrides,
+  };
+}
+
+export const comboIds = {
+  pizzaMeal: '01990000-0000-7000-8000-000000000801',
+  lunchDeal: '01990000-0000-7000-8000-000000000802',
+};
+
+export const slotIds = {
+  pizza: '01990000-0000-7000-8000-000000000811',
+  drink: '01990000-0000-7000-8000-000000000812',
+};
+
+export function combo(overrides: Partial<Combo> = {}): Combo {
+  return {
+    id: comboIds.pizzaMeal,
+    brandId: ids.pizza,
+    name: { en: 'Pizza meal', ar: 'وجبة بيتزا' },
+    price: '39.000',
+    isActive: true,
+    slots: [
+      {
+        id: slotIds.pizza,
+        name: { en: 'Pizza', ar: 'بيتزا' },
+        options: [
+          { itemId: itemIds.margherita, priceDelta: '0.000' },
+          { itemId: itemIds.pepperoni, priceDelta: '3.000' },
+        ],
+      },
+      {
+        id: slotIds.drink,
+        name: { en: 'Drink', ar: 'مشروب' },
+        options: [{ itemId: itemIds.cola, priceDelta: '0.000' }],
+      },
+    ],
+    ...overrides,
+  };
+}
+
+export const pizzaMeal = combo();
+
+export const lunchDeal = combo({
+  id: comboIds.lunchDeal,
+  name: { en: 'Lunch deal', ar: 'عرض الغداء' },
+  price: '22.000',
+  isActive: false,
+  slots: [
+    {
+      id: slotIds.pizza,
+      name: { en: 'Pizza', ar: 'بيتزا' },
+      options: [{ itemId: itemIds.margherita, priceDelta: '0.000' }],
+    },
+  ],
+});
+
+// The menu of the mall branch as its terminal loads it.
+export function branchMenu(overrides: Partial<BranchMenu> = {}): BranchMenu {
+  return {
+    branchId: ids.pizzaMall,
+    brandId: ids.pizza,
+    currency: 'SAR',
+    timezone: 'Asia/Riyadh',
+    categories: [
+      {
+        id: categoryIds.pizzas,
+        name: { en: 'Pizzas', ar: 'البيتزا' },
+        items: [
+          {
+            id: itemIds.margherita,
+            name: { en: 'Margherita', ar: 'مارجريتا' },
+            description: { en: 'Tomato and basil', ar: 'طماطم وريحان' },
+            price: '27.000',
+            imageUrl: null,
+            schedule: null,
+            modifierGroups: [
+              {
+                id: groupIds.size,
+                name: { en: 'Size', ar: 'الحجم' },
+                minSelect: 1,
+                maxSelect: 1,
+                modifiers: [
+                  {
+                    id: modifierIds.small,
+                    name: { en: 'Small', ar: 'صغير' },
+                    priceDelta: '-5.000',
+                  },
+                  { id: modifierIds.large, name: { en: 'Large', ar: 'كبير' }, priceDelta: '6.000' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: categoryIds.drinks,
+        name: { en: 'Drinks', ar: 'المشروبات' },
+        items: [
+          {
+            id: itemIds.cola,
+            name: { en: 'Cola', ar: 'كولا' },
+            description: null,
+            price: '5.000',
+            imageUrl: null,
+            schedule: null,
+            modifierGroups: [],
+          },
+        ],
+      },
+    ],
+    combos: [
+      {
+        id: comboIds.pizzaMeal,
+        name: { en: 'Pizza meal', ar: 'وجبة بيتزا' },
+        price: '39.000',
+        slots: [
+          {
+            id: slotIds.pizza,
+            name: { en: 'Pizza', ar: 'بيتزا' },
+            options: [{ itemId: itemIds.margherita, priceDelta: '3.000' }],
+          },
+          {
+            id: slotIds.drink,
+            name: { en: 'Drink', ar: 'مشروب' },
+            options: [{ itemId: itemIds.cola, priceDelta: '0.000' }],
+          },
+        ],
+      },
+    ],
     ...overrides,
   };
 }

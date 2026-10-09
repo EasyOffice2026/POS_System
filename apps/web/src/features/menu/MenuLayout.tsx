@@ -6,7 +6,7 @@ import { useAuth } from '../auth/auth-context';
 import type { MenuContext } from './menu-context';
 import { useMenuBrand } from './use-menu-brand';
 
-const tabs = ['items', 'categories'] as const;
+const tabs = ['items', 'categories', 'combos', 'preview'] as const;
 
 const tabClass = ({ isActive }: { isActive: boolean }) =>
   `-mb-px rounded-t-md border-b-2 px-3 py-2 text-sm font-medium ${

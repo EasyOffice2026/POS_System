@@ -144,6 +144,7 @@ describe('messageFor', () => {
       'DESCRIPTION_REQUIRED',
       'DESCRIPTION_TOO_LONG',
       'CATEGORY_REQUIRED',
+      'ITEM_REQUIRED',
       'CATEGORY_NOT_FOUND',
       'CATEGORY_LIMIT',
       'ORDER_MISMATCH',

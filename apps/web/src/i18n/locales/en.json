@@ -221,7 +221,8 @@
     "TOO_MANY_SLOTS": "A combo can have at most 10 choices.",
     "TOO_MANY_OPTIONS": "A choice can have at most 30 items.",
     "OPTION_DUPLICATE": "This item is already in this choice.",
-    "CATEGORY_REQUIRED": "Choose a category."
+    "CATEGORY_REQUIRED": "Choose a category.",
+    "ITEM_REQUIRED": "Choose an item."
   },
   "rolesPage": {
     "title": "Roles",
@@ -559,6 +560,56 @@
       "messages": {
         "saved": "Saved."
       }
+    },
+    "combos": {
+      "intro": "A combo is one price for a set of choices. Each choice (a pizza, a side, a drink) is filled by one of the items you allow for it.",
+      "filterStatus": "Status",
+      "newCombo": "New combo",
+      "needItems": "Add some items first: a combo is made of items.",
+      "goToItems": "Go to items",
+      "empty": "There are no combos yet.",
+      "noMatch": "No combo matches this filter.",
+      "columns": {
+        "name": "Name",
+        "price": "Price",
+        "choices": "Choices",
+        "status": "Status"
+      }
+    },
+    "combo": {
+      "newTitle": "New combo",
+      "created": "Combo created.",
+      "saved": "Changes saved.",
+      "readOnly": "You can see this combo but you cannot change it.",
+      "form": {
+        "price": "Combo price",
+        "priceHint": "What the guest pays for the combo. The extra charges of the items they choose come on top.",
+        "active": "Active",
+        "activeHint": "A combo that is not active is not on any terminal. Leave it off to set it up first."
+      },
+      "slots": {
+        "title": "Choices",
+        "hint": "Each choice is one place in the combo. The guest picks one of its items.",
+        "slotTitle": "Choice {{n}}",
+        "removeSlot": "Remove choice {{n}}",
+        "addSlot": "Add a choice",
+        "options": "Items the guest can pick",
+        "optionsHint": "An item can have an extra charge, for example a bigger drink. Leave it empty for none.",
+        "chooseItem": "Choose an item",
+        "itemLabel": "Choice {{slot}}, item {{n}}",
+        "deltaLabel": "Choice {{slot}}, item {{n}}: extra charge",
+        "addOption": "Add an item",
+        "addOptionTo": "Add an item to choice {{n}}",
+        "removeOption": "Remove item {{n}} of choice {{slot}}"
+      }
+    },
+    "preview": {
+      "intro": "The menu exactly as the terminal of the branch loads it: only what can be sold there, at the prices of the branch.",
+      "branch": "Branch",
+      "noBranches": "There are no branches to show a menu for.",
+      "empty": "Nothing can be sold at this branch yet.",
+      "combos": "Combos",
+      "notNow": "Not available right now"
     }
   },
   "weekdaysShort": {

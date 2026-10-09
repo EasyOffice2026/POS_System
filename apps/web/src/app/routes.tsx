@@ -10,7 +10,10 @@ import { BranchFormPage } from '../features/branches/BranchFormPage';
 import { BranchPage } from '../features/branches/BranchPage';
 import { BrandFormPage } from '../features/brands/BrandFormPage';
 import { BrandsPage } from '../features/brands/BrandsPage';
+import { BranchMenuPreviewPage } from '../features/menu/BranchMenuPreviewPage';
 import { CategoriesPage } from '../features/menu/CategoriesPage';
+import { ComboPage } from '../features/menu/ComboPage';
+import { CombosPage } from '../features/menu/CombosPage';
 import { ItemPage } from '../features/menu/ItemPage';
 import { ItemsPage } from '../features/menu/ItemsPage';
 import { MenuIndexRedirect, MenuLayout } from '../features/menu/MenuLayout';
@@ -88,7 +91,25 @@ export const routes: RouteObject[] = [
               { index: true, element: <MenuIndexRedirect /> },
               { path: 'items', element: <ItemsPage /> },
               { path: 'categories', element: <CategoriesPage /> },
+              { path: 'combos', element: <CombosPage /> },
+              { path: 'preview', element: <BranchMenuPreviewPage /> },
             ],
+          },
+          {
+            path: 'menu/combos/new',
+            element: (
+              <RequirePermission permission="menu:write">
+                <ComboPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'menu/combos/:id',
+            element: (
+              <RequirePermission permission="menu:read">
+                <ComboPage />
+              </RequirePermission>
+            ),
           },
           {
             path: 'menu/items/new',
