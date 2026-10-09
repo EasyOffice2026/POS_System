@@ -47,9 +47,30 @@ DATABASE_URL=postgres://postgres:postgres@localhost:51214/template1?sslmode=disa
 
 Then run `npm run db:setup` and `npm run dev` as above. Redis is not needed yet. `npx prisma dev ls` shows the address again, `npx prisma dev stop pos-dev` stops the database, and `npx prisma dev start pos-dev` starts it again with its data. To run the tests, set the same address in the terminal first, for example in PowerShell: `$env:DATABASE_URL = 'postgres://postgres:postgres@localhost:51214/template1?sslmode=disable'`.
 
+### With a hosted database (Supabase)
+
+The API connects with an ordinary PostgreSQL address, so a hosted PostgreSQL such as Supabase works. The demo seed does not run on it (see the end of this section), so a real database gets its first admin from a command instead.
+
+1. In the Supabase dashboard, open the project and click **Connect**. Copy the **Session pooler** address. It uses port 5432 and works over IPv4. The direct address works only over IPv6 unless the project has the IPv4 add-on, and the transaction pooler (port 6543) is not for migrations.
+2. Put it in `.env`, with the password filled in and `?schema=pos&sslmode=require&uselibpqcompat=true` added at the end:
+
+   ```
+   DATABASE_URL=postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres?schema=pos&sslmode=require&uselibpqcompat=true
+   ```
+
+   - A password with special characters must be percent-encoded (`@` is `%40`, `#` is `%23`, `/` is `%2F`). The easy way out is a password of only letters and digits, which can be set under **Project Settings, Database**.
+   - `schema=pos` keeps the tables out of the `public` schema, which Supabase publishes through its REST API (the Data API) by default. Keep it, and do not add `pos` to the exposed schemas.
+   - `sslmode=require&uselibpqcompat=true` encrypts the connection and does not check the certificate chain, which is how `psql` and Prisma treat `require`. Without `uselibpqcompat=true` the API stops with "self-signed certificate".
+
+3. Create the tables with `npm run db:deploy`. Do not use `db:setup`: its second half is the demo seed.
+4. Create the first admin: `npm run admin:create -- --email you@example.com --name "Your Name"`. It prints a password once. Sign in, then set a password of your own under Users.
+5. Start with `npm run dev`. If anybody else can reach the API, first put your own `JWT_ACCESS_SECRET` (32 random characters or more) in `.env`.
+
+The demo seed adds accounts with a public password, so it refuses to run against a database on another computer. To add the demo data to a hosted database on purpose, for example a throw-away project for a demonstration, set `SEED_ALLOW_REMOTE=1` for that one command.
+
 ### Demo accounts
 
-`npm run db:setup` creates two brands (Pizza Palace and Burger Hub) with two branches each, a menu for each brand, and one account per role. These are for development only. The seed refuses to run when `NODE_ENV` is `production`.
+`npm run db:setup` creates two brands (Pizza Palace and Burger Hub) with two branches each, a menu for each brand, and one account per role. These are for development only. The seed refuses to run when `NODE_ENV` is `production`, and against a database that is not on this computer.
 
 | Email                            | Role           | Sees                      |
 | -------------------------------- | -------------- | ------------------------- |
@@ -80,16 +101,17 @@ The demo branches already have opening hours and printers, so open one under Bra
 
 ### Commands
 
-| Command                                                | What it does                                                          |
-| ------------------------------------------------------ | --------------------------------------------------------------------- |
-| `npm run dev`                                          | Start the API and web app together                                    |
-| `npm run dev:api`, `dev:web`, `dev:print-bridge`       | Start one service                                                     |
-| `npm run infra:up`, `infra:down`, `infra:logs`         | Start, stop or follow PostgreSQL and Redis                            |
-| `npm run db:setup`                                     | Apply the migrations and add the demo data                            |
-| `npm run db:migrate`                                   | Create a new migration after changing `apps/api/prisma/schema.prisma` |
-| `npm run db:deploy`, `db:seed`, `db:reset`             | Apply migrations, add demo data, or wipe the database and start again |
-| `npm run check`                                        | Run everything CI runs: format check, lint, typecheck, tests, build   |
-| `npm run format`, `lint`, `typecheck`, `test`, `build` | Run a single step                                                     |
+| Command                                                | What it does                                                           |
+| ------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `npm run dev`                                          | Start the API and web app together                                     |
+| `npm run dev:api`, `dev:web`, `dev:print-bridge`       | Start one service                                                      |
+| `npm run infra:up`, `infra:down`, `infra:logs`         | Start, stop or follow PostgreSQL and Redis                             |
+| `npm run db:setup`                                     | Apply the migrations and add the demo data                             |
+| `npm run db:migrate`                                   | Create a new migration after changing `apps/api/prisma/schema.prisma`  |
+| `npm run db:deploy`, `db:seed`, `db:reset`             | Apply migrations, add demo data, or wipe the database and start again  |
+| `npm run admin:create -- --email … --name …`           | Create the first admin of a real database (the demo seed is for demos) |
+| `npm run check`                                        | Run everything CI runs: format check, lint, typecheck, tests, build    |
+| `npm run format`, `lint`, `typecheck`, `test`, `build` | Run a single step                                                      |
 
 The API tests need PostgreSQL, so run `npm run infra:up` first. They use their own schema (`pos_test`) inside the database and apply the real migrations to it, so your development data is never touched.
 
