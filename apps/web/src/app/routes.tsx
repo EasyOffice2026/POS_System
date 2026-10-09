@@ -10,6 +10,8 @@ import { BranchFormPage } from '../features/branches/BranchFormPage';
 import { BranchPage } from '../features/branches/BranchPage';
 import { BrandFormPage } from '../features/brands/BrandFormPage';
 import { BrandsPage } from '../features/brands/BrandsPage';
+import { CategoriesPage } from '../features/menu/CategoriesPage';
+import { MenuIndexRedirect, MenuLayout } from '../features/menu/MenuLayout';
 import { RolesPage } from '../features/roles/RolesPage';
 import { UserFormPage } from '../features/users/UserFormPage';
 import { UsersPage } from '../features/users/UsersPage';
@@ -72,6 +74,18 @@ export const routes: RouteObject[] = [
                 <BranchPage />
               </RequirePermission>
             ),
+          },
+          {
+            path: 'menu',
+            element: (
+              <RequirePermission permission="menu:read">
+                <MenuLayout />
+              </RequirePermission>
+            ),
+            children: [
+              { index: true, element: <MenuIndexRedirect /> },
+              { path: 'categories', element: <CategoriesPage /> },
+            ],
           },
           {
             path: 'users',

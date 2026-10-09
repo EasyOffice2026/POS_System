@@ -29,7 +29,8 @@
     "roles": "Roles",
     "audit": "Audit log",
     "brands": "Brands",
-    "branches": "Branches"
+    "branches": "Branches",
+    "menu": "Menu"
   },
   "language": {
     "switchTo": "Switch language",
@@ -203,7 +204,23 @@
     "PRINTER_HOST_INVALID": "Enter an IP address or a host name, without http:// and without a port.",
     "PRINTER_PORT_INVALID": "The port is a number from 1 to 65535.",
     "PRINTERS_TOO_MANY": "A branch can have at most 20 printers.",
-    "ITEM_NOT_FOUND": "This item does not exist, or you cannot see it."
+    "ITEM_NOT_FOUND": "This item does not exist, or you cannot see it.",
+    "PRICE_INVALID": "Enter a number with at most 3 decimals, for example 12.500.",
+    "IMAGE_URL_INVALID": "Enter a web link that starts with http:// or https://.",
+    "DESCRIPTION_REQUIRED": "Write the description in both languages, or leave both empty.",
+    "DESCRIPTION_TOO_LONG": "A description can have at most 500 characters.",
+    "CATEGORY_NOT_FOUND": "This category does not exist in this brand.",
+    "CATEGORY_LIMIT": "A brand can have at most 500 categories.",
+    "ORDER_MISMATCH": "The categories changed in the meantime. Reload the page and try again.",
+    "MODIFIER_LIMIT": "A group can have at most 50 choices.",
+    "MIN_SELECT_INVALID": "Enter a whole number from 0 to 20.",
+    "MAX_SELECT_INVALID": "Enter a whole number from 1 to 20.",
+    "SELECT_RANGE_INVALID": "The most choices cannot be fewer than the least choices.",
+    "SLOT_NEEDS_OPTION": "Add at least one item to this choice.",
+    "COMBO_NEEDS_SLOT": "A combo needs at least one choice.",
+    "TOO_MANY_SLOTS": "A combo can have at most 10 choices.",
+    "TOO_MANY_OPTIONS": "A choice can have at most 30 items.",
+    "OPTION_DUPLICATE": "This item is already in this choice."
   },
   "rolesPage": {
     "title": "Roles",
@@ -376,5 +393,41 @@
     "port": "Port",
     "portHint": "Usually 9100.",
     "saved": "Printers saved."
+  },
+  "menu": {
+    "title": "Menu",
+    "currency": "SAR",
+    "brand": "Brand",
+    "noBrand": "There is no brand to build a menu for yet.",
+    "readOnly": "You can see the menu but you cannot change it.",
+    "tabs": {
+      "label": "Menu sections",
+      "items": "Items",
+      "categories": "Categories",
+      "combos": "Combos",
+      "preview": "Branch menu"
+    },
+    "categories": {
+      "intro": "Categories group the items on the terminals. Drag a category, or use its arrows, to change the order the terminals show.",
+      "empty": "There are no categories yet.",
+      "addTitle": "Add a category",
+      "addButton": "Add category",
+      "edit": "Edit",
+      "editFor": "Edit {{name}}",
+      "moveUp": "Move {{name}} up",
+      "moveDown": "Move {{name}} down",
+      "deactivate": "Deactivate",
+      "deactivateFor": "Deactivate {{name}}",
+      "activate": "Activate",
+      "activateFor": "Activate {{name}}",
+      "hint": "A category is never deleted. When you deactivate it, its items stay in old orders but are not sold.",
+      "messages": {
+        "created": "Category added.",
+        "saved": "Category saved.",
+        "deactivated": "Category deactivated. Its items are not on the terminals any more.",
+        "activated": "The category is active again.",
+        "reordered": "The new order is saved."
+      }
+    }
   }
 }

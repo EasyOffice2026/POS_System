@@ -57,6 +57,11 @@ export function AdminLayout() {
             {t('nav.branches')}
           </NavLink>
         )}
+        {can('menu:read') && (
+          <NavLink to="/admin/menu" className={linkClass}>
+            {t('nav.menu')}
+          </NavLink>
+        )}
         {can('users:read') && (
           <NavLink to="/admin/users" className={linkClass}>
             {t('nav.users')}

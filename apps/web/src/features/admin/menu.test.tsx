@@ -38,6 +38,7 @@ describe('the main menu shows each person only what they may open', () => {
       'Dashboard',
       'Brands',
       'Branches',
+      'Menu',
       'Users',
       'Roles',
       'Audit log',
@@ -49,21 +50,22 @@ describe('the main menu shows each person only what they may open', () => {
       'Dashboard',
       'Brands',
       'Branches',
+      'Menu',
       'Users',
       'Roles',
       'Audit log',
     ]);
   });
 
-  it('shows a person who can only read brands and branches those two areas', async () => {
-    expect(await menuOf(brandManager)).toEqual(['Dashboard', 'Brands', 'Branches']);
+  it('shows a person who can only read brands, branches and the menu those three areas', async () => {
+    expect(await menuOf(brandManager)).toEqual(['Dashboard', 'Brands', 'Branches', 'Menu']);
   });
 
-  it('shows a branch manager their branch and their people, but not the brands', async () => {
-    expect(await menuOf(branchManager)).toEqual(['Dashboard', 'Branches', 'Users']);
+  it('shows a branch manager their branch, the menu and their people, but not the brands', async () => {
+    expect(await menuOf(branchManager)).toEqual(['Dashboard', 'Branches', 'Menu', 'Users']);
   });
 
-  it('shows a cashier only the dashboard', async () => {
-    expect(await menuOf(cashier)).toEqual(['Dashboard']);
+  it('shows a cashier the dashboard and the menu, which they may read', async () => {
+    expect(await menuOf(cashier)).toEqual(['Dashboard', 'Menu']);
   });
 });

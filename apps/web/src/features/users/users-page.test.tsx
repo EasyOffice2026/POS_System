@@ -310,6 +310,7 @@ describe('the main menu', () => {
       'Dashboard',
       'Brands',
       'Branches',
+      'Menu',
       'Users',
       'Roles',
       'Audit log',

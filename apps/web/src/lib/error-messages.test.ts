@@ -51,6 +51,14 @@ describe('problemsFrom', () => {
     expect(problemsFrom(new ApiError(404, 'NOT_FOUND', 'x')).form).toBe('NOT_FOUND');
   });
 
+  it('keeps a limit of the menu for the whole form', () => {
+    expect(problemsFrom(new ApiError(409, 'CATEGORY_LIMIT', 'x'))).toEqual({
+      fields: {},
+      form: 'CATEGORY_LIMIT',
+    });
+    expect(problemsFrom(new ApiError(409, 'MODIFIER_LIMIT', 'x')).form).toBe('MODIFIER_LIMIT');
+  });
+
   it('lets a form choose the sentence for a 404, so it does not talk about a person', () => {
     const notFound = new ApiError(404, 'NOT_FOUND', 'x');
 
@@ -131,6 +139,22 @@ describe('messageFor', () => {
       'PRINTER_HOST_INVALID',
       'PRINTER_PORT_INVALID',
       'PRINTERS_TOO_MANY',
+      'PRICE_INVALID',
+      'IMAGE_URL_INVALID',
+      'DESCRIPTION_REQUIRED',
+      'DESCRIPTION_TOO_LONG',
+      'CATEGORY_NOT_FOUND',
+      'CATEGORY_LIMIT',
+      'ORDER_MISMATCH',
+      'MODIFIER_LIMIT',
+      'MIN_SELECT_INVALID',
+      'MAX_SELECT_INVALID',
+      'SELECT_RANGE_INVALID',
+      'SLOT_NEEDS_OPTION',
+      'COMBO_NEEDS_SLOT',
+      'TOO_MANY_SLOTS',
+      'TOO_MANY_OPTIONS',
+      'OPTION_DUPLICATE',
     ];
 
     for (const code of codes) {

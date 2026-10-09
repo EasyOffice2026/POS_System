@@ -46,6 +46,22 @@ const messageKeys = {
   PRINTER_HOST_INVALID: 'validation.PRINTER_HOST_INVALID',
   PRINTER_PORT_INVALID: 'validation.PRINTER_PORT_INVALID',
   PRINTERS_TOO_MANY: 'validation.PRINTERS_TOO_MANY',
+  PRICE_INVALID: 'validation.PRICE_INVALID',
+  IMAGE_URL_INVALID: 'validation.IMAGE_URL_INVALID',
+  DESCRIPTION_REQUIRED: 'validation.DESCRIPTION_REQUIRED',
+  DESCRIPTION_TOO_LONG: 'validation.DESCRIPTION_TOO_LONG',
+  CATEGORY_NOT_FOUND: 'validation.CATEGORY_NOT_FOUND',
+  CATEGORY_LIMIT: 'validation.CATEGORY_LIMIT',
+  ORDER_MISMATCH: 'validation.ORDER_MISMATCH',
+  MODIFIER_LIMIT: 'validation.MODIFIER_LIMIT',
+  MIN_SELECT_INVALID: 'validation.MIN_SELECT_INVALID',
+  MAX_SELECT_INVALID: 'validation.MAX_SELECT_INVALID',
+  SELECT_RANGE_INVALID: 'validation.SELECT_RANGE_INVALID',
+  SLOT_NEEDS_OPTION: 'validation.SLOT_NEEDS_OPTION',
+  COMBO_NEEDS_SLOT: 'validation.COMBO_NEEDS_SLOT',
+  TOO_MANY_SLOTS: 'validation.TOO_MANY_SLOTS',
+  TOO_MANY_OPTIONS: 'validation.TOO_MANY_OPTIONS',
+  OPTION_DUPLICATE: 'validation.OPTION_DUPLICATE',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;
@@ -92,6 +108,9 @@ export function problemsFrom(error: unknown, options: { notFound?: string } = {}
       return { fields: { email: 'EMAIL_TAKEN' }, form: null };
     case 'STAFF_CODE_TAKEN':
       return { fields: { staffCode: 'STAFF_CODE_TAKEN' }, form: null };
+    // A limit of the menu is reached: the answer says which one.
+    case 'CATEGORY_LIMIT':
+    case 'MODIFIER_LIMIT':
     case 'FORBIDDEN':
       return { fields: {}, form: error.code };
     case 'NOT_FOUND':
