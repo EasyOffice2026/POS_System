@@ -2,7 +2,7 @@
 
 A web-based point of sale and operations platform for restaurant groups that run several brands across many branches. It covers orders, kitchen display, inventory, recipes, purchasing, customer loyalty and reporting, in Arabic (RTL) and English (LTR).
 
-**Status:** Phase 1 is under way. Sign-in, tenant isolation between brands and branches, the database schema, the web shell (login, dashboard, Arabic/English), user administration (users, roles, audit log), the setup of brands and branches (opening hours, printers) and the bilingual menu (categories, items with modifiers, prices and times per branch, combos, and the menu a branch terminal loads) are built. Phase 2 has started: the orders API is built ([spec 005](docs/specs/005-orders.md)): open an order, add dishes and combos at the branch price, send them to the kitchen, and void lines or give a discount with a manager's staff code and PIN. It has no screen yet; the POS terminal screen comes next. Payments and the other product features are not built yet.
+**Status:** Phase 1 is under way. Sign-in, tenant isolation between brands and branches, the database schema, the web shell (login, dashboard, Arabic/English), user administration (users, roles, audit log), the setup of brands and branches (opening hours, printers) and the bilingual menu (categories, items with modifiers, prices and times per branch, combos, and the menu a branch terminal loads) are built. Phase 2 has started: the orders API is built ([spec 005](docs/specs/005-orders.md)): open an order, add dishes and combos at the branch price, send them to the kitchen, and void lines or give a discount with a manager's staff code and PIN. The POS terminal screen is built too ([spec 006](docs/specs/006-pos-terminal.md)): a manager sets up a terminal for a branch once, cashiers sign in there with a staff code and PIN, take orders on a touch screen, send them to the kitchen, and a manager approves voids and discounts on the same screen. Payments and the other product features are not built yet.
 
 ## What the system will do
 
@@ -81,21 +81,22 @@ The demo seed adds accounts with a public password, so it refuses to run against
 | `pizza.mall.manager@pos.local`   | Branch Manager | Pizza Palace, Mall branch |
 | `pizza.mall.purchaser@pos.local` | Purchaser      | Pizza Palace, Mall branch |
 
-The password for all of them is `DevPassw0rd!`. Cashiers and kitchen staff sign in at a terminal with a branch, a staff code and a PIN instead (the PIN screen comes with the POS terminal in Phase 2). The API already accepts them, for example staff code `1001` with PIN `1234` at the Mall branch (`01990000-0000-7000-8000-000000000011`).
+The password for all of them is `DevPassw0rd!`. Cashiers and kitchen staff sign in at a terminal with a staff code and a PIN instead. To try it, open `/pos`, choose **Set up this terminal**, sign in as `pizza.mall.manager@pos.local` and pick the Mall branch. Then sign in with staff code `1001` and PIN `1234` (the cashier). When a void or a discount needs a manager, type staff code `1003` and PIN `5824` (the Mall manager).
 
 ### What you can try
 
 Sign in as `admin@pos.local` and use the menu under the header. Each link shows only when the person has its permission.
 
-| Screen    | What it does                                                                                                                                | Needs                                        |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| Dashboard | The brands and branches the person can see                                                                                                  | Any signed-in person                         |
-| Brands    | The brands of the group: add one, rename it, set a logo link, deactivate or activate it                                                     | `brands:read` (changing: `brands:write`)     |
-| Branches  | Branches of one brand or all. Settings in three tabs: details, opening hours, printers                                                      | `branches:read` (changing: `branches:write`) |
-| Menu      | Categories (drag to re-order), items with modifiers, prices and times per branch, combos, and a preview of the menu a branch terminal loads | `menu:read` (changing: `menu:write`)         |
-| Users     | Search and filter people, add and change them, deactivate, unlock, set a password or PIN                                                    | `users:read` (changing: `users:write`)       |
-| Roles     | What each built-in role may do                                                                                                              | `roles:read`                                 |
-| Audit log | Who did what, newest first, filtered by action, days or person                                                                              | `audit:read`                                 |
+| Screen       | What it does                                                                                                                                    | Needs                                        |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Dashboard    | The brands and branches the person can see                                                                                                      | Any signed-in person                         |
+| Brands       | The brands of the group: add one, rename it, set a logo link, deactivate or activate it                                                         | `brands:read` (changing: `brands:write`)     |
+| Branches     | Branches of one brand or all. Settings in three tabs: details, opening hours, printers                                                          | `branches:read` (changing: `branches:write`) |
+| Menu         | Categories (drag to re-order), items with modifiers, prices and times per branch, combos, and a preview of the menu a branch terminal loads     | `menu:read` (changing: `menu:write`)         |
+| Users        | Search and filter people, add and change them, deactivate, unlock, set a password or PIN                                                        | `users:read` (changing: `users:write`)       |
+| Roles        | What each built-in role may do                                                                                                                  | `roles:read`                                 |
+| Audit log    | Who did what, newest first, filtered by action, days or person                                                                                  | `audit:read`                                 |
+| POS terminal | The order screen of a branch terminal (`/pos`): PIN sign-in, the menu as tiles, the order with its totals, send to kitchen, voids and discounts | `orders:write`                               |
 
 The demo branches already have opening hours and printers, so open one under Branches to see them: a branch that closes after midnight, one with a lunch break, one that is open all day, and two receipt printers at one branch. Deactivate a branch and a PIN sign-in there stops with a message for the terminal. Sign in as `pizza.manager@pos.local` to see that only Pizza Palace people, branches and events appear. A brand manager can set up the hours and printers of their branches, but cannot create a brand or a group admin. Sign in as `pizza.mall.manager@pos.local` to see a branch manager's view: the people at their own branch, with no way to change them. Open Menu to see the demo menus: Pizza Palace has sizes and extras, a lunch-only salad and a dessert that one branch does not sell; under Branch menu, choose a branch to see its prices and what it leaves out. Search the items in English or Arabic (try مارجريتا). Switch the language with the button in the header to see the screens in Arabic, mirrored right to left.
 
@@ -166,12 +167,12 @@ Every request after sign-in gets a database client limited to the brand and bran
 
 ### Documents
 
-| File                                                                   | Description                                                                                            |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| [docs/specs/](docs/specs/)                                             | Module specs: sign-in and tenant scoping, brands and branches, users and roles, menu, orders           |
-| [POS_System_Proposal_1.html](docs/proposal/POS_System_Proposal_1.html) | Technical Proposal v1.1: modules, database schema, API, architecture, security                         |
-| [POS_System_Proposal_1.docx](docs/proposal/POS_System_Proposal_1.docx) | The same proposal as a Word document                                                                   |
-| [POS_Terminal.html](docs/prototype/POS_Terminal.html)                  | Clickable prototype of the cashier screen. Open it in a browser; it uses mock data and needs no server |
+| File                                                                   | Description                                                                                                |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| [docs/specs/](docs/specs/)                                             | Module specs: sign-in and tenant scoping, brands and branches, users and roles, menu, orders, POS terminal |
+| [POS_System_Proposal_1.html](docs/proposal/POS_System_Proposal_1.html) | Technical Proposal v1.1: modules, database schema, API, architecture, security                             |
+| [POS_System_Proposal_1.docx](docs/proposal/POS_System_Proposal_1.docx) | The same proposal as a Word document                                                                       |
+| [POS_Terminal.html](docs/prototype/POS_Terminal.html)                  | Clickable prototype of the cashier screen. Open it in a browser; it uses mock data and needs no server     |
 
 ## Roadmap
 
