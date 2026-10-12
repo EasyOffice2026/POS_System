@@ -89,7 +89,11 @@
     "roles_read": "See roles",
     "menu_read": "See the menu",
     "menu_write": "Change the menu",
-    "audit_read": "See the audit log"
+    "audit_read": "See the audit log",
+    "orders_read": "See orders",
+    "orders_write": "Take orders",
+    "orders_void": "Void orders",
+    "orders_discount": "Give discounts"
   },
   "users": {
     "title": "Users",
@@ -275,7 +279,11 @@
       "menu_modifier_created": "Modifier created",
       "menu_modifier_updated": "Modifier changed",
       "menu_combo_created": "Combo created",
-      "menu_combo_updated": "Combo changed"
+      "menu_combo_updated": "Combo changed",
+      "order_voided": "Order voided",
+      "order_line_voided": "Order line voided",
+      "order_discount_set": "Discount given",
+      "order_discount_removed": "Discount removed"
     }
   },
   "notFound": {

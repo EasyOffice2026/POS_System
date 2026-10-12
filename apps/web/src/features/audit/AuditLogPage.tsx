@@ -35,6 +35,10 @@ const actionKeys = {
   'menu.modifier.updated': 'audit.actions.menu_modifier_updated',
   'menu.combo.created': 'audit.actions.menu_combo_created',
   'menu.combo.updated': 'audit.actions.menu_combo_updated',
+  'order.voided': 'audit.actions.order_voided',
+  'order.line_voided': 'audit.actions.order_line_voided',
+  'order.discount_set': 'audit.actions.order_discount_set',
+  'order.discount_removed': 'audit.actions.order_discount_removed',
 } as const satisfies Record<AuditAction, string>;
 
 type ActionKey = (typeof actionKeys)[AuditAction];

@@ -83,7 +83,7 @@ describe('the roles page', () => {
       .filter((row) => within(row).getAllByRole('cell')[cashierColumn]?.textContent?.includes('✓'))
       .map((row) => within(row).getByRole('rowheader').textContent);
 
-    expect(allowed).toEqual(['See the menu']);
+    expect(allowed).toEqual(['See the menu', 'See orders', 'Take orders']);
   });
 
   it('is written in Arabic when the language is switched', async () => {

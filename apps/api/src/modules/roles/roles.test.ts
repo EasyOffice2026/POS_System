@@ -32,7 +32,11 @@ describe('GET /roles', () => {
     const { data } = roleList.parse(res.body);
     expect(data.map((role) => role.key)).toEqual([...roleKeys]);
     const cashier = data.find((role) => role.key === 'cashier');
-    expect(cashier).toMatchObject({ scope: 'BRANCH', name: 'Cashier', permissions: ['menu:read'] });
+    expect(cashier).toMatchObject({
+      scope: 'BRANCH',
+      name: 'Cashier',
+      permissions: ['menu:read', 'orders:read', 'orders:write'],
+    });
   });
 
   it('shows the permission matrix as the code defines it', async () => {

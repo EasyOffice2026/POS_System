@@ -29,6 +29,10 @@ export const auditActions = [
   'menu.modifier.updated',
   'menu.combo.created',
   'menu.combo.updated',
+  'order.voided',
+  'order.line_voided',
+  'order.discount_set',
+  'order.discount_removed',
 ] as const;
 
 export type AuditAction = (typeof auditActions)[number];

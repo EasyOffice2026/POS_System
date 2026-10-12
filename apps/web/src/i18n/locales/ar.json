@@ -93,7 +93,11 @@
     "roles_read": "عرض الأدوار",
     "menu_read": "عرض القائمة",
     "menu_write": "تعديل القائمة",
-    "audit_read": "عرض سجل المراجعة"
+    "audit_read": "عرض سجل المراجعة",
+    "orders_read": "رؤية الطلبات",
+    "orders_write": "استلام الطلبات",
+    "orders_void": "إلغاء الطلبات",
+    "orders_discount": "منح الخصومات"
   },
   "users": {
     "title": "المستخدمون",
@@ -279,7 +283,11 @@
       "menu_modifier_created": "إنشاء خيار",
       "menu_modifier_updated": "تعديل خيار",
       "menu_combo_created": "إنشاء كومبو",
-      "menu_combo_updated": "تعديل كومبو"
+      "menu_combo_updated": "تعديل كومبو",
+      "order_voided": "إلغاء طلب",
+      "order_line_voided": "إلغاء سطر من طلب",
+      "order_discount_set": "منح خصم",
+      "order_discount_removed": "إزالة خصم"
     }
   },
   "notFound": {

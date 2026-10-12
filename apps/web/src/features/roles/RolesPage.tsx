@@ -14,6 +14,10 @@ const permissionKeys = {
   'roles:read': 'permissions.roles_read',
   'menu:read': 'permissions.menu_read',
   'menu:write': 'permissions.menu_write',
+  'orders:read': 'permissions.orders_read',
+  'orders:write': 'permissions.orders_write',
+  'orders:void': 'permissions.orders_void',
+  'orders:discount': 'permissions.orders_discount',
   'audit:read': 'permissions.audit_read',
 } as const satisfies Record<Permission, string>;
 

@@ -9,6 +9,7 @@ export * from './health';
 export * from './localized';
 export * from './menu';
 export * from './money';
+export * from './orders';
 export * from './pagination';
 export * from './search';
 export * from './users';

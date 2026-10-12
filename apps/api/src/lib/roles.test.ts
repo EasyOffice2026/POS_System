@@ -16,7 +16,7 @@ describe('syncSystemRoles', () => {
 
     const cashier = roles.find((role) => role.key === 'cashier');
     expect(cashier?.scope).toBe('BRANCH');
-    expect(cashier?.permissions).toEqual(['menu:read']);
+    expect(cashier?.permissions).toEqual(['menu:read', 'orders:read', 'orders:write']);
   });
 
   it('can run again without creating duplicates', async () => {
@@ -36,6 +36,6 @@ describe('syncSystemRoles', () => {
     await syncSystemRoles(prisma);
 
     const cashier = await prisma.role.findUniqueOrThrow({ where: { key: 'cashier' } });
-    expect(cashier.permissions).toEqual(['menu:read']);
+    expect(cashier.permissions).toEqual(['menu:read', 'orders:read', 'orders:write']);
   });
 });

@@ -31,3 +31,33 @@ export const priceChangeSchema = z
   .trim()
   .regex(signed, 'PRICE_INVALID')
   .transform(formatMoney);
+
+const moneyText = /^-?\d+(\.\d{1,3})?$/;
+
+// Money as a whole number of thousandths (12.500 is 12500), so sums have no rounding errors. A
+// whole order (200 lines of up to 9,999,999.999 times 99) still fits exactly in a number.
+export function toMils(text: string): number {
+  if (!moneyText.test(text)) throw new RangeError(`"${text}" is not an amount of money.`);
+  const negative = text.startsWith('-');
+  const [whole = '0', fraction = ''] = (negative ? text.slice(1) : text).split('.');
+  const mils = Number(whole) * 1000 + Number(fraction.padEnd(3, '0'));
+  return negative ? -mils : mils;
+}
+
+// Thousandths back to text with 3 decimals: 12500 becomes "12.500".
+export function fromMils(mils: number): string {
+  if (!Number.isSafeInteger(mils)) {
+    throw new RangeError(`${mils} is not a whole number of thousandths.`);
+  }
+  const amount = Math.abs(mils);
+  const text = `${Math.floor(amount / 1000)}.${String(amount % 1000).padStart(3, '0')}`;
+  return mils < 0 ? `-${text}` : text;
+}
+
+// A percentage of an amount, rounded to the nearest thousandth (a half goes up). The percentage
+// has up to 2 decimals ("12.5" or "12.50"). Worked out with whole numbers only.
+export function percentOfMils(mils: number, percent: string): number {
+  const [whole = '0', fraction = ''] = percent.split('.');
+  const hundredths = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0').slice(0, 2));
+  return Number((BigInt(mils) * hundredths + 5000n) / 10000n);
+}
