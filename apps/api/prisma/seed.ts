@@ -167,6 +167,9 @@ const users: DemoUser[] = [
     brandId: brandIds.pizza,
     branchIds: [branchIds.pizzaMall],
     email: 'pizza.mall.manager@pos.local',
+    // Approves voids and discounts on the Mall terminal.
+    staffCode: '1003',
+    pin: '5824',
   },
   {
     id: '01990000-0000-7000-8000-000000000106',
