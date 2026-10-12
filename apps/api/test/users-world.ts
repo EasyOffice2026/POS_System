@@ -110,6 +110,8 @@ export function as(app: Express, token: string) {
       request(app).patch(path).set('Authorization', bearer).send(body),
     put: (path: string, body?: object) =>
       request(app).put(path).set('Authorization', bearer).send(body),
+    delete: (path: string, body?: object) =>
+      request(app).delete(path).set('Authorization', bearer).send(body),
   };
 }
 
