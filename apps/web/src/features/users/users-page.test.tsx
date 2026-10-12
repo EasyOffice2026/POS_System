@@ -311,6 +311,7 @@ describe('the main menu', () => {
       'Brands',
       'Branches',
       'Menu',
+      'POS terminal',
       'Users',
       'Roles',
       'Audit log',

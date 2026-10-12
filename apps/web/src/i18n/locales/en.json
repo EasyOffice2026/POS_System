@@ -30,7 +30,8 @@
     "audit": "Audit log",
     "brands": "Brands",
     "branches": "Branches",
-    "menu": "Menu"
+    "menu": "Menu",
+    "pos": "POS terminal"
   },
   "language": {
     "switchTo": "Switch language",
@@ -628,5 +629,142 @@
     "thursday": "Thu",
     "friday": "Fri",
     "saturday": "Sat"
+  },
+  "pos": {
+    "setup": {
+      "title": "Set up this terminal",
+      "intro": "Choose the branch this terminal belongs to. You are then signed out, and the staff of the branch sign in here with their staff code and PIN.",
+      "branch": "Branch",
+      "noBranches": "You cannot see any branch.",
+      "save": "Use this branch"
+    },
+    "notSetUp": {
+      "title": "This terminal is not set up",
+      "body": "A manager sets up a terminal once, with their email and password, by choosing its branch.",
+      "setUp": "Set up this terminal"
+    },
+    "notAllowed": {
+      "noOrders": "{{name}} cannot take orders on this terminal.",
+      "otherBranch": "{{name}} does not work at this branch."
+    },
+    "signIn": {
+      "staffCode": "Staff code",
+      "pin": "PIN",
+      "backspace": "Delete the last digit",
+      "clear": "Clear",
+      "withEmail": "Sign in with email",
+      "changeBranch": "Change the branch",
+      "errors": {
+        "invalid": "The staff code or PIN is not correct.",
+        "branchInactive": "This branch is switched off. Ask a manager."
+      }
+    },
+    "menu": {
+      "label": "Menu",
+      "search": "Search the menu",
+      "combos": "Combos",
+      "noMatch": "Nothing on the menu matches.",
+      "empty": "Nothing in this category."
+    },
+    "choice": {
+      "add": "Add to order"
+    },
+    "order": {
+      "label": "Order",
+      "new": "New order",
+      "number": "Order {{number}}",
+      "types": {
+        "dine_in": "Dine-in",
+        "takeaway": "Takeaway"
+      },
+      "empty": "Tap a dish to start the order.",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "total": "Total",
+      "send": "Send to kitchen",
+      "sendCount_one": "Send {{count}} item to kitchen",
+      "sendCount_other": "Send {{count}} items to kitchen",
+      "discountButton": "Discount",
+      "voidOrder": "Void order",
+      "newOrder": "New order",
+      "less": "One less",
+      "more": "One more",
+      "removeLine": "Remove {{name}}",
+      "lessOf": "One less {{name}}",
+      "moreOf": "One more {{name}}",
+      "quantity": "× {{count}}",
+      "sent": "Sent",
+      "voided": "Voided",
+      "void": "Void",
+      "voidLine": "Void {{name}}",
+      "voidedBecause": "Voided: {{reason}}"
+    },
+    "openOrders": {
+      "button": "Open orders",
+      "title": "Open orders",
+      "none": "No order is open at this branch.",
+      "lines_one": "{{count}} item",
+      "lines_other": "{{count}} items"
+    },
+    "void": {
+      "title": "Void {{what}}",
+      "reason": "Why?",
+      "otherReason": "The reason",
+      "confirm": "Void",
+      "reasons": {
+        "changedMind": "The customer changed their mind",
+        "wrongItem": "Wrong item",
+        "tooLong": "Took too long",
+        "quality": "Quality problem",
+        "other": "Other"
+      }
+    },
+    "discount": {
+      "title": "Discount on the order",
+      "percent": "Percent",
+      "amount": "Amount",
+      "percentValue": "Percent off",
+      "amountValue": "Amount off",
+      "reason": "Reason",
+      "preview": "Discount",
+      "remove": "Remove discount",
+      "apply": "Give discount"
+    },
+    "approval": {
+      "title": "A manager must approve",
+      "intro": "A manager of this branch types their staff code and PIN.",
+      "approve": "Approve"
+    },
+    "notices": {
+      "orderVoided": "Order {{number}} was voided.",
+      "dismiss": "Close the message"
+    },
+    "errors": {
+      "ITEM_NOT_AVAILABLE": "This dish is not on the menu of the branch any more. The menu was loaded again.",
+      "ITEM_NOT_AVAILABLE_NOW": "This dish cannot be sold at this time.",
+      "MODIFIER_NOT_AVAILABLE": "A choice is not on the menu any more. The menu was loaded again.",
+      "MODIFIER_CHOICE_MISSING": "A required choice is missing.",
+      "TOO_MANY_MODIFIERS": "Too many choices in one group.",
+      "COMBO_NOT_AVAILABLE": "This combo is not on the menu any more. The menu was loaded again.",
+      "SLOT_NOT_FOUND": "This combo changed. The menu was loaded again.",
+      "SLOT_CHOICE_MISSING": "Choose a dish for every part of the combo.",
+      "OPTION_NOT_AVAILABLE": "A dish of the combo is not available any more. The menu was loaded again.",
+      "ORDER_NOT_OPEN": "This order is not open any more. It was changed on another terminal.",
+      "LINE_ALREADY_SENT": "This dish was sent to the kitchen already.",
+      "LINE_VOIDED": "This dish was voided already.",
+      "LINE_NOT_SENT": "This dish was not sent yet. Remove it instead.",
+      "NOTHING_TO_SEND": "Everything was sent already.",
+      "ORDER_FULL": "This order is full. Start a new order.",
+      "BRANCH_INACTIVE": "This branch is switched off.",
+      "NOT_FOUND": "This order cannot be found.",
+      "APPROVAL_INVALID": "The staff code or PIN is not correct, or this person is not a manager of this branch.",
+      "APPROVAL_LOCKED": "This manager is locked after too many wrong PINs. Try again later.",
+      "APPROVAL_NOT_ALLOWED": "This person cannot approve this.",
+      "DISCOUNT_VALUE_INVALID": "Type a percent from 0.01 to 100, or an amount above 0 with up to 3 decimals.",
+      "REASON_REQUIRED": "A reason is needed.",
+      "REASON_TOO_LONG": "The reason is too long.",
+      "network": "Cannot reach the server. Check the connection and try again.",
+      "unknown": "Something went wrong. Try again."
+    }
   }
 }

@@ -17,6 +17,8 @@ import { CombosPage } from '../features/menu/CombosPage';
 import { ItemPage } from '../features/menu/ItemPage';
 import { ItemsPage } from '../features/menu/ItemsPage';
 import { MenuIndexRedirect, MenuLayout } from '../features/menu/MenuLayout';
+import { PosPage } from '../features/pos/PosPage';
+import { PosSetupPage } from '../features/pos/PosSetupPage';
 import { RolesPage } from '../features/roles/RolesPage';
 import { UserFormPage } from '../features/users/UserFormPage';
 import { UsersPage } from '../features/users/UsersPage';
@@ -24,9 +26,19 @@ import { NotFoundPage } from './NotFoundPage';
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
+  // The terminal shows its own PIN screen to people who are not signed in.
+  { path: '/pos', element: <PosPage /> },
   {
     element: <RequireAuth />,
     children: [
+      {
+        path: '/pos/setup',
+        element: (
+          <RequirePermission permission="branches:read">
+            <PosSetupPage />
+          </RequirePermission>
+        ),
+      },
       {
         path: '/admin',
         element: <AdminLayout />,

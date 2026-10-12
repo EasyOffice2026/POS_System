@@ -216,6 +216,22 @@ export const fullBrandManager: AuthUser = {
   permissions: [...(brandManagerRole?.permissions ?? [])],
 };
 
+const permissionsOf = (key: string) => [
+  ...(systemRoles.find((role) => role.key === key)?.permissions ?? []),
+];
+
+// --- the people at a terminal, with every permission their role has ---
+
+export const fullCashier: AuthUser = { ...cashier, permissions: permissionsOf('cashier') };
+
+export const kitchenStaff: AuthUser = {
+  ...cashier,
+  id: '01990000-0000-7000-8000-000000000108',
+  name: 'Mall Branch Kitchen',
+  role: { key: 'kitchen', name: 'Kitchen' },
+  permissions: permissionsOf('kitchen'),
+};
+
 // A branch as one branch is read, with its configuration. Closed all week and no printers, as a
 // branch that was never set up.
 export function branchDetail(overrides: Partial<BranchDetail> = {}): BranchDetail {
