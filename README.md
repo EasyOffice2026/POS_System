@@ -2,7 +2,7 @@
 
 A web-based point of sale and operations platform for restaurant groups that run several brands across many branches. It covers orders, kitchen display, inventory, recipes, purchasing, customer loyalty and reporting, in Arabic (RTL) and English (LTR).
 
-**Status:** Phase 1 is under way. Sign-in, tenant isolation between brands and branches, the database schema, the web shell (login, dashboard, Arabic/English), user administration (users, roles, audit log), the setup of brands and branches (opening hours, printers) and the bilingual menu (categories, items with modifiers, prices and times per branch, combos, and the menu a branch terminal loads) are built. Orders and the other product features are not built yet.
+**Status:** Phase 1 is under way. Sign-in, tenant isolation between brands and branches, the database schema, the web shell (login, dashboard, Arabic/English), user administration (users, roles, audit log), the setup of brands and branches (opening hours, printers) and the bilingual menu (categories, items with modifiers, prices and times per branch, combos, and the menu a branch terminal loads) are built. Phase 2 has started: the orders API is built ([spec 005](docs/specs/005-orders.md)): open an order, add dishes and combos at the branch price, send them to the kitchen, and void lines or give a discount with a manager's staff code and PIN. It has no screen yet; the POS terminal screen comes next. Payments and the other product features are not built yet.
 
 ## What the system will do
 
@@ -168,7 +168,7 @@ Every request after sign-in gets a database client limited to the brand and bran
 
 | File                                                                   | Description                                                                                            |
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| [docs/specs/](docs/specs/)                                             | Module specs: sign-in and tenant scoping, brands and branches, users and roles, menu                   |
+| [docs/specs/](docs/specs/)                                             | Module specs: sign-in and tenant scoping, brands and branches, users and roles, menu, orders           |
 | [POS_System_Proposal_1.html](docs/proposal/POS_System_Proposal_1.html) | Technical Proposal v1.1: modules, database schema, API, architecture, security                         |
 | [POS_System_Proposal_1.docx](docs/proposal/POS_System_Proposal_1.docx) | The same proposal as a Word document                                                                   |
 | [POS_Terminal.html](docs/prototype/POS_Terminal.html)                  | Clickable prototype of the cashier screen. Open it in a browser; it uses mock data and needs no server |
