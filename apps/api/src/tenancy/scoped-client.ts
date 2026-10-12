@@ -48,6 +48,10 @@ const tenantModels: Record<string, ModelRule> = {
   ComboSlot: { brand: 'brandId', brandWide: true },
   ComboSlotOption: { brand: 'brandId', brandWide: true },
   BranchMenuItem: { brand: 'brandId', branch: 'branchId' },
+  // Orders belong to a branch.
+  Order: { brand: 'brandId', branch: 'branchId' },
+  OrderLine: { brand: 'brandId', branch: 'branchId' },
+  OrderCounter: { brand: 'brandId', branch: 'branchId' },
 };
 
 // Reference data every signed-in person may read. Never writable through this client.

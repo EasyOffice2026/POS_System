@@ -58,6 +58,8 @@ model Branch {
   brand         Brand            @relation(fields: [brandId], references: [id], onDelete: Restrict)
   assignments   UserBranch[]
   menuOverrides BranchMenuItem[]
+  orders        Order[]
+  orderCounters OrderCounter[]
 
   // Lets tables that carry a brand id point at "this branch of this brand".
   @@unique([id, brandId])
@@ -210,6 +212,7 @@ model MenuItem {
   modifierGroups ModifierGroup[]
   overrides      BranchMenuItem[]
   comboOptions   ComboSlotOption[]
+  orderLines     OrderLine[]
 
   @@unique([id, brandId])
   @@index([brandId, categoryId])
@@ -288,8 +291,9 @@ model Combo {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  brand Brand       @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  slots ComboSlot[]
+  brand      Brand       @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  slots      ComboSlot[]
+  orderLines OrderLine[]
 
   @@unique([id, brandId])
   @@index([brandId])
@@ -326,4 +330,133 @@ model ComboSlotOption {
   @@id([slotId, itemId])
   @@index([itemId])
   @@map("combo_slot_options")
+}
+
+// ---- Orders. See docs/specs/005-orders.md.
+
+enum OrderType {
+  dine_in
+  takeaway
+
+  @@map("order_type")
+}
+
+enum OrderStatus {
+  open
+  voided
+
+  @@map("order_status")
+}
+
+enum OrderLineKind {
+  item
+  combo
+
+  @@map("order_line_kind")
+}
+
+enum OrderLineStatus {
+  pending
+  sent
+  voided
+
+  @@map("order_line_status")
+}
+
+enum DiscountKind {
+  percent
+  amount
+
+  @@map("discount_kind")
+}
+
+// One order at a branch. People are stored by id only: users are never deleted, they are
+// deactivated, like the audit log keeps them.
+model Order {
+  id                   String        @id @default(uuid(7)) @db.Uuid
+  brandId              String        @map("brand_id") @db.Uuid
+  branchId             String        @map("branch_id") @db.Uuid
+  // The day on the branch's clock when the order was opened. Numbers count from 1 each day.
+  businessDate         DateTime      @map("business_date") @db.Date
+  number               Int
+  type                 OrderType
+  status               OrderStatus   @default(open)
+  note                 String?
+  subtotal             Decimal       @default(0) @db.Decimal(15, 3)
+  discountKind         DiscountKind? @map("discount_kind")
+  // The percentage or the amount that was given. The amount it takes off is worked out again
+  // whenever the lines change.
+  discountValue        Decimal?      @map("discount_value") @db.Decimal(12, 3)
+  discountAmount       Decimal       @default(0) @map("discount_amount") @db.Decimal(15, 3)
+  discountReason       String?       @map("discount_reason")
+  discountById         String?       @map("discount_by_id") @db.Uuid
+  discountApprovedById String?       @map("discount_approved_by_id") @db.Uuid
+  total                Decimal       @default(0) @db.Decimal(15, 3)
+  // Goes up with every change. Raising it first locks the row, so changes to one order happen one
+  // after the other.
+  version              Int           @default(0)
+  openedById           String        @map("opened_by_id") @db.Uuid
+  voidedAt             DateTime?     @map("voided_at") @db.Timestamptz(3)
+  voidedById           String?       @map("voided_by_id") @db.Uuid
+  voidReason           String?       @map("void_reason")
+  voidApprovedById     String?       @map("void_approved_by_id") @db.Uuid
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  branch Branch      @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
+  lines  OrderLine[]
+
+  @@unique([branchId, businessDate, number])
+  // Lets a line point at "this order of this branch of this brand".
+  @@unique([id, branchId, brandId])
+  @@index([branchId, createdAt])
+  @@index([brandId, createdAt])
+  @@map("orders")
+}
+
+// A dish or a combo on an order, with everything about it copied at the time it was added.
+model OrderLine {
+  id               String          @id @default(uuid(7)) @db.Uuid
+  orderId          String          @map("order_id") @db.Uuid
+  brandId          String          @map("brand_id") @db.Uuid
+  branchId         String          @map("branch_id") @db.Uuid
+  kind             OrderLineKind
+  itemId           String?         @map("item_id") @db.Uuid
+  comboId          String?         @map("combo_id") @db.Uuid
+  name             Json
+  unitPrice        Decimal         @map("unit_price") @db.Decimal(12, 3)
+  quantity         Int
+  lineTotal        Decimal         @map("line_total") @db.Decimal(15, 3)
+  // The chosen modifiers, or the combo choices with theirs, with names and prices.
+  details          Json            @default("{}")
+  note             String?
+  status           OrderLineStatus @default(pending)
+  position         Int
+  sentAt           DateTime?       @map("sent_at") @db.Timestamptz(3)
+  voidedAt         DateTime?       @map("voided_at") @db.Timestamptz(3)
+  voidedById       String?         @map("voided_by_id") @db.Uuid
+  voidReason       String?         @map("void_reason")
+  voidApprovedById String?         @map("void_approved_by_id") @db.Uuid
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  order Order     @relation(fields: [orderId, branchId, brandId], references: [id, branchId, brandId], onDelete: Restrict)
+  item  MenuItem? @relation(fields: [itemId, brandId], references: [id, brandId], onDelete: Restrict)
+  combo Combo?    @relation(fields: [comboId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@index([orderId, position])
+  @@map("order_lines")
+}
+
+// The last order number given out at a branch on a business date.
+model OrderCounter {
+  branchId     String   @map("branch_id") @db.Uuid
+  businessDate DateTime @map("business_date") @db.Date
+  brandId      String   @map("brand_id") @db.Uuid
+  lastNumber   Int      @map("last_number")
+
+  branch Branch @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@id([branchId, businessDate])
+  @@map("order_counters")
 }
