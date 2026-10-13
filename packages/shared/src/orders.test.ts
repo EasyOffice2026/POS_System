@@ -5,6 +5,7 @@ import { fromMils, percentOfMils, toMils } from './money';
 import {
   addOrderLineRequestSchema,
   createOrderRequestSchema,
+  payOrderRequestSchema,
   setDiscountRequestSchema,
   updateOrderLineRequestSchema,
   updateOrderRequestSchema,
@@ -234,5 +235,57 @@ describe('setDiscountRequestSchema', () => {
     expect(
       setDiscountRequestSchema.parse({ kind: 'percent', value: '100', reason: 'R' }).value,
     ).toBe('100.00');
+  });
+});
+
+describe('payOrderRequestSchema', () => {
+  const cash = (amount: string, tendered: string, tenderId = id) => ({
+    id: tenderId,
+    method: 'cash',
+    amount,
+    tendered,
+  });
+  const card = (amount: string, tenderId = other) => ({ id: tenderId, method: 'card', amount });
+
+  it('writes the amounts with 3 decimals and keeps the slip number', () => {
+    const parsed = payOrderRequestSchema.parse({
+      tenders: [cash('22', '50.5'), { ...card('50'), reference: ' 123456 ' }],
+    });
+    expect(parsed.tenders).toEqual([
+      { id, method: 'cash', amount: '22.000', tendered: '50.500' },
+      { id: other, method: 'card', amount: '50.000', reference: '123456' },
+    ]);
+  });
+
+  it('allows no part, for an order that costs nothing', () => {
+    expect(payOrderRequestSchema.safeParse({ tenders: [] }).success).toBe(true);
+  });
+
+  it('refuses cash short of its part, two cash parts, and the same id twice', () => {
+    expect(codesOf(payOrderRequestSchema.safeParse({ tenders: [cash('72', '70')] }))).toEqual([
+      'tenders.0.tendered: PAYMENT_TENDERED_SHORT',
+    ]);
+    expect(
+      codesOf(
+        payOrderRequestSchema.safeParse({ tenders: [cash('1', '1'), cash('2', '2', other)] }),
+      ),
+    ).toEqual(['tenders: PAYMENT_TOO_MANY_CASH']);
+    expect(
+      codesOf(payOrderRequestSchema.safeParse({ tenders: [card('1', id), card('2', id)] })),
+    ).toEqual(['tenders: PAYMENT_ID_DUPLICATE']);
+  });
+
+  it('refuses an amount of 0, a negative one, and a method it does not know', () => {
+    expect(codesOf(payOrderRequestSchema.safeParse({ tenders: [card('0')] }))).toEqual([
+      'tenders.0.amount: PAYMENT_AMOUNT_INVALID',
+    ]);
+    expect(codesOf(payOrderRequestSchema.safeParse({ tenders: [card('-5')] }))).toEqual([
+      'tenders.0.amount: PAYMENT_AMOUNT_INVALID',
+    ]);
+    expect(
+      codesOf(
+        payOrderRequestSchema.safeParse({ tenders: [{ id, method: 'wallet', amount: '1' }] }),
+      ),
+    ).toEqual(['tenders.0.method: PAYMENT_METHOD_INVALID']);
   });
 });

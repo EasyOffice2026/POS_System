@@ -51,14 +51,18 @@ export function order(overrides: Partial<Order> = {}): Order {
     openedById: '01990000-0000-7000-8000-000000000107',
     voidedAt: null,
     voidReason: null,
+    paidAt: null,
+    paidById: null,
     createdAt: '2026-10-13T09:00:00.000Z',
     updatedAt: '2026-10-13T09:00:00.000Z',
     lines: [],
+    payments: [],
+    change: '0.000',
     ...overrides,
   };
 }
 
 export function orderSummary(overrides: Partial<Order> = {}): OrderSummary {
-  const { lines, ...rest } = order(overrides);
+  const { lines, payments: _payments, change: _change, ...rest } = order(overrides);
   return { ...rest, lineCount: lines.length };
 }
