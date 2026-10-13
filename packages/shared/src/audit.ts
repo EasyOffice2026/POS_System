@@ -39,6 +39,7 @@ export const auditActions = [
   'order.refunded',
   'ingredient.created',
   'ingredient.updated',
+  'menu.recipe.updated',
 ] as const;
 
 export type AuditAction = (typeof auditActions)[number];
