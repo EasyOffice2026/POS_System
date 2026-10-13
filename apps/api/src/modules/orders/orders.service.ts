@@ -73,7 +73,7 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
     db.orderLine.findMany({ where: { orderId }, orderBy: [{ position: 'asc' }, { id: 'asc' }] });
 
   async function describe(
-    db: Pick<OrderTx, 'orderLine' | 'payment'>,
+    db: Pick<OrderTx, 'orderLine' | 'payment' | 'kitchenTicket'>,
     row: OrderRow,
   ): Promise<Order> {
     const lines = await readLines(db, row.id);
@@ -81,7 +81,31 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
       where: { orderId: row.id },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
-    return toOrder(row, lines, payments);
+    const tickets = await db.kitchenTicket.findMany({
+      where: { orderId: row.id },
+      select: { id: true, status: true },
+    });
+    return toOrder(
+      row,
+      lines,
+      payments,
+      new Map(tickets.map((ticket) => [ticket.id, ticket.status])),
+    );
+  }
+
+  // Puts the lines that were not sent on a new kitchen ticket (spec 008, rule 1). Answers how many
+  // lines it sent.
+  async function sendPending(tx: OrderTx, order: OrderRow, at: Date): Promise<number> {
+    const pending = await tx.orderLine.count({ where: { orderId: order.id, status: 'pending' } });
+    if (pending === 0) return 0;
+    const ticket = await tx.kitchenTicket.create({
+      data: { orderId: order.id, brandId: order.brandId, branchId: order.branchId, sentAt: at },
+    });
+    const sent = await tx.orderLine.updateMany({
+      where: { orderId: order.id, status: 'pending' },
+      data: { status: 'sent', sentAt: at, ticketId: ticket.id },
+    });
+    return sent.count;
   }
 
   // An order the person cannot see is answered like one that does not exist.
@@ -118,7 +142,7 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
         total: fromMils(total),
       },
     });
-    return toOrder(updated, lines);
+    return describe(tx, updated);
   }
 
   async function lineOf(db: Pick<OrderTx, 'orderLine'>, orderId: string, lineId: string) {
@@ -369,11 +393,7 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
     async send(ctx: ActorContext, orderId: string): Promise<Order> {
       return ctx.db.$transaction(async (tx) => {
         const order = await lockOpen(tx, orderId);
-        const sent = await tx.orderLine.updateMany({
-          where: { orderId, status: 'pending' },
-          data: { status: 'sent', sentAt: now() },
-        });
-        if (sent.count === 0) {
+        if ((await sendPending(tx, order, now())) === 0) {
           throw errors.conflict('NOTHING_TO_SEND', 'Every line of this order was sent already');
         }
         return describe(tx, order);
@@ -649,10 +669,7 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
 
           // What was not sent yet goes to the kitchen now (rule 5).
           const at = now();
-          await tx.orderLine.updateMany({
-            where: { orderId, status: 'pending' },
-            data: { status: 'sent', sentAt: at },
-          });
+          await sendPending(tx, order, at);
           await tx.payment.createMany({
             data: input.tenders.map((tender) => ({
               id: tender.id,

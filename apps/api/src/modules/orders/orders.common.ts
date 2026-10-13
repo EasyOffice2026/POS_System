@@ -9,6 +9,7 @@ import {
   type OrderSummary,
   fromMils,
   percentOfMils,
+  type TicketStatus,
   toMils,
 } from '@pos/shared';
 import { z } from 'zod';
@@ -21,7 +22,10 @@ import {
 import type { ScopedClient } from '../../tenancy/scoped-client';
 
 // What a change to an order reads and writes, whether through the client or a transaction.
-export type OrderTx = Pick<ScopedClient, 'order' | 'orderLine' | 'payment' | 'branch' | 'brand'>;
+export type OrderTx = Pick<
+  ScopedClient,
+  'order' | 'orderLine' | 'payment' | 'kitchenTicket' | 'branch' | 'brand'
+>;
 
 export const mils = (value: Prisma.Decimal): number => toMils(value.toFixed(3));
 const iso = (value: Date | null) => (value ? value.toISOString() : null);
@@ -50,7 +54,10 @@ const detailsSchema = z.object({
   choices: z.array(orderComboChoiceSchema).default([]),
 });
 
-export function toOrderLine(row: LineRow): OrderLine {
+// The status of the kitchen ticket of each sent line, by ticket id.
+export type TicketStatuses = ReadonlyMap<string, TicketStatus>;
+
+export function toOrderLine(row: LineRow, tickets: TicketStatuses = new Map()): OrderLine {
   const details = detailsSchema.parse(row.details);
   return {
     id: row.id,
@@ -65,6 +72,7 @@ export function toOrderLine(row: LineRow): OrderLine {
     choices: details.choices,
     note: row.note,
     status: row.status,
+    kitchenStatus: row.ticketId ? (tickets.get(row.ticketId) ?? null) : null,
     sentAt: iso(row.sentAt),
     voidedAt: iso(row.voidedAt),
     voidReason: row.voidReason,
@@ -116,10 +124,15 @@ export function toPayment(row: PaymentRow): OrderPayment {
   };
 }
 
-export function toOrder(row: OrderRow, lines: LineRow[], payments: PaymentRow[] = []): Order {
+export function toOrder(
+  row: OrderRow,
+  lines: LineRow[],
+  payments: PaymentRow[] = [],
+  tickets: TicketStatuses = new Map(),
+): Order {
   return {
     ...orderFields(row),
-    lines: lines.map(toOrderLine),
+    lines: lines.map((line) => toOrderLine(line, tickets)),
     payments: payments.map(toPayment),
     change: fromMils(payments.reduce((sum, payment) => sum + mils(payment.change), 0)),
   };

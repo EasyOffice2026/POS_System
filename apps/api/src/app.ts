@@ -14,6 +14,8 @@ import { createBranchesRouter } from './modules/brands/branches.router';
 import { createBrandsRouter } from './modules/brands/brands.router';
 import { createBrandsService } from './modules/brands/brands.service';
 import { healthRouter } from './modules/health/health.router';
+import { createKitchenRouter } from './modules/kitchen/kitchen.router';
+import { createKitchenService } from './modules/kitchen/kitchen.service';
 import { createMenuRouter } from './modules/menu/menu.router';
 import { createMenuService } from './modules/menu/menu.service';
 import { createOrdersRouter } from './modules/orders/orders.router';
@@ -61,6 +63,7 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
       JSON.parse(await menuService.branchMenu.load(ctx, branchId)) as BranchMenu,
     now: now ?? (() => new Date()),
   });
+  const kitchenService = createKitchenService({ now: now ?? (() => new Date()) });
 
   const v1 = express.Router();
   v1.use('/health', healthRouter);
@@ -75,6 +78,7 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
   v1.use('/branches', ...protectedRoutes, createBranchesRouter({ service: brandsService }));
   v1.use('/menu', ...protectedRoutes, createMenuRouter({ service: menuService }));
   v1.use('/orders', ...protectedRoutes, createOrdersRouter({ service: ordersService }));
+  v1.use('/kitchen', ...protectedRoutes, createKitchenRouter({ service: kitchenService }));
   v1.use('/users', ...protectedRoutes, createUsersRouter({ service: usersService }));
   v1.use('/roles', ...protectedRoutes, createRolesRouter());
   v1.use('/audit-logs', ...protectedRoutes, createAuditRouter());
