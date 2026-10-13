@@ -26,6 +26,7 @@ export function orderLine(overrides: Partial<OrderLine> = {}): OrderLine {
     choices: [],
     note: null,
     status: 'pending',
+    kitchenStatus: null,
     sentAt: null,
     voidedAt: null,
     voidReason: null,

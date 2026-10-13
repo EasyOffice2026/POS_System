@@ -6,6 +6,7 @@ export * from './brands';
 export * from './credentials';
 export * from './errors';
 export * from './health';
+export * from './kitchen';
 export * from './localized';
 export * from './menu';
 export * from './money';

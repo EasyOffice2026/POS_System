@@ -98,7 +98,8 @@
     "orders_read": "رؤية الطلبات",
     "orders_write": "استلام الطلبات",
     "orders_void": "إلغاء الطلبات",
-    "orders_discount": "منح الخصومات"
+    "orders_discount": "منح الخصومات",
+    "kitchen_write": "العمل على شاشة المطبخ"
   },
   "users": {
     "title": "المستخدمون",

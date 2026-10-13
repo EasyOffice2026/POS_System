@@ -19,6 +19,12 @@ export const orderStatuses = ['open', 'paid', 'voided'] as const;
 export const orderStatusSchema = z.enum(orderStatuses);
 export type OrderStatus = z.infer<typeof orderStatusSchema>;
 
+// Where a ticket of the kitchen is (docs/specs/008-kitchen-display.md). A sent line shows the
+// status of its ticket.
+export const ticketStatuses = ['new', 'preparing', 'ready', 'done'] as const;
+export const ticketStatusSchema = z.enum(ticketStatuses, { error: 'TICKET_STATUS_INVALID' });
+export type TicketStatus = z.infer<typeof ticketStatusSchema>;
+
 export const orderLineStatuses = ['pending', 'sent', 'voided'] as const;
 export const orderLineStatusSchema = z.enum(orderLineStatuses);
 export type OrderLineStatus = z.infer<typeof orderLineStatusSchema>;
@@ -73,6 +79,8 @@ export const orderLineSchema = z.object({
   choices: z.array(orderComboChoiceSchema),
   note: z.string().nullable(),
   status: orderLineStatusSchema,
+  // The status of the kitchen ticket it was sent on, or null before it is sent.
+  kitchenStatus: ticketStatusSchema.nullable(),
   sentAt: z.iso.datetime().nullable(),
   voidedAt: z.iso.datetime().nullable(),
   voidReason: z.string().nullable(),

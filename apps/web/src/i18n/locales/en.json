@@ -94,7 +94,8 @@
     "orders_read": "See orders",
     "orders_write": "Take orders",
     "orders_void": "Void orders",
-    "orders_discount": "Give discounts"
+    "orders_discount": "Give discounts",
+    "kitchen_write": "Work the kitchen screen"
   },
   "users": {
     "title": "Users",
