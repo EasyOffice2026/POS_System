@@ -337,9 +337,9 @@
       "ingredient_created": "Ingredient added",
       "ingredient_updated": "Ingredient changed",
       "menu_recipe_updated": "Recipe changed",
-      "stock_transfer_sent": "Transfer sent",
-      "stock_transfer_received": "Transfer received",
-      "stock_transfer_cancelled": "Transfer cancelled"
+      "inventory_transfer_sent": "Transfer sent",
+      "inventory_transfer_received": "Transfer received",
+      "inventory_transfer_cancelled": "Transfer cancelled"
     }
   },
   "notFound": {

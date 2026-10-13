@@ -124,7 +124,7 @@ describe('POST /inventory/transfers', () => {
     expect(out?.quantity.toFixed(3)).toBe('-2.000');
     expect(out?.quantityAfter.toFixed(3)).toBe('3.000');
     await expect(
-      prisma.auditLog.findMany({ where: { action: 'stock_transfer.sent' } }),
+      prisma.auditLog.findMany({ where: { action: 'inventory.transfer.sent' } }),
     ).resolves.toHaveLength(1);
   });
 
@@ -189,7 +189,7 @@ describe('receiving and cancelling', () => {
     expect(into).toMatchObject({ kind: 'transfer_in', referenceId: transfer.id });
     expect(into?.quantity.toFixed(3)).toBe('2.000');
     await expect(
-      prisma.auditLog.findMany({ where: { action: 'stock_transfer.received' } }),
+      prisma.auditLog.findMany({ where: { action: 'inventory.transfer.received' } }),
     ).resolves.toHaveLength(1);
   });
 

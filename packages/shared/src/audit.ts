@@ -40,9 +40,9 @@ export const auditActions = [
   'ingredient.created',
   'ingredient.updated',
   'menu.recipe.updated',
-  'stock_transfer.sent',
-  'stock_transfer.received',
-  'stock_transfer.cancelled',
+  'inventory.transfer.sent',
+  'inventory.transfer.received',
+  'inventory.transfer.cancelled',
 ] as const;
 
 export type AuditAction = (typeof auditActions)[number];

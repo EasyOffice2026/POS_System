@@ -46,9 +46,9 @@ const actionKeys = {
   'ingredient.created': 'audit.actions.ingredient_created',
   'ingredient.updated': 'audit.actions.ingredient_updated',
   'menu.recipe.updated': 'audit.actions.menu_recipe_updated',
-  'stock_transfer.sent': 'audit.actions.stock_transfer_sent',
-  'stock_transfer.received': 'audit.actions.stock_transfer_received',
-  'stock_transfer.cancelled': 'audit.actions.stock_transfer_cancelled',
+  'inventory.transfer.sent': 'audit.actions.inventory_transfer_sent',
+  'inventory.transfer.received': 'audit.actions.inventory_transfer_received',
+  'inventory.transfer.cancelled': 'audit.actions.inventory_transfer_cancelled',
 } as const satisfies Record<AuditAction, string>;
 
 type ActionKey = (typeof actionKeys)[AuditAction];

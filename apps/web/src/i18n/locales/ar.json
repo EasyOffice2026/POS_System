@@ -341,9 +341,9 @@
       "ingredient_created": "إضافة مكوّن",
       "ingredient_updated": "تغيير مكوّن",
       "menu_recipe_updated": "تغيير وصفة",
-      "stock_transfer_sent": "إرسال تحويل",
-      "stock_transfer_received": "استلام تحويل",
-      "stock_transfer_cancelled": "إلغاء تحويل"
+      "inventory_transfer_sent": "إرسال تحويل",
+      "inventory_transfer_received": "استلام تحويل",
+      "inventory_transfer_cancelled": "إلغاء تحويل"
     }
   },
   "notFound": {
