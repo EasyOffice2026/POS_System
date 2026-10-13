@@ -11,6 +11,7 @@ import {
   type DiscountInput,
   getOrder,
   orderKeys,
+  payOrder,
   removeDiscount,
   removeLine,
   sendOrder,
@@ -65,7 +66,8 @@ export function useTerminalOrder(branchId: string) {
     if (menuIsStale(code)) {
       void queryClient.invalidateQueries({ queryKey: menuKeys.branchMenu(branchId) });
     }
-    if ((code === 'ORDER_NOT_OPEN' || code === 'LINE_VOIDED') && orderId) {
+    const changedElsewhere = ['ORDER_NOT_OPEN', 'LINE_VOIDED', 'PAYMENT_TOTAL_MISMATCH'];
+    if (changedElsewhere.includes(code) && orderId) {
       void queryClient.invalidateQueries({ queryKey: orderKeys.order(orderId) });
     }
   }
@@ -161,6 +163,10 @@ export function useTerminalOrder(branchId: string) {
     removeDiscount: () => {
       if (order) void performApproved((given) => removeDiscount(order.id, given));
     },
+
+    // Answers the paid order, for the receipt, or null when it failed.
+    pay: (tenders: Parameters<typeof payOrder>[1]) =>
+      order ? perform(() => payOrder(order.id, tenders)) : Promise.resolve(null),
 
     newOrder: () => {
       setOrderId(null);

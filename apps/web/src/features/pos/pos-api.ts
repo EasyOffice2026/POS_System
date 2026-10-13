@@ -6,6 +6,7 @@ import {
   orderSchema,
   orderSummarySchema,
   pageSchema,
+  type payOrderRequestSchema,
 } from '@pos/shared';
 import type { z } from 'zod';
 import { request } from '../../lib/api';
@@ -86,3 +87,10 @@ export const removeDiscount = (orderId: string, approval?: Approval) =>
     body: withApproval(approval),
     ...asOrder,
   });
+
+// The whole payment at once. The ids are made by the dialog, so sending it again takes nothing
+// twice (spec 007, rule 7).
+export type TenderInput = z.input<typeof payOrderRequestSchema>['tenders'][number];
+
+export const payOrder = (orderId: string, tenders: TenderInput[]) =>
+  request(`/orders/${orderId}/pay`, { method: 'POST', body: { tenders }, ...asOrder });

@@ -697,7 +697,9 @@
       "voided": "Voided",
       "void": "Void",
       "voidLine": "Void {{name}}",
-      "voidedBecause": "Voided: {{reason}}"
+      "voidedBecause": "Voided: {{reason}}",
+      "pay": "Pay",
+      "paid": "Paid"
     },
     "openOrders": {
       "button": "Open orders",
@@ -764,7 +766,44 @@
       "REASON_REQUIRED": "A reason is needed.",
       "REASON_TOO_LONG": "The reason is too long.",
       "network": "Cannot reach the server. Check the connection and try again.",
-      "unknown": "Something went wrong. Try again."
+      "unknown": "Something went wrong. Try again.",
+      "PAYMENT_TOTAL_MISMATCH": "The total of the order changed. Check it and take the payment again.",
+      "PAYMENT_TENDERED_SHORT": "The cash received is less than the amount due.",
+      "PAYMENT_TOO_MANY_CASH": "Only one cash payment is allowed.",
+      "PAYMENT_AMOUNT_INVALID": "An amount is not valid.",
+      "PAYMENT_TENDERS_INVALID": "Choose how the order is paid.",
+      "PAYMENT_ID_TAKEN": "This payment was already used. Open the payment again.",
+      "ORDER_EMPTY": "This order has nothing to pay for."
+    },
+    "pay": {
+      "title": "Pay order {{number}}",
+      "due": "Amount due",
+      "modes": {
+        "cash": "Cash",
+        "card": "Card",
+        "split": "Card + cash"
+      },
+      "methods": {
+        "cash": "Cash",
+        "card": "Card"
+      },
+      "tendered": "Cash received",
+      "tenderedRest": "Cash received for the rest ({{amount}})",
+      "exact": "Exact",
+      "change": "Change",
+      "cardHint": "Take the payment on the card machine, then confirm here.",
+      "cardAmount": "Amount by card",
+      "reference": "Card slip number (optional)",
+      "nothingDue": "Nothing to pay. Confirm to close the order.",
+      "confirm": "Confirm payment",
+      "close": "Close the order"
+    },
+    "receipt": {
+      "title": "Receipt",
+      "cashier": "Cashier: {{name}}",
+      "slip": "slip",
+      "thanks": "Thank you for your visit",
+      "print": "Print"
     }
   }
 }

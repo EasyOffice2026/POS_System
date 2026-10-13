@@ -1,8 +1,11 @@
 import { MAX_LINE_QUANTITY, type Order, type OrderLine, type OrderType } from '@pos/shared';
 import { useTranslation } from 'react-i18next';
-import { primaryButtonClass, secondaryButtonClass } from '../../components/form';
+import { secondaryButtonClass } from '../../components/form';
 import { Price } from '../../components/Price';
 import { localize } from '../../i18n/localize';
+
+const payButtonClass =
+  'w-full rounded-md bg-emerald-700 px-4 py-3 text-base font-semibold text-white hover:bg-emerald-800 focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60';
 
 const stepClass =
   'h-9 w-9 rounded-md border border-slate-300 bg-white text-lg font-semibold hover:bg-slate-100 disabled:opacity-40';
@@ -30,11 +33,13 @@ function LineDetails({ line }: { line: OrderLine }) {
 interface LineRowProps {
   line: OrderLine;
   busy: boolean;
+  // The order is paid or voided: its lines can only be looked at.
+  closed: boolean;
   onQuantity: (line: OrderLine, quantity: number) => void;
   onVoid: (line: OrderLine) => void;
 }
 
-function LineRow({ line, busy, onQuantity, onVoid }: LineRowProps) {
+function LineRow({ line, busy, closed, onQuantity, onVoid }: LineRowProps) {
   const { t, i18n } = useTranslation();
   const name = localize(line.name, i18n.language);
   const voided = line.status === 'voided';
@@ -93,7 +98,7 @@ function LineRow({ line, busy, onQuantity, onVoid }: LineRowProps) {
             </span>
           </p>
         )}
-        {line.status === 'sent' && (
+        {line.status === 'sent' && !closed && (
           <button
             type="button"
             disabled={busy}
@@ -120,6 +125,7 @@ interface OrderPanelProps {
   onDiscount: () => void;
   onVoidOrder: () => void;
   onNewOrder: () => void;
+  onPay: () => void;
 }
 
 // The order on the screen: its type, its lines, the totals, and what can be done with it.
@@ -161,6 +167,11 @@ export function OrderPanel(props: OrderPanelProps) {
               {t('pos.order.voided')}
             </span>
           )}
+          {order?.status === 'paid' && (
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900">
+              {t('pos.order.paid')}
+            </span>
+          )}
         </div>
         <div className="flex gap-2">
           {typeButton('dine_in')}
@@ -178,6 +189,7 @@ export function OrderPanel(props: OrderPanelProps) {
                 key={line.id}
                 line={line}
                 busy={busy || !open}
+                closed={!open}
                 onQuantity={props.onQuantity}
                 onVoid={props.onVoidLine}
               />
@@ -220,9 +232,17 @@ export function OrderPanel(props: OrderPanelProps) {
       <div className="space-y-2 border-t border-slate-200 p-3">
         <button
           type="button"
+          disabled={busy || !order || !open || live === 0}
+          onClick={props.onPay}
+          className={payButtonClass}
+        >
+          {t('pos.order.pay')} <Price value={order?.total ?? '0.000'} />
+        </button>
+        <button
+          type="button"
           disabled={busy || !open || pending === 0}
           onClick={props.onSend}
-          className={`${primaryButtonClass} w-full py-3 text-base`}
+          className={`${secondaryButtonClass} w-full py-3 text-base`}
         >
           {pending > 0 ? t('pos.order.sendCount', { count: pending }) : t('pos.order.send')}
         </button>

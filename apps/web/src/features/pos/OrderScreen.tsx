@@ -1,4 +1,4 @@
-import type { OrderLine } from '@pos/shared';
+import type { Order, OrderLine } from '@pos/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,8 @@ import { DiscountDialog } from './DiscountDialog';
 import { MenuPanel } from './MenuPanel';
 import { OpenOrdersDialog } from './OpenOrdersDialog';
 import { OrderPanel } from './OrderPanel';
+import { PaymentDialog } from './PaymentDialog';
+import { Receipt, ReceiptDialog } from './Receipt';
 import type { Terminal } from './terminal-store';
 import { useTerminalOrder } from './use-terminal-order';
 import { VoidDialog } from './VoidDialog';
@@ -35,6 +37,9 @@ export function OrderScreen({ terminal }: { terminal: Terminal }) {
   const [voiding, setVoiding] = useState<Voiding | null>(null);
   const [discounting, setDiscounting] = useState(false);
   const [listing, setListing] = useState(false);
+  const [paying, setPaying] = useState(false);
+  // The paid order whose receipt is shown, and printed.
+  const [receipt, setReceipt] = useState<Order | null>(null);
 
   const menu = useQuery({
     queryKey: menuKeys.branchMenu(terminal.branchId),
@@ -63,142 +68,180 @@ export function OrderScreen({ terminal }: { terminal: Terminal }) {
     return t(`pos.errors.${notice.code}`);
   };
 
+  const cashier = user?.name ?? '';
+
   return (
-    <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 lg:h-screen">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2">
-        <div className="min-w-0">
-          <p className="text-xs text-slate-500">
-            {terminal.brandName ? localize(terminal.brandName, i18n.language) : t('app.name')}
-          </p>
-          <p className="font-semibold">{localize(terminal.branchName, i18n.language)}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium" dir="ltr">
-            {clock}
-          </span>
-          <span className="text-sm text-slate-600">{user?.name}</span>
-          <button type="button" onClick={() => setListing(true)} className={headerButtonClass}>
-            {t('pos.openOrders.button')}
-          </button>
-          <LanguageSwitcher />
-          <button
-            type="button"
-            onClick={() => void logout()}
-            className="rounded-md bg-slate-900 px-3 py-1 text-sm font-medium text-white hover:bg-slate-700"
-          >
-            {t('auth.signOut')}
-          </button>
-        </div>
-      </header>
-
-      {notice && (
-        <div
-          role={notice.kind === 'error' ? 'alert' : 'status'}
-          className={`flex items-center justify-between gap-3 px-4 py-2 text-sm ${
-            notice.kind === 'error' ? 'bg-red-50 text-red-800' : 'bg-emerald-50 text-emerald-900'
-          }`}
-        >
-          <span>{noticeText()}</span>
-          <button
-            type="button"
-            onClick={terminalOrder.dismissNotice}
-            aria-label={t('pos.notices.dismiss')}
-            className="rounded px-2 font-semibold"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <div className="min-h-0 overflow-y-auto">
-          {menu.isPending && <p className="text-sm text-slate-500">{t('common.loading')}</p>}
-          {menu.isError && (
-            <p role="alert" className="text-sm text-red-700">
-              {t('common.loadError')}
+    <>
+      <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 print:hidden lg:h-screen">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2">
+          <div className="min-w-0">
+            <p className="text-xs text-slate-500">
+              {terminal.brandName ? localize(terminal.brandName, i18n.language) : t('app.name')}
             </p>
-          )}
-          {menu.data && <MenuPanel menu={menu.data} now={now} disabled={busy} onPick={pick} />}
+            <p className="font-semibold">{localize(terminal.branchName, i18n.language)}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium" dir="ltr">
+              {clock}
+            </span>
+            <span className="text-sm text-slate-600">{user?.name}</span>
+            <button type="button" onClick={() => setListing(true)} className={headerButtonClass}>
+              {t('pos.openOrders.button')}
+            </button>
+            <LanguageSwitcher />
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className="rounded-md bg-slate-900 px-3 py-1 text-sm font-medium text-white hover:bg-slate-700"
+            >
+              {t('auth.signOut')}
+            </button>
+          </div>
+        </header>
+
+        {notice && (
+          <div
+            role={notice.kind === 'error' ? 'alert' : 'status'}
+            className={`flex items-center justify-between gap-3 px-4 py-2 text-sm ${
+              notice.kind === 'error' ? 'bg-red-50 text-red-800' : 'bg-emerald-50 text-emerald-900'
+            }`}
+          >
+            <span>{noticeText()}</span>
+            <button
+              type="button"
+              onClick={terminalOrder.dismissNotice}
+              aria-label={t('pos.notices.dismiss')}
+              className="rounded px-2 font-semibold"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_24rem]">
+          <div className="min-h-0 overflow-y-auto">
+            {menu.isPending && <p className="text-sm text-slate-500">{t('common.loading')}</p>}
+            {menu.isError && (
+              <p role="alert" className="text-sm text-red-700">
+                {t('common.loadError')}
+              </p>
+            )}
+            {menu.data && <MenuPanel menu={menu.data} now={now} disabled={busy} onPick={pick} />}
+          </div>
+
+          <OrderPanel
+            order={order}
+            type={terminalOrder.type}
+            busy={busy}
+            onType={terminalOrder.setType}
+            onQuantity={terminalOrder.setQuantity}
+            onVoidLine={(line) => setVoiding({ kind: 'line', line })}
+            onSend={terminalOrder.send}
+            onDiscount={() => setDiscounting(true)}
+            onVoidOrder={() => setVoiding({ kind: 'order' })}
+            onNewOrder={terminalOrder.newOrder}
+            onPay={() => setPaying(true)}
+          />
         </div>
 
-        <OrderPanel
-          order={order}
-          type={terminalOrder.type}
-          busy={busy}
-          onType={terminalOrder.setType}
-          onQuantity={terminalOrder.setQuantity}
-          onVoidLine={(line) => setVoiding({ kind: 'line', line })}
-          onSend={terminalOrder.send}
-          onDiscount={() => setDiscounting(true)}
-          onVoidOrder={() => setVoiding({ kind: 'order' })}
-          onNewOrder={terminalOrder.newOrder}
-        />
+        {choosing && menu.data && (
+          <ChoiceDialog
+            choosing={choosing}
+            menu={menu.data}
+            now={now}
+            onCancel={() => setChoosing(null)}
+            onAdd={(line) => {
+              setChoosing(null);
+              void terminalOrder.add(line);
+            }}
+          />
+        )}
+
+        {voiding && (
+          <VoidDialog
+            what={
+              voiding.kind === 'line'
+                ? `${localize(voiding.line.name, i18n.language)} × ${voiding.line.quantity}`
+                : t('pos.order.number', { number: order?.number ?? 0 })
+            }
+            onCancel={() => setVoiding(null)}
+            onConfirm={(reason) => {
+              setVoiding(null);
+              if (voiding.kind === 'line') terminalOrder.voidLine(voiding.line, reason);
+              else terminalOrder.voidOrder(reason);
+            }}
+          />
+        )}
+
+        {discounting && order && (
+          <DiscountDialog
+            order={order}
+            onCancel={() => setDiscounting(false)}
+            onApply={(input) => {
+              setDiscounting(false);
+              terminalOrder.setDiscount(input);
+            }}
+            onRemove={() => {
+              setDiscounting(false);
+              terminalOrder.removeDiscount();
+            }}
+          />
+        )}
+
+        {listing && (
+          <OpenOrdersDialog
+            branchId={terminal.branchId}
+            currentId={order?.id ?? null}
+            onClose={() => setListing(false)}
+            onOpen={(id) => {
+              setListing(false);
+              terminalOrder.open(id);
+            }}
+          />
+        )}
+
+        {terminalOrder.approval && (
+          <ApprovalDialog
+            change={terminalOrder.approval}
+            onDone={terminalOrder.approvalDone}
+            onFailed={terminalOrder.approvalFailed}
+            onCancel={terminalOrder.approvalCancelled}
+          />
+        )}
+
+        {paying && order && (
+          <PaymentDialog
+            order={order}
+            onCancel={() => setPaying(false)}
+            onPay={(tenders) => {
+              setPaying(false);
+              void terminalOrder.pay(tenders).then((paid) => {
+                if (paid) setReceipt(paid);
+              });
+            }}
+          />
+        )}
+
+        {receipt && (
+          <ReceiptDialog
+            order={receipt}
+            terminal={terminal}
+            cashier={cashier}
+            onClose={() => setReceipt(null)}
+            onNewOrder={() => {
+              setReceipt(null);
+              terminalOrder.newOrder();
+            }}
+          />
+        )}
       </div>
 
-      {choosing && menu.data && (
-        <ChoiceDialog
-          choosing={choosing}
-          menu={menu.data}
-          now={now}
-          onCancel={() => setChoosing(null)}
-          onAdd={(line) => {
-            setChoosing(null);
-            void terminalOrder.add(line);
-          }}
-        />
+      {/* Only the receipt is printed, never the screen around it. */}
+      {receipt && (
+        <div className="hidden bg-white print:block">
+          <Receipt order={receipt} terminal={terminal} cashier={cashier} />
+        </div>
       )}
-
-      {voiding && (
-        <VoidDialog
-          what={
-            voiding.kind === 'line'
-              ? `${localize(voiding.line.name, i18n.language)} × ${voiding.line.quantity}`
-              : t('pos.order.number', { number: order?.number ?? 0 })
-          }
-          onCancel={() => setVoiding(null)}
-          onConfirm={(reason) => {
-            setVoiding(null);
-            if (voiding.kind === 'line') terminalOrder.voidLine(voiding.line, reason);
-            else terminalOrder.voidOrder(reason);
-          }}
-        />
-      )}
-
-      {discounting && order && (
-        <DiscountDialog
-          order={order}
-          onCancel={() => setDiscounting(false)}
-          onApply={(input) => {
-            setDiscounting(false);
-            terminalOrder.setDiscount(input);
-          }}
-          onRemove={() => {
-            setDiscounting(false);
-            terminalOrder.removeDiscount();
-          }}
-        />
-      )}
-
-      {listing && (
-        <OpenOrdersDialog
-          branchId={terminal.branchId}
-          currentId={order?.id ?? null}
-          onClose={() => setListing(false)}
-          onOpen={(id) => {
-            setListing(false);
-            terminalOrder.open(id);
-          }}
-        />
-      )}
-
-      {terminalOrder.approval && (
-        <ApprovalDialog
-          change={terminalOrder.approval}
-          onDone={terminalOrder.approvalDone}
-          onFailed={terminalOrder.approvalFailed}
-          onCancel={terminalOrder.approvalCancelled}
-        />
-      )}
-    </div>
+    </>
   );
 }
