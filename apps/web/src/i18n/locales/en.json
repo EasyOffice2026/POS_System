@@ -107,7 +107,8 @@
     "orders_refund": "Give refunds",
     "inventory_read": "See the stock",
     "inventory_write": "Change the stock",
-    "ingredients_write": "Change the ingredients"
+    "ingredients_write": "Change the ingredients",
+    "suppliers_write": "Change the suppliers"
   },
   "users": {
     "title": "Users",
@@ -277,7 +278,15 @@
     "COUNT_NOT_OPEN": "This count was finished or cancelled already.",
     "COUNT_EMPTY": "Type at least one counted quantity before finishing.",
     "COUNT_TOO_LONG": "A count can have up to 500 ingredients.",
-    "COUNT_LINES_REQUIRED": "Type at least one quantity."
+    "COUNT_LINES_REQUIRED": "Type at least one quantity.",
+    "SUPPLIER_NAME_REQUIRED": "Enter the supplier's name.",
+    "SUPPLIER_NAME_TAKEN": "The brand already has a supplier with this name.",
+    "SUPPLIER_NOT_FOUND": "This supplier is not available.",
+    "PHONE_INVALID": "Type a phone number with digits, spaces, + and - only.",
+    "EMAIL_INVALID": "Type an email address like name@example.com.",
+    "PAYMENT_DAYS_INVALID": "Type a whole number of days from 0 to 365.",
+    "PRICE_LIST_TOO_LONG": "A price list can have up to 500 ingredients.",
+    "NOTE_TOO_LONG": "This text is too long."
   },
   "rolesPage": {
     "title": "Roles",
@@ -347,7 +356,10 @@
       "inventory_transfer_cancelled": "Transfer cancelled",
       "inventory_count_started": "Count started",
       "inventory_count_finished": "Count finished",
-      "inventory_count_cancelled": "Count cancelled"
+      "inventory_count_cancelled": "Count cancelled",
+      "inventory_supplier_created": "Supplier added",
+      "inventory_supplier_updated": "Supplier changed",
+      "inventory_supplier_prices_updated": "Supplier prices changed"
     }
   },
   "notFound": {
@@ -1056,7 +1068,8 @@
       "stock": "Stock",
       "movements": "Movements",
       "transfers": "Transfers",
-      "counts": "Counts"
+      "counts": "Counts",
+      "suppliers": "Suppliers"
     },
     "units": {
       "g": "g",
@@ -1212,6 +1225,42 @@
         "finished": "Count finished. The stock is set to what was counted.",
         "cancelled": "Count cancelled. The stock did not change."
       }
+    },
+    "suppliers": {
+      "intro": "Who the brand buys from, how to reach them, and the price of what they sell.",
+      "search": "Search",
+      "add": "Add a supplier",
+      "edit": "Edit",
+      "empty": "No supplier yet.",
+      "back": "Back to the suppliers",
+      "name": "Name",
+      "contactName": "Contact person",
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "notes": "Notes",
+      "paymentDays": "Days to pay",
+      "paymentDaysHint": "0 means cash on delivery.",
+      "cash": "Cash on delivery",
+      "days_one": "{{count}} day to pay",
+      "days_other": "{{count}} days to pay",
+      "priceCount_one": "{{count}} price",
+      "priceCount_other": "{{count}} prices",
+      "prices": "Prices",
+      "pricesIntro": "The supplier's price for one unit of each ingredient, next to the ingredient's cost.",
+      "noPrices": "No price yet.",
+      "price": "Supplier's price",
+      "perUnit": "per {{unit}}",
+      "ourCost": "Ingredient cost",
+      "dearer": "{{percent}}% dearer",
+      "cheaper": "{{percent}}% cheaper",
+      "addPrice": "Add an ingredient",
+      "addButton": "Add",
+      "choose": "Choose an ingredient",
+      "remove": "Remove",
+      "removeFor": "Remove {{name}} from the prices",
+      "savePrices": "Save prices",
+      "pricesSaved": "Prices saved."
     }
   },
   "alerts": {

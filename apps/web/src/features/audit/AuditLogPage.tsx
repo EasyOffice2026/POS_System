@@ -52,6 +52,9 @@ const actionKeys = {
   'inventory.count.started': 'audit.actions.inventory_count_started',
   'inventory.count.finished': 'audit.actions.inventory_count_finished',
   'inventory.count.cancelled': 'audit.actions.inventory_count_cancelled',
+  'inventory.supplier.created': 'audit.actions.inventory_supplier_created',
+  'inventory.supplier.updated': 'audit.actions.inventory_supplier_updated',
+  'inventory.supplier.prices_updated': 'audit.actions.inventory_supplier_prices_updated',
 } as const satisfies Record<AuditAction, string>;
 
 type ActionKey = (typeof actionKeys)[AuditAction];

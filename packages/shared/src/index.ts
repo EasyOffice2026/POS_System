@@ -18,6 +18,7 @@ export * from './recipes';
 export * from './refunds';
 export * from './search';
 export * from './settings';
+export * from './suppliers';
 export * from './transfers';
 export * from './shifts';
 export * from './users';

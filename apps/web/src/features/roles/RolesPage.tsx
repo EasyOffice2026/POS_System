@@ -25,6 +25,7 @@ const permissionKeys = {
   'inventory:read': 'permissions.inventory_read',
   'inventory:write': 'permissions.inventory_write',
   'ingredients:write': 'permissions.ingredients_write',
+  'suppliers:write': 'permissions.suppliers_write',
   'audit:read': 'permissions.audit_read',
 } as const satisfies Record<Permission, string>;
 

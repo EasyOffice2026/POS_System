@@ -4,6 +4,10 @@ import {
   type CreateIngredientRequest,
   type CreateMovementRequest,
   type createTransferRequestSchema,
+  type createSupplierRequestSchema,
+  supplierDetailSchema,
+  supplierSchema,
+  type updateSupplierRequestSchema,
   type startCountRequestSchema,
   stockCountSchema,
   stockCountSummarySchema,
@@ -167,3 +171,36 @@ export async function listAlerts() {
   });
   return data;
 }
+
+// ---- suppliers (docs/specs/017-suppliers.md)
+
+export type CreateSupplierInput = z.input<typeof createSupplierRequestSchema>;
+export type UpdateSupplierInput = z.input<typeof updateSupplierRequestSchema>;
+
+export const supplierKeys = {
+  list: (brandId: string, q = '') => ['inventory', brandId, 'suppliers', q] as const,
+  one: (id: string) => ['inventory', 'supplier', id] as const,
+};
+
+export async function listSuppliers(brandId: string, q = '') {
+  const { data } = await request(`/inventory/suppliers${queryString({ brandId, q })}`, {
+    schema: pageSchema(supplierSchema),
+  });
+  return data;
+}
+
+export const getSupplier = (id: string) =>
+  request(`/inventory/suppliers/${id}`, { schema: supplierDetailSchema });
+
+export const createSupplier = (body: CreateSupplierInput) =>
+  request('/inventory/suppliers', { method: 'POST', body, schema: supplierDetailSchema });
+
+export const updateSupplier = (id: string, body: UpdateSupplierInput) =>
+  request(`/inventory/suppliers/${id}`, { method: 'PATCH', body, schema: supplierDetailSchema });
+
+export const putSupplierPrices = (id: string, prices: { ingredientId: string; price: string }[]) =>
+  request(`/inventory/suppliers/${id}/prices`, {
+    method: 'PUT',
+    body: { prices },
+    schema: supplierDetailSchema,
+  });
