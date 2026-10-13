@@ -21,6 +21,7 @@ export function testConfig(overrides: Record<string, string> = {}): Config {
 export async function resetDatabase(prisma: PrismaClient): Promise<void> {
   await prisma.payment.deleteMany();
   await prisma.orderLine.deleteMany();
+  await prisma.kitchenTicket.deleteMany();
   await prisma.order.deleteMany();
   await prisma.orderCounter.deleteMany();
   await prisma.comboSlotOption.deleteMany();

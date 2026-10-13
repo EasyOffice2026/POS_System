@@ -406,9 +406,10 @@ model Order {
   createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  branch   Branch      @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
+  branch   Branch          @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
   lines    OrderLine[]
   payments Payment[]
+  tickets  KitchenTicket[]
 
   @@unique([branchId, businessDate, number])
   // Lets a line point at "this order of this branch of this brand".
@@ -436,6 +437,8 @@ model OrderLine {
   note             String?
   status           OrderLineStatus @default(pending)
   position         Int
+  // The kitchen ticket it was sent on (docs/specs/008-kitchen-display.md).
+  ticketId         String?         @map("ticket_id") @db.Uuid
   sentAt           DateTime?       @map("sent_at") @db.Timestamptz(3)
   voidedAt         DateTime?       @map("voided_at") @db.Timestamptz(3)
   voidedById       String?         @map("voided_by_id") @db.Uuid
@@ -444,11 +447,14 @@ model OrderLine {
   createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  order Order     @relation(fields: [orderId, branchId, brandId], references: [id, branchId, brandId], onDelete: Restrict)
-  item  MenuItem? @relation(fields: [itemId, brandId], references: [id, brandId], onDelete: Restrict)
-  combo Combo?    @relation(fields: [comboId, brandId], references: [id, brandId], onDelete: Restrict)
+  order  Order          @relation(fields: [orderId, branchId, brandId], references: [id, branchId, brandId], onDelete: Restrict)
+  item   MenuItem?      @relation(fields: [itemId, brandId], references: [id, brandId], onDelete: Restrict)
+  combo  Combo?         @relation(fields: [comboId, brandId], references: [id, brandId], onDelete: Restrict)
+  // The ticket belongs to the same order, so it is of the same branch and brand.
+  ticket KitchenTicket? @relation(fields: [ticketId], references: [id], onDelete: Restrict)
 
   @@index([orderId, position])
+  @@index([ticketId])
   @@map("order_lines")
 }
 
@@ -497,4 +503,37 @@ model Payment {
   @@index([orderId])
   @@index([branchId, createdAt])
   @@map("payments")
+}
+
+// ---- Kitchen display. See docs/specs/008-kitchen-display.md.
+
+enum TicketStatus {
+  new
+  preparing
+  ready
+  done
+
+  @@map("ticket_status")
+}
+
+// What one "send" of an order put in front of the kitchen.
+model KitchenTicket {
+  id        String       @id @default(uuid(7)) @db.Uuid
+  orderId   String       @map("order_id") @db.Uuid
+  brandId   String       @map("brand_id") @db.Uuid
+  branchId  String       @map("branch_id") @db.Uuid
+  status    TicketStatus @default(new)
+  sentAt    DateTime     @map("sent_at") @db.Timestamptz(3)
+  startedAt DateTime?    @map("started_at") @db.Timestamptz(3)
+  readyAt   DateTime?    @map("ready_at") @db.Timestamptz(3)
+  doneAt    DateTime?    @map("done_at") @db.Timestamptz(3)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  order Order       @relation(fields: [orderId, branchId, brandId], references: [id, branchId, brandId], onDelete: Restrict)
+  lines OrderLine[]
+
+  @@index([branchId, status, sentAt])
+  @@index([orderId])
+  @@map("kitchen_tickets")
 }
