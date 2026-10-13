@@ -111,7 +111,8 @@
     "orders_refund": "منح الاسترداد",
     "inventory_read": "رؤية المخزون",
     "inventory_write": "تغيير المخزون",
-    "ingredients_write": "تغيير المكونات"
+    "ingredients_write": "تغيير المكونات",
+    "suppliers_write": "تغيير الموردين"
   },
   "users": {
     "title": "المستخدمون",
@@ -281,7 +282,15 @@
     "COUNT_NOT_OPEN": "تم إنهاء هذا الجرد أو إلغاؤه من قبل.",
     "COUNT_EMPTY": "اكتب كمية معدودة واحدة على الأقل قبل الإنهاء.",
     "COUNT_TOO_LONG": "يمكن أن يضم الجرد حتى 500 مكوّن.",
-    "COUNT_LINES_REQUIRED": "اكتب كمية واحدة على الأقل."
+    "COUNT_LINES_REQUIRED": "اكتب كمية واحدة على الأقل.",
+    "SUPPLIER_NAME_REQUIRED": "أدخل اسم المورد.",
+    "SUPPLIER_NAME_TAKEN": "لدى العلامة التجارية مورد بهذا الاسم.",
+    "SUPPLIER_NOT_FOUND": "هذا المورد غير متاح.",
+    "PHONE_INVALID": "اكتب رقم هاتف بالأرقام والمسافات و+ و- فقط.",
+    "EMAIL_INVALID": "اكتب بريدًا إلكترونيًا مثل name@example.com.",
+    "PAYMENT_DAYS_INVALID": "اكتب عددًا صحيحًا من الأيام من 0 إلى 365.",
+    "PRICE_LIST_TOO_LONG": "يمكن أن تضم قائمة الأسعار حتى 500 مكوّن.",
+    "NOTE_TOO_LONG": "هذا النص طويل جدًا."
   },
   "rolesPage": {
     "title": "الأدوار",
@@ -351,7 +360,10 @@
       "inventory_transfer_cancelled": "إلغاء تحويل",
       "inventory_count_started": "بدء جرد",
       "inventory_count_finished": "إنهاء جرد",
-      "inventory_count_cancelled": "إلغاء جرد"
+      "inventory_count_cancelled": "إلغاء جرد",
+      "inventory_supplier_created": "إضافة مورد",
+      "inventory_supplier_updated": "تغيير مورد",
+      "inventory_supplier_prices_updated": "تغيير أسعار مورد"
     }
   },
   "notFound": {
@@ -1084,7 +1096,8 @@
       "stock": "المخزون",
       "movements": "الحركات",
       "transfers": "التحويلات",
-      "counts": "الجرد"
+      "counts": "الجرد",
+      "suppliers": "الموردون"
     },
     "units": {
       "g": "غ",
@@ -1240,6 +1253,50 @@
         "finished": "تم إنهاء الجرد. ضُبط المخزون على ما تم عدّه.",
         "cancelled": "تم إلغاء الجرد. لم يتغير المخزون."
       }
+    },
+    "suppliers": {
+      "intro": "من تشتري منهم العلامة التجارية، وكيفية التواصل معهم، وأسعار ما يبيعونه.",
+      "search": "بحث",
+      "add": "إضافة مورد",
+      "edit": "تعديل",
+      "empty": "لا يوجد مورد بعد.",
+      "back": "العودة إلى الموردين",
+      "name": "الاسم",
+      "contactName": "مسؤول التواصل",
+      "phone": "الهاتف",
+      "email": "البريد الإلكتروني",
+      "address": "العنوان",
+      "notes": "ملاحظات",
+      "paymentDays": "مهلة الدفع بالأيام",
+      "paymentDaysHint": "0 يعني الدفع نقدًا عند التسليم.",
+      "cash": "نقدًا عند التسليم",
+      "prices": "الأسعار",
+      "pricesIntro": "سعر المورد لوحدة واحدة من كل مكوّن، بجانب تكلفة المكوّن.",
+      "noPrices": "لا يوجد سعر بعد.",
+      "price": "سعر المورد",
+      "perUnit": "لكل {{unit}}",
+      "ourCost": "تكلفة المكوّن",
+      "dearer": "أغلى بنسبة {{percent}}٪",
+      "cheaper": "أرخص بنسبة {{percent}}٪",
+      "addPrice": "إضافة مكوّن",
+      "addButton": "إضافة",
+      "choose": "اختر مكوّنًا",
+      "remove": "إزالة",
+      "removeFor": "إزالة {{name}} من الأسعار",
+      "savePrices": "حفظ الأسعار",
+      "pricesSaved": "تم حفظ الأسعار.",
+      "days_zero": "نقدًا عند التسليم",
+      "days_one": "مهلة دفع يوم واحد",
+      "days_two": "مهلة دفع يومين",
+      "days_few": "مهلة دفع {{count}} أيام",
+      "days_many": "مهلة دفع {{count}} يومًا",
+      "days_other": "مهلة دفع {{count}} يوم",
+      "priceCount_zero": "لا أسعار",
+      "priceCount_one": "سعر واحد",
+      "priceCount_two": "سعران",
+      "priceCount_few": "{{count}} أسعار",
+      "priceCount_many": "{{count}} سعرًا",
+      "priceCount_other": "{{count}} سعر"
     }
   },
   "alerts": {

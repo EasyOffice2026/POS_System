@@ -1,4 +1,8 @@
 import {
+  createSupplierRequestSchema,
+  putSupplierPricesRequestSchema,
+  supplierListQuerySchema,
+  updateSupplierRequestSchema,
   cancelCountRequestSchema,
   countListQuerySchema,
   saveCountLinesRequestSchema,
@@ -24,6 +28,7 @@ import { requestContext } from '../../middleware/authenticate';
 import { requirePermission } from '../../middleware/authorize';
 import type { CountsService } from './counts.service';
 import type { InventoryService } from './inventory.service';
+import type { SuppliersService } from './suppliers.service';
 import type { TransfersService } from './transfers.service';
 
 const idParams = z.object({ id: z.uuid() });
@@ -35,10 +40,12 @@ export function createInventoryRouter({
   service,
   transfers,
   counts,
+  suppliers,
 }: {
   service: InventoryService;
   transfers: TransfersService;
   counts: CountsService;
+  suppliers: SuppliersService;
 }): Router {
   const router = Router();
   const read = requirePermission('inventory:read');
@@ -152,6 +159,36 @@ export function createInventoryRouter({
     const { id } = parseWith(idParams, req.params);
     const input = parseWith(cancelCountRequestSchema, req.body);
     res.json(await counts.cancel(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  // Suppliers and their prices (docs/specs/017-suppliers.md).
+  const writeSuppliers = requirePermission('suppliers:write');
+
+  router.get('/suppliers', read, async (req, res) => {
+    const query = parseWith(supplierListQuerySchema, req.query);
+    res.json(await suppliers.list(requestContext(req), query));
+  });
+
+  router.get('/suppliers/:id', read, async (req, res) => {
+    const { id } = parseWith(idParams, req.params);
+    res.json(await suppliers.get(requestContext(req), id));
+  });
+
+  router.post('/suppliers', writeSuppliers, async (req, res) => {
+    const input = parseWith(createSupplierRequestSchema, req.body);
+    res.status(201).json(await suppliers.create(requestContext(req), input, requestMeta(req)));
+  });
+
+  router.patch('/suppliers/:id', writeSuppliers, async (req, res) => {
+    const { id } = parseWith(idParams, req.params);
+    const input = parseWith(updateSupplierRequestSchema, req.body);
+    res.json(await suppliers.update(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  router.put('/suppliers/:id/prices', writeSuppliers, async (req, res) => {
+    const { id } = parseWith(idParams, req.params);
+    const input = parseWith(putSupplierPricesRequestSchema, req.body);
+    res.json(await suppliers.putPrices(requestContext(req), id, input, requestMeta(req)));
   });
 
   return router;

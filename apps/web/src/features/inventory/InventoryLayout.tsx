@@ -22,11 +22,13 @@ export interface InventoryContext {
   // (inventory:write).
   canEditIngredients: boolean;
   canMoveStock: boolean;
+  // Whether the person may change the suppliers and their prices (suppliers:write).
+  canEditSuppliers: boolean;
 }
 
 export const useInventoryContext = () => useOutletContext<InventoryContext>();
 
-const tabs = ['ingredients', 'stock', 'movements', 'transfers', 'counts'] as const;
+const tabs = ['ingredients', 'stock', 'movements', 'transfers', 'counts', 'suppliers'] as const;
 
 const tabClass = ({ isActive }: { isActive: boolean }) =>
   `-mb-px rounded-t-md border-b-2 px-3 py-2 text-sm font-medium ${
@@ -58,6 +60,7 @@ export function InventoryLayout() {
         branches: menuBrand.branches,
         canEditIngredients: user?.permissions.includes('ingredients:write') ?? false,
         canMoveStock: user?.permissions.includes('inventory:write') ?? false,
+        canEditSuppliers: user?.permissions.includes('suppliers:write') ?? false,
       }
     : null;
 
@@ -94,7 +97,7 @@ export function InventoryLayout() {
         <>
           <nav
             aria-label={t('inventory.tabs.label')}
-            className="flex gap-1 border-b border-slate-200"
+            className="flex flex-wrap gap-1 border-b border-slate-200"
           >
             {tabs.map((tab) => (
               <NavLink key={tab} to={{ pathname: tab, search }} className={tabClass}>

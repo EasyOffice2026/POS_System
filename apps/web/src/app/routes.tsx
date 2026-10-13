@@ -28,6 +28,8 @@ import { IngredientsPage } from '../features/inventory/IngredientsPage';
 import { InventoryIndexRedirect, InventoryLayout } from '../features/inventory/InventoryLayout';
 import { MovementsPage } from '../features/inventory/MovementsPage';
 import { StockPage } from '../features/inventory/StockPage';
+import { SupplierPage } from '../features/inventory/SupplierPage';
+import { SuppliersPage } from '../features/inventory/SuppliersPage';
 import { TransfersPage } from '../features/inventory/TransfersPage';
 import { ShiftsPage } from '../features/shifts/ShiftsPage';
 import { UserFormPage } from '../features/users/UserFormPage';
@@ -197,6 +199,8 @@ export const routes: RouteObject[] = [
               { path: 'transfers', element: <TransfersPage /> },
               { path: 'counts', element: <CountsPage /> },
               { path: 'counts/:id', element: <CountPage /> },
+              { path: 'suppliers', element: <SuppliersPage /> },
+              { path: 'suppliers/:id', element: <SupplierPage /> },
             ],
           },
           {
