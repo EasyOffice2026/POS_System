@@ -20,7 +20,9 @@
     "statusInactive": "غير نشط",
     "inactiveSuffix": "(غير نشط)",
     "nameEnglish": "الاسم (بالإنجليزية)",
-    "nameArabic": "الاسم (بالعربية)"
+    "nameArabic": "الاسم (بالعربية)",
+    "activate": "تفعيل",
+    "deactivate": "إيقاف"
   },
   "nav": {
     "label": "القائمة الرئيسية",
@@ -34,7 +36,8 @@
     "pos": "نقطة البيع",
     "kds": "شاشة المطبخ",
     "settings": "الإعدادات",
-    "shifts": "الورديات"
+    "shifts": "الورديات",
+    "inventory": "المخزون"
   },
   "language": {
     "switchTo": "تغيير اللغة",
@@ -105,7 +108,10 @@
     "kitchen_write": "العمل على شاشة المطبخ",
     "settings_write": "تغيير الإعدادات",
     "shifts_read": "رؤية الورديات",
-    "orders_refund": "منح الاسترداد"
+    "orders_refund": "منح الاسترداد",
+    "inventory_read": "رؤية المخزون",
+    "inventory_write": "تغيير المخزون",
+    "ingredients_write": "تغيير المكونات"
   },
   "users": {
     "title": "المستخدمون",
@@ -256,7 +262,15 @@
     "SHIFT_REQUIRED": "افتح وردية قبل استلام المدفوعات.",
     "REFUND_AMOUNT_INVALID": "اكتب مبلغًا أكبر من 0، بثلاث خانات عشرية على الأكثر.",
     "REFUND_TOO_MUCH": "هذا أكثر مما تبقّى من الطلب.",
-    "REFUND_METHOD_INVALID": "يعود المال نقدًا، أو بالطريقة التي دُفع بها الطلب."
+    "REFUND_METHOD_INVALID": "يعود المال نقدًا، أو بالطريقة التي دُفع بها الطلب.",
+    "UNIT_INVALID": "اختر وحدة.",
+    "UNIT_LOCKED": "لا يمكن تغيير الوحدة بعد وجود حركات على المكوّن.",
+    "QUANTITY_INVALID": "اكتب كمية 0 أو أكثر، بثلاث خانات عشرية على الأكثر.",
+    "NOTE_REQUIRED": "اذكر السبب.",
+    "STOCK_NEGATIVE": "لا توجد هذه الكمية في المخزون.",
+    "INGREDIENT_NOT_FOUND": "هذا المكوّن غير متاح.",
+    "INGREDIENT_REQUIRED": "اختر مكوّنًا.",
+    "MOVEMENT_KIND_INVALID": "اختر ما حدث."
   },
   "rolesPage": {
     "title": "الأدوار",
@@ -317,7 +331,9 @@
       "brand_settings_updated": "تغيير الإعدادات",
       "shift_opened": "فتح وردية",
       "shift_closed": "إغلاق وردية",
-      "order_refunded": "استرداد مبلغ"
+      "order_refunded": "استرداد مبلغ",
+      "ingredient_created": "إضافة مكوّن",
+      "ingredient_updated": "تغيير مكوّن"
     }
   },
   "notFound": {
@@ -1017,6 +1033,74 @@
       "done": "تم",
       "refunds": "الاستردادات",
       "refundsTotal": "المبالغ المرجعة"
+    }
+  },
+  "inventory": {
+    "title": "المخزون",
+    "brand": "العلامة التجارية",
+    "tabs": {
+      "label": "أقسام المخزون",
+      "ingredients": "المكونات",
+      "stock": "المخزون",
+      "movements": "الحركات"
+    },
+    "units": {
+      "g": "غ",
+      "kg": "كغ",
+      "ml": "مل",
+      "l": "ل",
+      "piece": "قطعة"
+    },
+    "ingredients": {
+      "intro": "ما تشتريه العلامة التجارية، كل مكوّن بوحدة واحدة. مخزون الفرع في تبويب المخزون.",
+      "search": "بحث",
+      "add": "إضافة مكوّن",
+      "edit": "تغيير",
+      "empty": "لا يوجد مكوّن بعد.",
+      "unit": "الوحدة",
+      "cost": "تكلفة الوحدة",
+      "perUnit": "للوحدة",
+      "lowLevel": "منخفض تحت",
+      "lowLevelHint": "القيمة الافتراضية للعلامة التجارية. يمكن للفرع تحديد قيمته في تبويب المخزون.",
+      "lowAt": "منخفض عند {{level}}"
+    },
+    "stock": {
+      "intro": "مخزون الفرع. المكونات المنخفضة أولًا.",
+      "branch": "الفرع",
+      "ingredient": "المكوّن",
+      "quantity": "في المخزون",
+      "lowLevel": "منخفض تحت",
+      "value": "القيمة",
+      "total": "قيمة المخزون",
+      "low": "منخفض",
+      "onlyLow": "المنخفض فقط",
+      "noBranches": "لا يوجد فرع لعرضه.",
+      "empty": "لا يوجد ما يُعرض.",
+      "now": "في المخزون الآن: {{quantity}} {{unit}}.",
+      "setLevel": "تحديد الحد",
+      "levelPrompt": "حد الانخفاض لـ {{name}} في هذا الفرع (اتركه فارغًا للقيمة الافتراضية):"
+    },
+    "movements": {
+      "intro": "كل تغيير في المخزون، الأحدث أولًا.",
+      "kinds": {
+        "received": "استلام",
+        "adjustment": "تصحيح",
+        "waste": "هدر",
+        "sold": "مبيع",
+        "transfer_in": "تحويل وارد",
+        "transfer_out": "تحويل صادر",
+        "count": "جرد"
+      },
+      "quantity": "الكمية ({{unit}})",
+      "counted": "الكمية المعدودة ({{unit}})",
+      "note": "السبب",
+      "noteOptional": "ملاحظة (اختياري)",
+      "when": "متى",
+      "kind": "ماذا",
+      "change": "التغيير",
+      "after": "بعده",
+      "who": "من",
+      "empty": "لا توجد حركة بعد."
     }
   }
 }

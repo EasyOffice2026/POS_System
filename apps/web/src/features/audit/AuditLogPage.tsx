@@ -43,6 +43,8 @@ const actionKeys = {
   'shift.opened': 'audit.actions.shift_opened',
   'shift.closed': 'audit.actions.shift_closed',
   'order.refunded': 'audit.actions.order_refunded',
+  'ingredient.created': 'audit.actions.ingredient_created',
+  'ingredient.updated': 'audit.actions.ingredient_updated',
 } as const satisfies Record<AuditAction, string>;
 
 type ActionKey = (typeof actionKeys)[AuditAction];
