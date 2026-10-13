@@ -141,6 +141,16 @@ describe('the stock of a branch', () => {
     expect(screen.getByText('Value of the stock').nextElementSibling).toHaveTextContent('31.600');
   });
 
+  it('shows a quantity below zero in red (more was sold than received)', async () => {
+    inventoryApi(manager, {
+      [STOCK]: () => json({ data: [stockOf(cheese, '-0.140', true)] }),
+    });
+    renderApp('/admin/inventory/stock');
+
+    const quantity = await screen.findByText('-0.140');
+    expect(quantity.closest('td')).toHaveClass('text-red-700');
+  });
+
   it('records goods received and shows the API’s answer for too much waste', async () => {
     let calls = 0;
     const api = inventoryApi(manager, {

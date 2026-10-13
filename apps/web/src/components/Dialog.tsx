@@ -27,9 +27,20 @@ export function Dialog({ title, onClose, children, footer }: DialogProps) {
     return () => before?.focus();
   }, []);
 
+  // Escape closes the dialog even when nothing in it has the focus any more (a button that
+  // was pressed and then disabled while saving loses it).
+  useEffect(() => {
+    const onEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.defaultPrevented) close.current();
+    };
+    document.addEventListener('keydown', onEscape);
+    return () => document.removeEventListener('keydown', onEscape);
+  }, []);
+
   function onKeyDown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.stopPropagation();
+      event.preventDefault();
       close.current();
       return;
     }

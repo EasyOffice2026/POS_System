@@ -14,6 +14,8 @@ import {
   modifierSchema,
   pageSchema,
   type putBranchOverrideRequestSchema,
+  type PutRecipeRequest,
+  recipeSchema,
   type UpdateCategoryRequest,
   type UpdateComboRequest,
   type UpdateItemRequest,
@@ -45,6 +47,8 @@ export const menuKeys = {
   combos: (brandId: string) => ['menu', brandId, 'combos'] as const,
   combo: (id: string) => ['menu', 'combo', id] as const,
   branchMenu: (branchId: string) => ['menu', 'branch', branchId] as const,
+  recipe: (owner: RecipeOwner) =>
+    ['menu', 'recipe', 'itemId' in owner ? owner.itemId : owner.modifierId] as const,
 };
 
 // ---- categories
@@ -173,3 +177,19 @@ export const updateCombo = (id: string, body: UpdateComboRequest) =>
 
 export const getBranchMenu = (branchId: string) =>
   request(`/menu${queryString({ branchId })}`, { schema: branchMenuSchema });
+
+// ---- recipes (docs/specs/013-recipes.md)
+
+// The dish or the modifier a recipe belongs to.
+export type RecipeOwner = { itemId: string } | { modifierId: string };
+
+const recipePath = (owner: RecipeOwner) =>
+  'itemId' in owner
+    ? `/menu/items/${owner.itemId}/recipe`
+    : `/menu/modifiers/${owner.modifierId}/recipe`;
+
+export const getRecipe = (owner: RecipeOwner) =>
+  request(recipePath(owner), { schema: recipeSchema });
+
+export const putRecipe = (owner: RecipeOwner, body: PutRecipeRequest) =>
+  request(recipePath(owner), { method: 'PUT', body, schema: recipeSchema });

@@ -266,7 +266,9 @@
     "STOCK_NEGATIVE": "There is not that much in stock.",
     "INGREDIENT_NOT_FOUND": "This ingredient is not available.",
     "INGREDIENT_REQUIRED": "Choose an ingredient.",
-    "MOVEMENT_KIND_INVALID": "Choose what happened."
+    "MOVEMENT_KIND_INVALID": "Choose what happened.",
+    "INGREDIENT_DUPLICATE": "Each ingredient can be on the recipe once.",
+    "RECIPE_TOO_LONG": "A recipe can have up to 50 ingredients."
   },
   "rolesPage": {
     "title": "Roles",
@@ -329,7 +331,8 @@
       "shift_closed": "Shift closed",
       "order_refunded": "Refund given",
       "ingredient_created": "Ingredient added",
-      "ingredient_updated": "Ingredient changed"
+      "ingredient_updated": "Ingredient changed",
+      "menu_recipe_updated": "Recipe changed"
     }
   },
   "notFound": {
@@ -537,7 +540,8 @@
         "label": "Item settings",
         "details": "Details",
         "pricing": "Branch prices",
-        "modifiers": "Modifiers"
+        "modifiers": "Modifiers",
+        "recipe": "Recipe"
       }
     },
     "schedule": {
@@ -668,6 +672,27 @@
       "empty": "Nothing can be sold at this branch yet.",
       "combos": "Combos",
       "notNow": "Not available right now"
+    },
+    "recipe": {
+      "intro": "What one of this dish uses. When an order is paid, the branch's stock goes down by it.",
+      "modifierIntro": "What this choice adds to the dish. When an order is paid, the branch's stock goes down by it.",
+      "button": "Recipe",
+      "forName": "Recipe of {{name}}",
+      "ingredient": "Ingredient",
+      "quantity": "Quantity",
+      "cost": "Cost",
+      "total": "Cost of the ingredients",
+      "ofPrice": "{{percent}}% of the price",
+      "empty": "No recipe yet. The stock does not change when this is sold.",
+      "add": "Add an ingredient",
+      "addButton": "Add",
+      "choose": "Choose an ingredient",
+      "noIngredients": "No ingredient to add. Add some under Inventory first.",
+      "remove": "Remove",
+      "removeFor": "Remove {{name}} from the recipe",
+      "quantityInvalid": "Type a quantity above 0, with up to 3 decimals.",
+      "saved": "Recipe saved.",
+      "close": "Close"
     }
   },
   "weekdaysShort": {

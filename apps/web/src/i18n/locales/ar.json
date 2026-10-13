@@ -270,7 +270,9 @@
     "STOCK_NEGATIVE": "لا توجد هذه الكمية في المخزون.",
     "INGREDIENT_NOT_FOUND": "هذا المكوّن غير متاح.",
     "INGREDIENT_REQUIRED": "اختر مكوّنًا.",
-    "MOVEMENT_KIND_INVALID": "اختر ما حدث."
+    "MOVEMENT_KIND_INVALID": "اختر ما حدث.",
+    "INGREDIENT_DUPLICATE": "يمكن إدراج كل مكوّن مرة واحدة في الوصفة.",
+    "RECIPE_TOO_LONG": "يمكن أن تضم الوصفة حتى 50 مكوّنًا."
   },
   "rolesPage": {
     "title": "الأدوار",
@@ -333,7 +335,8 @@
       "shift_closed": "إغلاق وردية",
       "order_refunded": "استرداد مبلغ",
       "ingredient_created": "إضافة مكوّن",
-      "ingredient_updated": "تغيير مكوّن"
+      "ingredient_updated": "تغيير مكوّن",
+      "menu_recipe_updated": "تغيير وصفة"
     }
   },
   "notFound": {
@@ -541,7 +544,8 @@
         "label": "إعدادات الصنف",
         "details": "التفاصيل",
         "pricing": "أسعار الفروع",
-        "modifiers": "الخيارات"
+        "modifiers": "الخيارات",
+        "recipe": "الوصفة"
       }
     },
     "schedule": {
@@ -672,6 +676,27 @@
       "empty": "لا شيء يمكن بيعه في هذا الفرع بعد.",
       "combos": "الوجبات المركبة",
       "notNow": "غير متاح الآن"
+    },
+    "recipe": {
+      "intro": "ما يستهلكه طبق واحد. عند دفع طلب ينقص مخزون الفرع بهذا المقدار.",
+      "modifierIntro": "ما يضيفه هذا الخيار إلى الطبق. عند دفع طلب ينقص مخزون الفرع بهذا المقدار.",
+      "button": "الوصفة",
+      "forName": "وصفة {{name}}",
+      "ingredient": "المكوّن",
+      "quantity": "الكمية",
+      "cost": "التكلفة",
+      "total": "تكلفة المكوّنات",
+      "ofPrice": "{{percent}}٪ من السعر",
+      "empty": "لا توجد وصفة بعد. لا يتغير المخزون عند بيع هذا الصنف.",
+      "add": "إضافة مكوّن",
+      "addButton": "إضافة",
+      "choose": "اختر مكوّنًا",
+      "noIngredients": "لا يوجد مكوّن للإضافة. أضف المكوّنات في المخزون أولًا.",
+      "remove": "إزالة",
+      "removeFor": "إزالة {{name}} من الوصفة",
+      "quantityInvalid": "اكتب كمية أكبر من 0 بثلاث منازل عشرية كحد أقصى.",
+      "saved": "تم حفظ الوصفة.",
+      "close": "إغلاق"
     }
   },
   "weekdaysShort": {

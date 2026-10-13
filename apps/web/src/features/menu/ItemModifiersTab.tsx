@@ -15,6 +15,7 @@ import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActiveBadge } from '../../components/ActiveBadge';
 import { BilingualNameFields } from '../../components/BilingualNameFields';
+import { Dialog } from '../../components/Dialog';
 import {
   FormField,
   fieldAttributes,
@@ -33,7 +34,9 @@ import {
   updateModifier,
   updateModifierGroup,
 } from './menu-api';
+import { useAuth } from '../auth/auth-context';
 import { describeChoices } from './modifier-rule';
+import { RecipeEditor } from './RecipeEditor';
 
 type Notice = { kind: 'saved' } | { kind: 'problem'; code: string };
 
@@ -407,7 +410,11 @@ interface ModifierRowProps {
 function ModifierRow({ item, group, modifier, readOnly, onNotice }: ModifierRowProps) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [editing, setEditing] = useState(false);
+  const [recipeOpen, setRecipeOpen] = useState(false);
+  // A recipe names ingredients, so it needs the stock too (spec 013).
+  const canSeeRecipe = user?.permissions.includes('inventory:read') ?? false;
 
   const name = localize(modifier.name, i18n.language);
   const otherLanguage = i18n.language === 'ar' ? 'en' : 'ar';
@@ -455,6 +462,40 @@ function ModifierRow({ item, group, modifier, readOnly, onNotice }: ModifierRowP
         <Price value={modifier.priceDelta} signed />
       </span>
       {!modifier.isActive && <ActiveBadge isActive={false} />}
+      {canSeeRecipe && (
+        <button
+          type="button"
+          aria-label={t('menu.recipe.forName', { name })}
+          onClick={() => {
+            onNotice(null);
+            setRecipeOpen(true);
+          }}
+          className={smallButtonClass}
+        >
+          {t('menu.recipe.button')}
+        </button>
+      )}
+      {recipeOpen && (
+        <Dialog
+          title={t('menu.recipe.forName', { name })}
+          onClose={() => setRecipeOpen(false)}
+          footer={
+            <button
+              type="button"
+              onClick={() => setRecipeOpen(false)}
+              className={secondaryButtonClass}
+            >
+              {t('menu.recipe.close')}
+            </button>
+          }
+        >
+          <RecipeEditor
+            brandId={item.brandId}
+            owner={{ modifierId: modifier.id }}
+            readOnly={readOnly}
+          />
+        </Dialog>
+      )}
       {!readOnly && (
         <div className="flex flex-wrap gap-2">
           <button

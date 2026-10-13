@@ -90,6 +90,8 @@ const messageKeys = {
   INGREDIENT_NOT_FOUND: 'validation.INGREDIENT_NOT_FOUND',
   INGREDIENT_REQUIRED: 'validation.INGREDIENT_REQUIRED',
   MOVEMENT_KIND_INVALID: 'validation.MOVEMENT_KIND_INVALID',
+  INGREDIENT_DUPLICATE: 'validation.INGREDIENT_DUPLICATE',
+  RECIPE_TOO_LONG: 'validation.RECIPE_TOO_LONG',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;

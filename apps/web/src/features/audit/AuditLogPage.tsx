@@ -45,6 +45,7 @@ const actionKeys = {
   'order.refunded': 'audit.actions.order_refunded',
   'ingredient.created': 'audit.actions.ingredient_created',
   'ingredient.updated': 'audit.actions.ingredient_updated',
+  'menu.recipe.updated': 'audit.actions.menu_recipe_updated',
 } as const satisfies Record<AuditAction, string>;
 
 type ActionKey = (typeof actionKeys)[AuditAction];

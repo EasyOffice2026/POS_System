@@ -243,7 +243,12 @@ export function StockPage() {
                         </span>
                       )}
                     </td>
-                    <td className="py-2 pe-3 text-end whitespace-nowrap">
+                    {/* Below zero means more was sold than was received (spec 013, rule 5). */}
+                    <td
+                      className={`py-2 pe-3 text-end whitespace-nowrap ${
+                        Number(row.quantity) < 0 ? 'font-medium text-red-700' : ''
+                      }`}
+                    >
                       <bdi dir="ltr">{row.quantity}</bdi>{' '}
                       {t(`inventory.units.${row.ingredient.unit}`)}
                     </td>
