@@ -57,6 +57,7 @@ const tenantModels: Record<string, ModelRule> = {
   Shift: { brand: 'brandId', branch: 'branchId' },
   Refund: { brand: 'brandId', branch: 'branchId' },
   Ingredient: { brand: 'brandId', brandWide: true },
+  RecipeLine: { brand: 'brandId', brandWide: true },
   BranchStock: { brand: 'brandId', branch: 'branchId' },
   StockMovement: { brand: 'brandId', branch: 'branchId' },
 };

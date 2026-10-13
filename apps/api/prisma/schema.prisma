@@ -218,6 +218,7 @@ model MenuItem {
   modifierGroups ModifierGroup[]
   overrides      BranchMenuItem[]
   comboOptions   ComboSlotOption[]
+  recipeLines    RecipeLine[]
   orderLines     OrderLine[]
 
   @@unique([id, brandId])
@@ -280,8 +281,10 @@ model Modifier {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  group ModifierGroup @relation(fields: [groupId, brandId], references: [id, brandId], onDelete: Restrict)
+  group       ModifierGroup @relation(fields: [groupId, brandId], references: [id, brandId], onDelete: Restrict)
+  recipeLines RecipeLine[]
 
+  @@unique([id, brandId])
   @@index([groupId])
   @@map("modifiers")
 }
@@ -656,9 +659,10 @@ model Ingredient {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  brand     Brand           @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  stock     BranchStock[]
-  movements StockMovement[]
+  brand       Brand           @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  stock       BranchStock[]
+  movements   StockMovement[]
+  recipeLines RecipeLine[]
 
   @@unique([id, brandId])
   @@index([brandId, isActive])
@@ -705,4 +709,26 @@ model StockMovement {
   @@index([branchId, ingredientId, createdAt])
   @@index([branchId, createdAt])
   @@map("stock_movements")
+}
+
+// ---- Recipes. See docs/specs/013-recipes.md.
+
+// One ingredient of what a dish or a modifier uses, in the ingredient's unit.
+model RecipeLine {
+  id           String  @id @default(uuid(7)) @db.Uuid
+  brandId      String  @map("brand_id") @db.Uuid
+  // One of the two: the dish, or the modifier.
+  itemId       String? @map("item_id") @db.Uuid
+  modifierId   String? @map("modifier_id") @db.Uuid
+  ingredientId String  @map("ingredient_id") @db.Uuid
+  quantity     Decimal @db.Decimal(15, 3)
+
+  item       MenuItem?  @relation(fields: [itemId, brandId], references: [id, brandId], onDelete: Restrict)
+  modifier   Modifier?  @relation(fields: [modifierId, brandId], references: [id, brandId], onDelete: Restrict)
+  ingredient Ingredient @relation(fields: [ingredientId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@unique([itemId, ingredientId])
+  @@unique([modifierId, ingredientId])
+  @@index([brandId])
+  @@map("recipe_lines")
 }
