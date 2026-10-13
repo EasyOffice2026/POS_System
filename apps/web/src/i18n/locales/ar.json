@@ -290,7 +290,13 @@
     "EMAIL_INVALID": "اكتب بريدًا إلكترونيًا مثل name@example.com.",
     "PAYMENT_DAYS_INVALID": "اكتب عددًا صحيحًا من الأيام من 0 إلى 365.",
     "PRICE_LIST_TOO_LONG": "يمكن أن تضم قائمة الأسعار حتى 500 مكوّن.",
-    "NOTE_TOO_LONG": "هذا النص طويل جدًا."
+    "NOTE_TOO_LONG": "هذا النص طويل جدًا.",
+    "PRICE_REQUIRED": "لا يوجد سعر لدى هذا المورد. اكتب سعرًا.",
+    "ORDER_EMPTY": "أضف مكوّنًا واحدًا على الأقل.",
+    "ORDER_TOO_LONG": "يمكن أن يضم الأمر حتى 200 مكوّن.",
+    "ORDER_NOT_DRAFT": "تم إرسال هذا الأمر ولا يمكن تغييره.",
+    "ORDER_CLOSED": "تم استلام هذا الأمر أو إلغاؤه من قبل.",
+    "DATE_INVALID": "اختر يومًا."
   },
   "rolesPage": {
     "title": "الأدوار",
@@ -363,7 +369,11 @@
       "inventory_count_cancelled": "إلغاء جرد",
       "inventory_supplier_created": "إضافة مورد",
       "inventory_supplier_updated": "تغيير مورد",
-      "inventory_supplier_prices_updated": "تغيير أسعار مورد"
+      "inventory_supplier_prices_updated": "تغيير أسعار مورد",
+      "inventory_purchase_order_created": "إنشاء أمر شراء",
+      "inventory_purchase_order_updated": "تغيير أمر شراء",
+      "inventory_purchase_order_sent": "إرسال أمر شراء",
+      "inventory_purchase_order_cancelled": "إلغاء أمر شراء"
     }
   },
   "notFound": {
@@ -1097,7 +1107,8 @@
       "movements": "الحركات",
       "transfers": "التحويلات",
       "counts": "الجرد",
-      "suppliers": "الموردون"
+      "suppliers": "الموردون",
+      "purchase-orders": "أوامر الشراء"
     },
     "units": {
       "g": "غ",
@@ -1297,6 +1308,62 @@
       "priceCount_few": "{{count}} أسعار",
       "priceCount_many": "{{count}} سعرًا",
       "priceCount_other": "{{count}} سعر"
+    },
+    "purchaseOrders": {
+      "intro": "مكوّنات تُطلب لفرع من مورد بأسعار المورد.",
+      "new": "أمر جديد",
+      "empty": "لا يوجد أمر بعد.",
+      "number": "الرقم",
+      "supplier": "المورد",
+      "status": "الحالة",
+      "total": "الإجمالي",
+      "expectedOn": "موعد التسليم المتوقع",
+      "created": "الإنشاء",
+      "openFor": "فتح الأمر {{number}}",
+      "lineCount_zero": "لا مكوّنات",
+      "lineCount_one": "مكوّن واحد",
+      "lineCount_two": "مكوّنان",
+      "lineCount_few": "{{count}} مكوّنات",
+      "lineCount_many": "{{count}} مكوّنًا",
+      "lineCount_other": "{{count}} مكوّن",
+      "statuses": {
+        "draft": "مسودة",
+        "sent": "مُرسل",
+        "received": "مُستلم",
+        "cancelled": "ملغى"
+      },
+      "back": "العودة إلى أوامر الشراء",
+      "title": "أمر الشراء {{number}}",
+      "forBranch": "لفرع {{branch}}",
+      "toSupplier": "إلى {{supplier}}",
+      "chooseSupplier": "اختر موردًا",
+      "noSuppliers": "لا يوجد مورد نشط. أضف موردًا في تبويب الموردين.",
+      "createdBy": "أنشأه {{name}}، {{when}}",
+      "sentBy": "أرسله {{name}}، {{when}}",
+      "cancelledBy": "ألغاه {{name}}، {{when}}: {{reason}}",
+      "noLines": "لا يوجد مكوّن بعد.",
+      "quantity": "الكمية",
+      "unitPrice": "سعر الوحدة",
+      "priceFor": "سعر وحدة {{name}}",
+      "lineTotal": "إجمالي السطر",
+      "add": "إضافة مكوّن",
+      "addButton": "إضافة",
+      "chooseIngredient": "اختر مكوّنًا",
+      "remove": "إزالة",
+      "removeFor": "إزالة {{name}} من الأمر",
+      "note": "ملاحظة (اختياري)",
+      "saveDraft": "حفظ المسودة",
+      "send": "إرسال",
+      "cancel": "إلغاء الأمر",
+      "cancelReason": "لماذا يُلغى؟",
+      "confirmCancel": "تأكيد الإلغاء",
+      "print": "طباعة",
+      "deliverTo": "التسليم إلى",
+      "messages": {
+        "saved": "تم حفظ المسودة.",
+        "sent": "تم إرسال الأمر. اطبعه أو شاركه مع المورد."
+      },
+      "noteHeading": "ملاحظة"
     }
   },
   "alerts": {

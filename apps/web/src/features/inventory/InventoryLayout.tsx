@@ -28,7 +28,15 @@ export interface InventoryContext {
 
 export const useInventoryContext = () => useOutletContext<InventoryContext>();
 
-const tabs = ['ingredients', 'stock', 'movements', 'transfers', 'counts', 'suppliers'] as const;
+const tabs = [
+  'ingredients',
+  'stock',
+  'movements',
+  'transfers',
+  'counts',
+  'suppliers',
+  'purchase-orders',
+] as const;
 
 const tabClass = ({ isActive }: { isActive: boolean }) =>
   `-mb-px rounded-t-md border-b-2 px-3 py-2 text-sm font-medium ${

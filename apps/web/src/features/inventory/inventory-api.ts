@@ -5,6 +5,8 @@ import {
   type CreateMovementRequest,
   type createTransferRequestSchema,
   type createSupplierRequestSchema,
+  purchaseOrderSchema,
+  purchaseOrderSummarySchema,
   supplierDetailSchema,
   supplierSchema,
   type updateSupplierRequestSchema,
@@ -203,4 +205,56 @@ export const putSupplierPrices = (id: string, prices: { ingredientId: string; pr
     method: 'PUT',
     body: { prices },
     schema: supplierDetailSchema,
+  });
+
+// ---- purchase orders (docs/specs/018-purchase-orders.md)
+
+export type PurchaseOrderLineInput = {
+  ingredientId: string;
+  quantity: string;
+  unitPrice?: string | null;
+};
+
+export const purchaseOrderKeys = {
+  list: (branchId: string) => ['inventory', 'purchase-orders', branchId] as const,
+  one: (id: string) => ['inventory', 'purchase-order', id] as const,
+};
+
+export async function listPurchaseOrders(branchId: string) {
+  const { data } = await request(
+    `/inventory/purchase-orders${queryString({ branchId, limit: 100 })}`,
+    { schema: pageSchema(purchaseOrderSummarySchema) },
+  );
+  return data;
+}
+
+export const getPurchaseOrder = (id: string) =>
+  request(`/inventory/purchase-orders/${id}`, { schema: purchaseOrderSchema });
+
+export const createPurchaseOrder = (body: {
+  branchId: string;
+  supplierId: string;
+  expectedOn: string | null;
+  note: string;
+  lines: PurchaseOrderLineInput[];
+}) => request('/inventory/purchase-orders', { method: 'POST', body, schema: purchaseOrderSchema });
+
+export const updatePurchaseOrder = (
+  id: string,
+  body: { expectedOn: string | null; note: string; lines: PurchaseOrderLineInput[] },
+) =>
+  request(`/inventory/purchase-orders/${id}`, { method: 'PUT', body, schema: purchaseOrderSchema });
+
+export const sendPurchaseOrder = (id: string) =>
+  request(`/inventory/purchase-orders/${id}/send`, {
+    method: 'POST',
+    body: {},
+    schema: purchaseOrderSchema,
+  });
+
+export const cancelPurchaseOrder = (id: string, reason: string) =>
+  request(`/inventory/purchase-orders/${id}/cancel`, {
+    method: 'POST',
+    body: { reason },
+    schema: purchaseOrderSchema,
   });

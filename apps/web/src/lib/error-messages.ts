@@ -109,6 +109,12 @@ const messageKeys = {
   PAYMENT_DAYS_INVALID: 'validation.PAYMENT_DAYS_INVALID',
   PRICE_LIST_TOO_LONG: 'validation.PRICE_LIST_TOO_LONG',
   NOTE_TOO_LONG: 'validation.NOTE_TOO_LONG',
+  PRICE_REQUIRED: 'validation.PRICE_REQUIRED',
+  ORDER_EMPTY: 'validation.ORDER_EMPTY',
+  ORDER_TOO_LONG: 'validation.ORDER_TOO_LONG',
+  ORDER_NOT_DRAFT: 'validation.ORDER_NOT_DRAFT',
+  ORDER_CLOSED: 'validation.ORDER_CLOSED',
+  DATE_INVALID: 'validation.DATE_INVALID',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;
@@ -165,6 +171,8 @@ export function problemsFrom(error: unknown, options: { notFound?: string } = {}
     case 'COUNT_ALREADY_OPEN':
     case 'COUNT_NOT_OPEN':
     case 'COUNT_EMPTY':
+    case 'ORDER_NOT_DRAFT':
+    case 'ORDER_CLOSED':
     case 'FORBIDDEN':
       return { fields: {}, form: error.code };
     case 'NOT_FOUND':

@@ -1,4 +1,8 @@
 import {
+  cancelPurchaseOrderRequestSchema,
+  createPurchaseOrderRequestSchema,
+  purchaseOrderListQuerySchema,
+  updatePurchaseOrderRequestSchema,
   createSupplierRequestSchema,
   putSupplierPricesRequestSchema,
   supplierListQuerySchema,
@@ -28,6 +32,7 @@ import { requestContext } from '../../middleware/authenticate';
 import { requirePermission } from '../../middleware/authorize';
 import type { CountsService } from './counts.service';
 import type { InventoryService } from './inventory.service';
+import type { PurchaseOrdersService } from './purchase-orders.service';
 import type { SuppliersService } from './suppliers.service';
 import type { TransfersService } from './transfers.service';
 
@@ -41,11 +46,13 @@ export function createInventoryRouter({
   transfers,
   counts,
   suppliers,
+  purchaseOrders,
 }: {
   service: InventoryService;
   transfers: TransfersService;
   counts: CountsService;
   suppliers: SuppliersService;
+  purchaseOrders: PurchaseOrdersService;
 }): Router {
   const router = Router();
   const read = requirePermission('inventory:read');
@@ -189,6 +196,39 @@ export function createInventoryRouter({
     const { id } = parseWith(idParams, req.params);
     const input = parseWith(putSupplierPricesRequestSchema, req.body);
     res.json(await suppliers.putPrices(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  // Purchase orders (docs/specs/018-purchase-orders.md).
+  router.get('/purchase-orders', read, async (req, res) => {
+    const query = parseWith(purchaseOrderListQuerySchema, req.query);
+    res.json(await purchaseOrders.list(requestContext(req), query));
+  });
+
+  router.get('/purchase-orders/:id', read, async (req, res) => {
+    const { id } = parseWith(idParams, req.params);
+    res.json(await purchaseOrders.get(requestContext(req), id));
+  });
+
+  router.post('/purchase-orders', write, async (req, res) => {
+    const input = parseWith(createPurchaseOrderRequestSchema, req.body);
+    res.status(201).json(await purchaseOrders.create(requestContext(req), input, requestMeta(req)));
+  });
+
+  router.put('/purchase-orders/:id', write, async (req, res) => {
+    const { id } = parseWith(idParams, req.params);
+    const input = parseWith(updatePurchaseOrderRequestSchema, req.body);
+    res.json(await purchaseOrders.update(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  router.post('/purchase-orders/:id/send', write, async (req, res) => {
+    const { id } = parseWith(idParams, req.params);
+    res.json(await purchaseOrders.send(requestContext(req), id, requestMeta(req)));
+  });
+
+  router.post('/purchase-orders/:id/cancel', write, async (req, res) => {
+    const { id } = parseWith(idParams, req.params);
+    const input = parseWith(cancelPurchaseOrderRequestSchema, req.body);
+    res.json(await purchaseOrders.cancel(requestContext(req), id, input, requestMeta(req)));
   });
 
   return router;
