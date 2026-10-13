@@ -8,10 +8,12 @@ import {
   type OrderListQuery,
   type OrderSummary,
   type Page,
+  type PayOrderRequest,
   type RemoveDiscountRequest,
   type SetDiscountRequest,
   type UpdateOrderLineRequest,
   type UpdateOrderRequest,
+  toMils,
   type VoidRequest,
 } from '@pos/shared';
 import type {
@@ -70,8 +72,16 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
   const readLines = (db: Pick<OrderTx, 'orderLine'>, orderId: string) =>
     db.orderLine.findMany({ where: { orderId }, orderBy: [{ position: 'asc' }, { id: 'asc' }] });
 
-  async function describe(db: Pick<OrderTx, 'orderLine'>, row: OrderRow): Promise<Order> {
-    return toOrder(row, await readLines(db, row.id));
+  async function describe(
+    db: Pick<OrderTx, 'orderLine' | 'payment'>,
+    row: OrderRow,
+  ): Promise<Order> {
+    const lines = await readLines(db, row.id);
+    const payments = await db.payment.findMany({
+      where: { orderId: row.id },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    return toOrder(row, lines, payments);
   }
 
   // An order the person cannot see is answered like one that does not exist.
@@ -599,6 +609,83 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
         meta,
       );
       return result;
+    },
+
+    // Takes the whole payment and closes the order. See docs/specs/007-payments.md.
+    async pay(ctx: ActorContext, orderId: string, input: PayOrderRequest): Promise<Order> {
+      const { auth, db } = ctx;
+      const ids = input.tenders.map((tender) => tender.id);
+
+      // The same payment sent again: the order was paid with these parts already (rule 7).
+      const repeated = async () => {
+        if (ids.length === 0) return null;
+        const found = await db.payment.findMany({ where: { id: { in: ids } } });
+        if (found.length === 0) return null;
+        if (found.some((payment) => payment.orderId !== orderId)) {
+          throw errors.conflict('PAYMENT_ID_TAKEN', 'This payment id is already used');
+        }
+        return describe(db, await load(db, orderId));
+      };
+      const before = await repeated();
+      if (before) return before;
+
+      try {
+        return await db.$transaction(async (tx) => {
+          const order = await lockOpen(tx, orderId);
+          const lines = await readLines(tx, orderId);
+          if (!lines.some((line) => line.status !== 'voided')) {
+            throw errors.conflict('ORDER_EMPTY', 'This order has nothing to pay for');
+          }
+
+          // The parts pay the total of the order as it is now, to the last decimal (rule 8).
+          const total = mils(order.total);
+          if (total > 0 && input.tenders.length === 0) {
+            throw errors.validation([{ path: 'tenders', message: 'PAYMENT_TENDERS_INVALID' }]);
+          }
+          const paid = input.tenders.reduce((sum, tender) => sum + toMils(tender.amount), 0);
+          if (paid !== total) {
+            throw errors.validation([{ path: 'tenders', message: 'PAYMENT_TOTAL_MISMATCH' }]);
+          }
+
+          // What was not sent yet goes to the kitchen now (rule 5).
+          const at = now();
+          await tx.orderLine.updateMany({
+            where: { orderId, status: 'pending' },
+            data: { status: 'sent', sentAt: at },
+          });
+          await tx.payment.createMany({
+            data: input.tenders.map((tender) => ({
+              id: tender.id,
+              orderId,
+              brandId: order.brandId,
+              branchId: order.branchId,
+              method: tender.method,
+              amount: tender.amount,
+              tendered: tender.method === 'cash' ? tender.tendered : null,
+              change:
+                tender.method === 'cash'
+                  ? fromMils(toMils(tender.tendered) - toMils(tender.amount))
+                  : '0',
+              reference: tender.method === 'card' ? (tender.reference ?? null) : null,
+              takenById: auth.sub,
+              createdAt: at,
+            })),
+          });
+          const closed = await tx.order.update({
+            where: { id: orderId },
+            data: { status: 'paid', paidAt: at, paidById: auth.sub },
+          });
+          return describe(tx, closed);
+        });
+      } catch (error) {
+        // Sent twice at the same moment: the first one was taken.
+        if (isUniqueViolation(error)) {
+          const after = await repeated();
+          if (after) return after;
+          throw errors.conflict('PAYMENT_ID_TAKEN', 'This payment id is already used');
+        }
+        throw error;
+      }
     },
   };
 }

@@ -5,7 +5,9 @@ import {
   orderComboChoiceSchema,
   type OrderLine,
   orderModifierSchema,
+  type OrderPayment,
   type OrderSummary,
+  fromMils,
   percentOfMils,
   toMils,
 } from '@pos/shared';
@@ -13,12 +15,13 @@ import { z } from 'zod';
 import {
   type OrderLine as LineRow,
   type Order as OrderRow,
+  type Payment as PaymentRow,
   Prisma,
 } from '../../generated/prisma/client';
 import type { ScopedClient } from '../../tenancy/scoped-client';
 
 // What a change to an order reads and writes, whether through the client or a transaction.
-export type OrderTx = Pick<ScopedClient, 'order' | 'orderLine' | 'branch' | 'brand'>;
+export type OrderTx = Pick<ScopedClient, 'order' | 'orderLine' | 'payment' | 'branch' | 'brand'>;
 
 export const mils = (value: Prisma.Decimal): number => toMils(value.toFixed(3));
 const iso = (value: Date | null) => (value ? value.toISOString() : null);
@@ -93,13 +96,33 @@ function orderFields(row: OrderRow) {
     openedById: row.openedById,
     voidedAt: iso(row.voidedAt),
     voidReason: row.voidReason,
+    paidAt: iso(row.paidAt),
+    paidById: row.paidById,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   } as const;
 }
 
-export function toOrder(row: OrderRow, lines: LineRow[]): Order {
-  return { ...orderFields(row), lines: lines.map(toOrderLine) };
+export function toPayment(row: PaymentRow): OrderPayment {
+  return {
+    id: row.id,
+    method: row.method,
+    amount: row.amount.toFixed(3),
+    tendered: row.tendered?.toFixed(3) ?? null,
+    change: row.change.toFixed(3),
+    reference: row.reference,
+    takenById: row.takenById,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+export function toOrder(row: OrderRow, lines: LineRow[], payments: PaymentRow[] = []): Order {
+  return {
+    ...orderFields(row),
+    lines: lines.map(toOrderLine),
+    payments: payments.map(toPayment),
+    change: fromMils(payments.reduce((sum, payment) => sum + mils(payment.change), 0)),
+  };
 }
 
 export function toSummary(row: OrderRow, lineCount: number): OrderSummary {

@@ -2,6 +2,7 @@ import {
   addOrderLineRequestSchema,
   createOrderRequestSchema,
   orderListQuerySchema,
+  payOrderRequestSchema,
   removeDiscountRequestSchema,
   setDiscountRequestSchema,
   updateOrderLineRequestSchema,
@@ -92,6 +93,12 @@ export function createOrdersRouter({ service }: { service: OrdersService }): Rou
     const { id } = parseWith(orderParams, req.params);
     const input = parseWith(removeDiscountRequestSchema, req.body ?? {});
     res.json(await service.removeDiscount(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  router.post('/:id/pay', write, async (req, res) => {
+    const { id } = parseWith(orderParams, req.params);
+    const input = parseWith(payOrderRequestSchema, req.body);
+    res.json(await service.pay(requestContext(req), id, input));
   });
 
   return router;
