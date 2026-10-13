@@ -19,6 +19,7 @@ import {
   type Page,
   type PayOrderRequest,
   type RemoveDiscountRequest,
+  type RefundRequest,
   type SetDiscountRequest,
   type UpdateOrderLineRequest,
   type UpdateOrderRequest,
@@ -87,7 +88,7 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
     db.orderLine.findMany({ where: { orderId }, orderBy: [{ position: 'asc' }, { id: 'asc' }] });
 
   async function describe(
-    db: Pick<OrderTx, 'orderLine' | 'payment' | 'kitchenTicket'>,
+    db: Pick<OrderTx, 'orderLine' | 'payment' | 'kitchenTicket' | 'refund'>,
     row: OrderRow,
   ): Promise<Order> {
     const lines = await readLines(db, row.id);
@@ -99,11 +100,16 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
       where: { orderId: row.id },
       select: { id: true, status: true },
     });
+    const refunds = await db.refund.findMany({
+      where: { orderId: row.id },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
     return toOrder(
       row,
       lines,
       payments,
       new Map(tickets.map((ticket) => [ticket.id, ticket.status])),
+      refunds,
     );
   }
 
@@ -793,6 +799,122 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
           const after = await repeated();
           if (after) return after;
           throw errors.conflict('PAYMENT_ID_TAKEN', 'This payment id is already used');
+        }
+        throw error;
+      }
+    },
+
+    // Gives money back for a paid order, in cash or by the way it was paid, with a manager's
+    // approval, counted in the shift. See docs/specs/011-refunds.md.
+    async refund(
+      ctx: ActorContext,
+      orderId: string,
+      input: RefundRequest,
+      meta: RequestMeta,
+    ): Promise<Order> {
+      const { auth, db } = ctx;
+      const order = await load(db, orderId);
+
+      // The same refund sent again gives back nothing twice (rule 7).
+      const repeated = async () => {
+        const existing = await db.refund.findUnique({ where: { id: input.id } });
+        if (!existing) return null;
+        if (existing.orderId !== orderId) {
+          throw errors.conflict('REFUND_ID_TAKEN', 'This refund id is already used');
+        }
+        return describe(db, await load(db, orderId));
+      };
+      const before = await repeated();
+      if (before) return before;
+
+      const notPaid = () => errors.conflict('ORDER_NOT_PAID', 'Only a paid order can be refunded');
+      const tooMuch = () => errors.validation([{ path: 'amount', message: 'REFUND_TOO_MUCH' }]);
+      if (order.status !== 'paid') throw notPaid();
+      if (toMils(input.amount) > mils(order.total) - mils(order.refunded)) throw tooMuch();
+
+      // Money goes back the way it came, or in cash (rule 3).
+      const payments = await db.payment.findMany({ where: { orderId } });
+      const paidWith = payments.find((payment) => payment.method === input.method);
+      if (input.method !== CASH && !paidWith) {
+        throw errors.validation([{ path: 'method', message: 'REFUND_METHOD_INVALID' }]);
+      }
+      const methodName = (
+        input.method === CASH ? CASH_NAME : (paidWith?.methodName ?? {})
+      ) as Prisma.InputJsonObject;
+
+      const approvedById = await approvals.authorize(
+        ctx,
+        order,
+        'orders:refund',
+        input.approval,
+        meta,
+      );
+
+      try {
+        const result = await db.$transaction(async (tx) => {
+          // Raising the version locks the row (spec 005, rule 11); then the checks again.
+          const locked = await tx.order.update({
+            where: { id: orderId },
+            data: { version: { increment: 1 } },
+          });
+          if (locked.status !== 'paid') throw notPaid();
+          const refunded = mils(locked.refunded) + toMils(input.amount);
+          if (refunded > mils(locked.total)) throw tooMuch();
+
+          const shift = await tx.shift.findFirst({
+            where: { branchId: order.branchId, openedById: auth.sub, status: 'open' },
+            select: { id: true },
+          });
+          if (!shift) throw errors.conflict('SHIFT_REQUIRED', 'Open a shift before refunding');
+
+          await tx.refund.create({
+            data: {
+              id: input.id,
+              orderId,
+              brandId: order.brandId,
+              branchId: order.branchId,
+              shiftId: shift.id,
+              amount: input.amount,
+              method: input.method,
+              methodName,
+              reason: input.reason,
+              refundedById: auth.sub,
+              approvedById,
+              createdAt: now(),
+            },
+          });
+          const updated = await tx.order.update({
+            where: { id: orderId },
+            data: { refunded: fromMils(refunded) },
+          });
+          return describe(tx, updated);
+        });
+
+        await audit(
+          {
+            action: 'order.refunded',
+            userId: auth.sub,
+            brandId: order.brandId,
+            branchId: order.branchId,
+            entityType: 'order',
+            entityId: orderId,
+            metadata: {
+              number: order.number,
+              amount: input.amount,
+              method: input.method,
+              reason: input.reason,
+              refunded: result.refunded,
+              approvedById,
+            },
+          },
+          meta,
+        );
+        return result;
+      } catch (error) {
+        if (isUniqueViolation(error)) {
+          const after = await repeated();
+          if (after) return after;
+          throw errors.conflict('REFUND_ID_TAKEN', 'This refund id is already used');
         }
         throw error;
       }

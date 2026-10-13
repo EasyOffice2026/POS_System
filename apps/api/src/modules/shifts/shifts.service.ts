@@ -80,6 +80,19 @@ export function createShiftsService({ prisma, now }: ShiftsDeps) {
     }
     const cash = byMethod.get(CASH)?.amount ?? 0;
 
+    // Money given back during the shift (spec 011, rule 6). Cash refunds leave the drawer.
+    const refunds = await db.refund.findMany({
+      where: { shiftId: shift.id },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    const refundsByMethod = new Map<string, { name: unknown; amount: number }>();
+    for (const refund of refunds) {
+      const entry = refundsByMethod.get(refund.method) ?? { name: refund.methodName, amount: 0 };
+      entry.amount += mils(refund.amount);
+      refundsByMethod.set(refund.method, entry);
+    }
+    const cashBack = refundsByMethod.get(CASH)?.amount ?? 0;
+
     return {
       ordersPaid: orderIds.length,
       sales: fromMils(orders.reduce((sum, order) => sum + mils(order.total), 0)),
@@ -89,7 +102,13 @@ export function createShiftsService({ prisma, now }: ShiftsDeps) {
         methodName: localizedTextSchema.parse(entry.name),
         amount: fromMils(entry.amount),
       })),
-      cashExpected: fromMils(mils(shift.openingCash) + cash),
+      refunds: fromMils(refunds.reduce((sum, refund) => sum + mils(refund.amount), 0)),
+      refundsByMethod: [...refundsByMethod].map(([method, entry]) => ({
+        method,
+        methodName: localizedTextSchema.parse(entry.name),
+        amount: fromMils(entry.amount),
+      })),
+      cashExpected: fromMils(mils(shift.openingCash) + cash - cashBack),
     };
   }
 

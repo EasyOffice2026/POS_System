@@ -6,6 +6,7 @@ import {
   type OrderLine,
   orderModifierSchema,
   type OrderPayment,
+  type OrderRefund,
   type OrderSummary,
   fromMils,
   percentOfMils,
@@ -17,6 +18,7 @@ import {
   type OrderLine as LineRow,
   type Order as OrderRow,
   type Payment as PaymentRow,
+  type Refund as RefundRow,
   Prisma,
 } from '../../generated/prisma/client';
 import type { ScopedClient } from '../../tenancy/scoped-client';
@@ -33,6 +35,7 @@ export type OrderTx = Pick<
   | 'menuItem'
   | 'menuCategory'
   | 'shift'
+  | 'refund'
 >;
 
 export const mils = (value: Prisma.Decimal): number => toMils(value.toFixed(3));
@@ -103,6 +106,7 @@ function orderFields(row: OrderRow) {
     openedById: row.openedById,
     voidedAt: iso(row.voidedAt),
     voidReason: row.voidReason,
+    refunded: row.refunded.toFixed(3),
     paidAt: iso(row.paidAt),
     paidById: row.paidById,
     createdAt: row.createdAt.toISOString(),
@@ -124,17 +128,32 @@ export function toPayment(row: PaymentRow): OrderPayment {
   };
 }
 
+export function toRefund(row: RefundRow): OrderRefund {
+  return {
+    id: row.id,
+    amount: row.amount.toFixed(3),
+    method: row.method,
+    methodName: localizedTextSchema.parse(row.methodName),
+    reason: row.reason,
+    refundedById: row.refundedById,
+    approvedById: row.approvedById,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
 export function toOrder(
   row: OrderRow,
   lines: LineRow[],
   payments: PaymentRow[] = [],
   tickets: TicketStatuses = new Map(),
+  refunds: RefundRow[] = [],
 ): Order {
   return {
     ...orderFields(row),
     lines: lines.map((line) => toOrderLine(line, tickets)),
     payments: payments.map(toPayment),
     change: fromMils(payments.reduce((sum, payment) => sum + mils(payment.change), 0)),
+    refunds: refunds.map(toRefund),
   };
 }
 
