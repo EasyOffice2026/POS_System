@@ -15,7 +15,8 @@ export function AdminLayout() {
   const can = (permission: Permission) => user?.permissions.includes(permission) ?? false;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    // A page that prints (a purchase order) puts its own print-only copy outside this.
+    <div className="min-h-screen bg-slate-50 text-slate-900 print:hidden">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
         <p className="text-lg font-semibold">{t('app.name')}</p>
 

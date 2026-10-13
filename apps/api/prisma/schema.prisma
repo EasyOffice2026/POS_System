@@ -57,17 +57,18 @@ model Branch {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  brand         Brand            @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  assignments   UserBranch[]
-  menuOverrides BranchMenuItem[]
-  orders        Order[]
-  orderCounters OrderCounter[]
-  shifts        Shift[]
-  stock         BranchStock[]
-  movements     StockMovement[]
-  transfersOut  StockTransfer[]  @relation("transfersOut")
-  transfersIn   StockTransfer[]  @relation("transfersIn")
-  stockCounts   StockCount[]
+  brand          Brand            @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  assignments    UserBranch[]
+  menuOverrides  BranchMenuItem[]
+  orders         Order[]
+  orderCounters  OrderCounter[]
+  shifts         Shift[]
+  stock          BranchStock[]
+  movements      StockMovement[]
+  transfersOut   StockTransfer[]  @relation("transfersOut")
+  transfersIn    StockTransfer[]  @relation("transfersIn")
+  stockCounts    StockCount[]
+  purchaseOrders PurchaseOrder[]
 
   // Lets tables that carry a brand id point at "this branch of this brand".
   @@unique([id, brandId])
@@ -663,13 +664,14 @@ model Ingredient {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  brand          Brand               @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  stock          BranchStock[]
-  movements      StockMovement[]
-  recipeLines    RecipeLine[]
-  transferLines  StockTransferLine[]
-  countLines     StockCountLine[]
-  supplierPrices SupplierPrice[]
+  brand              Brand               @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  stock              BranchStock[]
+  movements          StockMovement[]
+  recipeLines        RecipeLine[]
+  transferLines      StockTransferLine[]
+  countLines         StockCountLine[]
+  supplierPrices     SupplierPrice[]
+  purchaseOrderLines PurchaseOrderLine[]
 
   @@unique([id, brandId])
   @@index([brandId, isActive])
@@ -877,8 +879,9 @@ model Supplier {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  brand  Brand           @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  prices SupplierPrice[]
+  brand          Brand           @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  prices         SupplierPrice[]
+  purchaseOrders PurchaseOrder[]
 
   @@unique([id, brandId])
   @@unique([brandId, searchText])
@@ -898,4 +901,66 @@ model SupplierPrice {
 
   @@id([supplierId, ingredientId])
   @@map("supplier_prices")
+}
+
+// ---- Purchase orders. See docs/specs/018-purchase-orders.md.
+
+enum PurchaseOrderStatus {
+  draft
+  sent
+  received
+  cancelled
+
+  @@map("purchase_order_status")
+}
+
+// Ingredients ordered for a branch from a supplier.
+model PurchaseOrder {
+  id              String              @id @default(uuid(7)) @db.Uuid
+  number          Int                 @default(autoincrement())
+  brandId         String              @map("brand_id") @db.Uuid
+  branchId        String              @map("branch_id") @db.Uuid
+  supplierId      String              @map("supplier_id") @db.Uuid
+  status          PurchaseOrderStatus @default(draft)
+  expectedOn      DateTime?           @map("expected_on") @db.Date
+  note            String?
+  total           Decimal             @default(0) @db.Decimal(12, 3)
+  createdById     String?             @map("created_by_id") @db.Uuid
+  createdByName   String?             @map("created_by_name")
+  createdAt       DateTime            @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  sentById        String?             @map("sent_by_id") @db.Uuid
+  sentByName      String?             @map("sent_by_name")
+  sentAt          DateTime?           @map("sent_at") @db.Timestamptz(3)
+  cancelledById   String?             @map("cancelled_by_id") @db.Uuid
+  cancelledByName String?             @map("cancelled_by_name")
+  cancelledAt     DateTime?           @map("cancelled_at") @db.Timestamptz(3)
+  cancelReason    String?             @map("cancel_reason")
+
+  branch   Branch              @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
+  supplier Supplier            @relation(fields: [supplierId, brandId], references: [id, brandId], onDelete: Restrict)
+  lines    PurchaseOrderLine[]
+
+  @@unique([id, brandId])
+  @@index([branchId, createdAt])
+  @@index([supplierId])
+  @@map("purchase_orders")
+}
+
+// One ingredient of a purchase order, in the ingredient's unit.
+model PurchaseOrderLine {
+  id           String  @id @default(uuid(7)) @db.Uuid
+  orderId      String  @map("order_id") @db.Uuid
+  brandId      String  @map("brand_id") @db.Uuid
+  branchId     String  @map("branch_id") @db.Uuid
+  ingredientId String  @map("ingredient_id") @db.Uuid
+  quantity     Decimal @db.Decimal(15, 3)
+  unitPrice    Decimal @map("unit_price") @db.Decimal(12, 3)
+  lineTotal    Decimal @map("line_total") @db.Decimal(12, 3)
+
+  order      PurchaseOrder @relation(fields: [orderId, brandId], references: [id, brandId], onDelete: Restrict)
+  ingredient Ingredient    @relation(fields: [ingredientId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@unique([orderId, ingredientId])
+  @@map("purchase_order_lines")
 }

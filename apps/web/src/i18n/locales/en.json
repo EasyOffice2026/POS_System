@@ -286,7 +286,13 @@
     "EMAIL_INVALID": "Type an email address like name@example.com.",
     "PAYMENT_DAYS_INVALID": "Type a whole number of days from 0 to 365.",
     "PRICE_LIST_TOO_LONG": "A price list can have up to 500 ingredients.",
-    "NOTE_TOO_LONG": "This text is too long."
+    "NOTE_TOO_LONG": "This text is too long.",
+    "PRICE_REQUIRED": "This supplier has no price for it. Type one.",
+    "ORDER_EMPTY": "Add at least one ingredient.",
+    "ORDER_TOO_LONG": "An order can have up to 200 ingredients.",
+    "ORDER_NOT_DRAFT": "This order was sent already and cannot be changed.",
+    "ORDER_CLOSED": "This order was received or cancelled already.",
+    "DATE_INVALID": "Choose a day."
   },
   "rolesPage": {
     "title": "Roles",
@@ -359,7 +365,11 @@
       "inventory_count_cancelled": "Count cancelled",
       "inventory_supplier_created": "Supplier added",
       "inventory_supplier_updated": "Supplier changed",
-      "inventory_supplier_prices_updated": "Supplier prices changed"
+      "inventory_supplier_prices_updated": "Supplier prices changed",
+      "inventory_purchase_order_created": "Purchase order created",
+      "inventory_purchase_order_updated": "Purchase order changed",
+      "inventory_purchase_order_sent": "Purchase order sent",
+      "inventory_purchase_order_cancelled": "Purchase order cancelled"
     }
   },
   "notFound": {
@@ -1069,7 +1079,8 @@
       "movements": "Movements",
       "transfers": "Transfers",
       "counts": "Counts",
-      "suppliers": "Suppliers"
+      "suppliers": "Suppliers",
+      "purchase-orders": "Purchase orders"
     },
     "units": {
       "g": "g",
@@ -1261,6 +1272,58 @@
       "removeFor": "Remove {{name}} from the prices",
       "savePrices": "Save prices",
       "pricesSaved": "Prices saved."
+    },
+    "purchaseOrders": {
+      "intro": "Ingredients ordered for a branch from a supplier, at the supplier's prices.",
+      "new": "New order",
+      "empty": "No order yet.",
+      "number": "Number",
+      "supplier": "Supplier",
+      "status": "Status",
+      "total": "Total",
+      "expectedOn": "Expected delivery",
+      "created": "Created",
+      "openFor": "Open order {{number}}",
+      "lineCount_one": "{{count}} ingredient",
+      "lineCount_other": "{{count}} ingredients",
+      "statuses": {
+        "draft": "Draft",
+        "sent": "Sent",
+        "received": "Received",
+        "cancelled": "Cancelled"
+      },
+      "back": "Back to the purchase orders",
+      "title": "Purchase order {{number}}",
+      "forBranch": "For {{branch}}",
+      "toSupplier": "To {{supplier}}",
+      "chooseSupplier": "Choose a supplier",
+      "noSuppliers": "No active supplier. Add one in the Suppliers tab.",
+      "createdBy": "Created by {{name}}, {{when}}",
+      "sentBy": "Sent by {{name}}, {{when}}",
+      "cancelledBy": "Cancelled by {{name}}, {{when}}: {{reason}}",
+      "noLines": "No ingredient yet.",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "priceFor": "Unit price of {{name}}",
+      "lineTotal": "Line total",
+      "add": "Add an ingredient",
+      "addButton": "Add",
+      "chooseIngredient": "Choose an ingredient",
+      "remove": "Remove",
+      "removeFor": "Remove {{name}} from the order",
+      "note": "Note (optional)",
+      "saveDraft": "Save draft",
+      "send": "Send",
+      "cancel": "Cancel order",
+      "cancelReason": "Why is it cancelled?",
+      "confirmCancel": "Confirm the cancellation",
+      "print": "Print",
+      "deliverTo": "Deliver to",
+      "messages": {
+        "saved": "Draft saved.",
+        "sent": "Order sent. Print it or share it with the supplier."
+      },
+      "noteHeading": "Note"
     }
   },
   "alerts": {

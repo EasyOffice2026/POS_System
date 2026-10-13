@@ -27,6 +27,8 @@ import { CountsPage } from '../features/inventory/CountsPage';
 import { IngredientsPage } from '../features/inventory/IngredientsPage';
 import { InventoryIndexRedirect, InventoryLayout } from '../features/inventory/InventoryLayout';
 import { MovementsPage } from '../features/inventory/MovementsPage';
+import { PurchaseOrderPage } from '../features/inventory/PurchaseOrderPage';
+import { PurchaseOrdersPage } from '../features/inventory/PurchaseOrdersPage';
 import { StockPage } from '../features/inventory/StockPage';
 import { SupplierPage } from '../features/inventory/SupplierPage';
 import { SuppliersPage } from '../features/inventory/SuppliersPage';
@@ -201,6 +203,8 @@ export const routes: RouteObject[] = [
               { path: 'counts/:id', element: <CountPage /> },
               { path: 'suppliers', element: <SuppliersPage /> },
               { path: 'suppliers/:id', element: <SupplierPage /> },
+              { path: 'purchase-orders', element: <PurchaseOrdersPage /> },
+              { path: 'purchase-orders/:id', element: <PurchaseOrderPage /> },
             ],
           },
           {
