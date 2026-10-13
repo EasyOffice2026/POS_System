@@ -267,7 +267,7 @@ export function createTransfersService({ prisma, now }: TransfersDeps) {
       });
       await audit(
         {
-          action: 'stock_transfer.sent',
+          action: 'inventory.transfer.sent',
           userId: auth.sub,
           brandId: from.brandId,
           branchId: from.id,
@@ -320,7 +320,7 @@ export function createTransfersService({ prisma, now }: TransfersDeps) {
       });
       await audit(
         {
-          action: 'stock_transfer.received',
+          action: 'inventory.transfer.received',
           userId: auth.sub,
           brandId: transfer.brandId,
           branchId: transfer.toBranchId,
@@ -378,7 +378,7 @@ export function createTransfersService({ prisma, now }: TransfersDeps) {
       });
       await audit(
         {
-          action: 'stock_transfer.cancelled',
+          action: 'inventory.transfer.cancelled',
           userId: auth.sub,
           brandId: transfer.brandId,
           branchId: transfer.fromBranchId,

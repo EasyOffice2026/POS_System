@@ -1,6 +1,7 @@
 export * from './access';
 export * from './audit';
 export * from './auth';
+export * from './counts';
 export * from './branch-config';
 export * from './brands';
 export * from './credentials';

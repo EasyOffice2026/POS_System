@@ -66,6 +66,8 @@ const tenantModels: Record<string, ModelRule> = {
   StockMovement: { brand: 'brandId', branch: 'branchId' },
   StockTransfer: { brand: 'brandId', anyBranch: ['fromBranchId', 'toBranchId'] },
   StockTransferLine: { brand: 'brandId', anyBranch: ['fromBranchId', 'toBranchId'] },
+  StockCount: { brand: 'brandId', branch: 'branchId' },
+  StockCountLine: { brand: 'brandId', branch: 'branchId' },
 };
 
 // Reference data every signed-in person may read. Never writable through this client.

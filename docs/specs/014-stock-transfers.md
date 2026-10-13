@@ -31,7 +31,7 @@ A brand manager and the group admin can do all of it at every branch of the bran
 4. **Cancelling puts the stock back at the sender** (`transfer_in` with the reason as note). Only a `sent` transfer can be cancelled (`TRANSFER_NOT_SENT`); a received one cannot, the receiver sends it back instead. A reason is required.
 5. **Each movement refers to the transfer** (`referenceId`) and its note says `Transfer N` so the history reads well.
 6. **Who sees what.** A transfer is visible at both of its branches. A branch-scoped person sees the transfers where one of their branches sends or receives; they send only from their own branches and receive only at their own. The receiving branch is chosen from the other active branches of the brand, which `GET /inventory/transfers/destinations` lists even for a person who sees only their own branch.
-7. **The audit log** records `stock_transfer.sent`, `stock_transfer.received` and `stock_transfer.cancelled`.
+7. **The audit log** records `inventory.transfer.sent`, `inventory.transfer.received` and `inventory.transfer.cancelled`.
 
 ## API
 

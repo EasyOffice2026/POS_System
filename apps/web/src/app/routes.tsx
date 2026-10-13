@@ -22,6 +22,8 @@ import { PosPage } from '../features/pos/PosPage';
 import { PosSetupPage } from '../features/pos/PosSetupPage';
 import { RolesPage } from '../features/roles/RolesPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
+import { CountPage } from '../features/inventory/CountPage';
+import { CountsPage } from '../features/inventory/CountsPage';
 import { IngredientsPage } from '../features/inventory/IngredientsPage';
 import { InventoryIndexRedirect, InventoryLayout } from '../features/inventory/InventoryLayout';
 import { MovementsPage } from '../features/inventory/MovementsPage';
@@ -193,6 +195,8 @@ export const routes: RouteObject[] = [
               { path: 'stock', element: <StockPage /> },
               { path: 'movements', element: <MovementsPage /> },
               { path: 'transfers', element: <TransfersPage /> },
+              { path: 'counts', element: <CountsPage /> },
+              { path: 'counts/:id', element: <CountPage /> },
             ],
           },
           {

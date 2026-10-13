@@ -3,6 +3,9 @@ import {
   type CreateIngredientRequest,
   type CreateMovementRequest,
   type createTransferRequestSchema,
+  type startCountRequestSchema,
+  stockCountSchema,
+  stockCountSummarySchema,
   ingredientSchema,
   localizedTextSchema,
   pageSchema,
@@ -16,6 +19,7 @@ import { queryString } from '../../lib/query-string';
 
 // The request before the server applies defaults.
 export type CreateTransferInput = z.input<typeof createTransferRequestSchema>;
+export type StartCountInput = z.input<typeof startCountRequestSchema>;
 
 export const inventoryKeys = {
   all: ['inventory'] as const,
@@ -106,4 +110,48 @@ export const cancelTransfer = (id: string, reason: string) =>
     method: 'POST',
     body: { reason },
     schema: stockTransferSchema,
+  });
+
+// ---- stock counts (docs/specs/015-stock-counts.md)
+
+export const countKeys = {
+  list: (branchId: string) => ['inventory', 'counts', branchId] as const,
+  one: (id: string) => ['inventory', 'count', id] as const,
+};
+
+export async function listCounts(branchId: string) {
+  const { data } = await request(`/inventory/counts${queryString({ branchId, limit: 100 })}`, {
+    schema: pageSchema(stockCountSummarySchema),
+  });
+  return data;
+}
+
+export const getCount = (id: string) =>
+  request(`/inventory/counts/${id}`, { schema: stockCountSchema });
+
+export const startCount = (body: StartCountInput) =>
+  request('/inventory/counts', { method: 'POST', body, schema: stockCountSchema });
+
+export const saveCountLines = (
+  id: string,
+  lines: { ingredientId: string; counted: string | null }[],
+) =>
+  request(`/inventory/counts/${id}/lines`, {
+    method: 'PUT',
+    body: { lines },
+    schema: stockCountSchema,
+  });
+
+export const finishCount = (id: string) =>
+  request(`/inventory/counts/${id}/finish`, {
+    method: 'POST',
+    body: {},
+    schema: stockCountSchema,
+  });
+
+export const cancelCount = (id: string, reason: string) =>
+  request(`/inventory/counts/${id}/cancel`, {
+    method: 'POST',
+    body: { reason },
+    schema: stockCountSchema,
   });

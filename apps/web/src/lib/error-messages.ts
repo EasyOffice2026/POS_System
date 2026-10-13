@@ -96,6 +96,11 @@ const messageKeys = {
   TRANSFER_EMPTY: 'validation.TRANSFER_EMPTY',
   TRANSFER_TOO_LONG: 'validation.TRANSFER_TOO_LONG',
   TRANSFER_NOT_SENT: 'validation.TRANSFER_NOT_SENT',
+  COUNT_ALREADY_OPEN: 'validation.COUNT_ALREADY_OPEN',
+  COUNT_NOT_OPEN: 'validation.COUNT_NOT_OPEN',
+  COUNT_EMPTY: 'validation.COUNT_EMPTY',
+  COUNT_TOO_LONG: 'validation.COUNT_TOO_LONG',
+  COUNT_LINES_REQUIRED: 'validation.COUNT_LINES_REQUIRED',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;
@@ -149,6 +154,9 @@ export function problemsFrom(error: unknown, options: { notFound?: string } = {}
     case 'SHIFT_NOT_OPEN':
     case 'SHIFT_REQUIRED':
     case 'TRANSFER_NOT_SENT':
+    case 'COUNT_ALREADY_OPEN':
+    case 'COUNT_NOT_OPEN':
+    case 'COUNT_EMPTY':
     case 'FORBIDDEN':
       return { fields: {}, form: error.code };
     case 'NOT_FOUND':

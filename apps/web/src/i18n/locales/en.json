@@ -272,7 +272,12 @@
     "TRANSFER_SAME_BRANCH": "Choose another branch to send to.",
     "TRANSFER_EMPTY": "Add at least one ingredient.",
     "TRANSFER_TOO_LONG": "A transfer can have up to 50 ingredients.",
-    "TRANSFER_NOT_SENT": "This transfer was received or cancelled already."
+    "TRANSFER_NOT_SENT": "This transfer was received or cancelled already.",
+    "COUNT_ALREADY_OPEN": "A count is already open at this branch. Finish or cancel it first.",
+    "COUNT_NOT_OPEN": "This count was finished or cancelled already.",
+    "COUNT_EMPTY": "Type at least one counted quantity before finishing.",
+    "COUNT_TOO_LONG": "A count can have up to 500 ingredients.",
+    "COUNT_LINES_REQUIRED": "Type at least one quantity."
   },
   "rolesPage": {
     "title": "Roles",
@@ -337,9 +342,12 @@
       "ingredient_created": "Ingredient added",
       "ingredient_updated": "Ingredient changed",
       "menu_recipe_updated": "Recipe changed",
-      "stock_transfer_sent": "Transfer sent",
-      "stock_transfer_received": "Transfer received",
-      "stock_transfer_cancelled": "Transfer cancelled"
+      "inventory_transfer_sent": "Transfer sent",
+      "inventory_transfer_received": "Transfer received",
+      "inventory_transfer_cancelled": "Transfer cancelled",
+      "inventory_count_started": "Count started",
+      "inventory_count_finished": "Count finished",
+      "inventory_count_cancelled": "Count cancelled"
     }
   },
   "notFound": {
@@ -1047,7 +1055,8 @@
       "ingredients": "Ingredients",
       "stock": "Stock",
       "movements": "Movements",
-      "transfers": "Transfers"
+      "transfers": "Transfers",
+      "counts": "Counts"
     },
     "units": {
       "g": "g",
@@ -1153,6 +1162,55 @@
         "sent": "Transfer sent. The stock has left this branch.",
         "received": "Transfer received. The stock is in.",
         "cancelled": "Transfer cancelled. The stock is back."
+      }
+    },
+    "counts": {
+      "intro": "Check the stock against what is on the shelves. When a count is finished, the stock is set to what was counted.",
+      "new": "New count",
+      "what": "What to count",
+      "everything": "Every ingredient ({{count}})",
+      "some": "Only some ingredients",
+      "chooseIngredients": "Ingredients to count",
+      "note": "Note (optional)",
+      "start": "Start the count",
+      "empty": "No count yet.",
+      "number": "Number",
+      "status": "Status",
+      "started": "Started",
+      "counted": "Counted",
+      "ofLines": "{{counted}} of {{total}} counted",
+      "lost": "Lost",
+      "found": "Found",
+      "open": "Open",
+      "continue": "Continue",
+      "openFor": "Open count {{number}}",
+      "back": "Back to the counts",
+      "title": "Count {{number}}",
+      "statuses": {
+        "open": "Open",
+        "finished": "Finished",
+        "cancelled": "Cancelled"
+      },
+      "startedBy": "Started by {{name}}, {{when}}",
+      "finishedBy": "Finished by {{name}}, {{when}}",
+      "cancelledBy": "Cancelled by {{name}}, {{when}}: {{reason}}",
+      "howTo": "Type what you find on the shelves. Save as you go; leave a box empty to skip an ingredient.",
+      "expected": "Expected",
+      "countedQuantity": "Counted",
+      "difference": "Difference",
+      "value": "Value",
+      "notCounted": "Not counted",
+      "finish": "Finish the count",
+      "cancel": "Cancel the count",
+      "cancelReason": "Why is it cancelled?",
+      "confirmCancel": "Confirm the cancellation",
+      "confirmTitle": "Finish the count?",
+      "confirmText": "The stock of every counted ingredient will be set to what was counted. This cannot be undone.",
+      "confirmFinish": "Finish and set the stock",
+      "messages": {
+        "saved": "Saved.",
+        "finished": "Count finished. The stock is set to what was counted.",
+        "cancelled": "Count cancelled. The stock did not change."
       }
     }
   }

@@ -16,6 +16,7 @@ import { createBrandsService } from './modules/brands/brands.service';
 import { healthRouter } from './modules/health/health.router';
 import { createInventoryRouter } from './modules/inventory/inventory.router';
 import { createInventoryService } from './modules/inventory/inventory.service';
+import { createCountsService } from './modules/inventory/counts.service';
 import { createTransfersService } from './modules/inventory/transfers.service';
 import { createKitchenRouter } from './modules/kitchen/kitchen.router';
 import { createKitchenService } from './modules/kitchen/kitchen.service';
@@ -62,6 +63,7 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
   });
   const inventoryService = createInventoryService({ prisma, now: now ?? (() => new Date()) });
   const transfersService = createTransfersService({ prisma, now: now ?? (() => new Date()) });
+  const countsService = createCountsService({ prisma, now: now ?? (() => new Date()) });
   const ordersService = createOrdersService({
     prisma,
     hasher: passwordHasher,
@@ -93,7 +95,11 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
   v1.use(
     '/inventory',
     ...protectedRoutes,
-    createInventoryRouter({ service: inventoryService, transfers: transfersService }),
+    createInventoryRouter({
+      service: inventoryService,
+      transfers: transfersService,
+      counts: countsService,
+    }),
   );
   v1.use('/users', ...protectedRoutes, createUsersRouter({ service: usersService }));
   v1.use('/roles', ...protectedRoutes, createRolesRouter());

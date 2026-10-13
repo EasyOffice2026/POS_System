@@ -276,7 +276,12 @@
     "TRANSFER_SAME_BRANCH": "اختر فرعًا آخر للإرسال إليه.",
     "TRANSFER_EMPTY": "أضف مكوّنًا واحدًا على الأقل.",
     "TRANSFER_TOO_LONG": "يمكن أن يضم التحويل حتى 50 مكوّنًا.",
-    "TRANSFER_NOT_SENT": "تم استلام هذا التحويل أو إلغاؤه من قبل."
+    "TRANSFER_NOT_SENT": "تم استلام هذا التحويل أو إلغاؤه من قبل.",
+    "COUNT_ALREADY_OPEN": "يوجد جرد مفتوح في هذا الفرع. أنهِه أو ألغِه أولًا.",
+    "COUNT_NOT_OPEN": "تم إنهاء هذا الجرد أو إلغاؤه من قبل.",
+    "COUNT_EMPTY": "اكتب كمية معدودة واحدة على الأقل قبل الإنهاء.",
+    "COUNT_TOO_LONG": "يمكن أن يضم الجرد حتى 500 مكوّن.",
+    "COUNT_LINES_REQUIRED": "اكتب كمية واحدة على الأقل."
   },
   "rolesPage": {
     "title": "الأدوار",
@@ -341,9 +346,12 @@
       "ingredient_created": "إضافة مكوّن",
       "ingredient_updated": "تغيير مكوّن",
       "menu_recipe_updated": "تغيير وصفة",
-      "stock_transfer_sent": "إرسال تحويل",
-      "stock_transfer_received": "استلام تحويل",
-      "stock_transfer_cancelled": "إلغاء تحويل"
+      "inventory_transfer_sent": "إرسال تحويل",
+      "inventory_transfer_received": "استلام تحويل",
+      "inventory_transfer_cancelled": "إلغاء تحويل",
+      "inventory_count_started": "بدء جرد",
+      "inventory_count_finished": "إنهاء جرد",
+      "inventory_count_cancelled": "إلغاء جرد"
     }
   },
   "notFound": {
@@ -1075,7 +1083,8 @@
       "ingredients": "المكونات",
       "stock": "المخزون",
       "movements": "الحركات",
-      "transfers": "التحويلات"
+      "transfers": "التحويلات",
+      "counts": "الجرد"
     },
     "units": {
       "g": "غ",
@@ -1181,6 +1190,55 @@
         "sent": "تم إرسال التحويل. خرج المخزون من هذا الفرع.",
         "received": "تم استلام التحويل. دخل المخزون.",
         "cancelled": "تم إلغاء التحويل. عاد المخزون."
+      }
+    },
+    "counts": {
+      "intro": "قارن المخزون بما هو موجود على الرفوف. عند إنهاء الجرد يُضبط المخزون على ما تم عدّه.",
+      "new": "جرد جديد",
+      "what": "ما الذي يُجرد",
+      "everything": "كل المكوّنات ({{count}})",
+      "some": "بعض المكوّنات فقط",
+      "chooseIngredients": "المكوّنات المطلوب جردها",
+      "note": "ملاحظة (اختياري)",
+      "start": "بدء الجرد",
+      "empty": "لا يوجد جرد بعد.",
+      "number": "الرقم",
+      "status": "الحالة",
+      "started": "البدء",
+      "counted": "المعدود",
+      "ofLines": "{{counted}} من {{total}} معدود",
+      "lost": "النقص",
+      "found": "الزيادة",
+      "open": "فتح",
+      "continue": "متابعة",
+      "openFor": "فتح الجرد {{number}}",
+      "back": "العودة إلى الجرد",
+      "title": "الجرد {{number}}",
+      "statuses": {
+        "open": "مفتوح",
+        "finished": "منتهٍ",
+        "cancelled": "ملغى"
+      },
+      "startedBy": "بدأه {{name}}، {{when}}",
+      "finishedBy": "أنهاه {{name}}، {{when}}",
+      "cancelledBy": "ألغاه {{name}}، {{when}}: {{reason}}",
+      "howTo": "اكتب ما تجده على الرفوف. احفظ أثناء العمل، واترك الخانة فارغة لتخطي مكوّن.",
+      "expected": "المتوقع",
+      "countedQuantity": "المعدود",
+      "difference": "الفرق",
+      "value": "القيمة",
+      "notCounted": "لم يُعد",
+      "finish": "إنهاء الجرد",
+      "cancel": "إلغاء الجرد",
+      "cancelReason": "لماذا يُلغى؟",
+      "confirmCancel": "تأكيد الإلغاء",
+      "confirmTitle": "إنهاء الجرد؟",
+      "confirmText": "سيُضبط مخزون كل مكوّن معدود على ما تم عدّه. لا يمكن التراجع عن ذلك.",
+      "confirmFinish": "إنهاء وضبط المخزون",
+      "messages": {
+        "saved": "تم الحفظ.",
+        "finished": "تم إنهاء الجرد. ضُبط المخزون على ما تم عدّه.",
+        "cancelled": "تم إلغاء الجرد. لم يتغير المخزون."
       }
     }
   }
