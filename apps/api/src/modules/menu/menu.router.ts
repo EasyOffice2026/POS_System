@@ -9,6 +9,7 @@ import {
   createModifierRequestSchema,
   itemListQuerySchema,
   putBranchOverrideRequestSchema,
+  putRecipeRequestSchema,
   reorderCategoriesRequestSchema,
   updateCategoryRequestSchema,
   updateComboRequestSchema,
@@ -127,6 +128,31 @@ export function createMenuRouter({ service }: { service: MenuService }): Router 
       .json(
         await service.modifiers.createModifier(requestContext(req), id, input, requestMeta(req)),
       );
+  });
+
+  // Recipes need the menu and the stock (docs/specs/013-recipes.md).
+  const readStock = requirePermission('inventory:read');
+  router.get('/items/:id/recipe', read, readStock, async (req, res) => {
+    const { id } = parseWith(idParamsSchema, req.params);
+    res.json(await service.recipes.get(requestContext(req), { itemId: id }));
+  });
+  router.put('/items/:id/recipe', write, async (req, res) => {
+    const { id } = parseWith(idParamsSchema, req.params);
+    const input = parseWith(putRecipeRequestSchema, req.body);
+    res.json(
+      await service.recipes.put(requestContext(req), { itemId: id }, input, requestMeta(req)),
+    );
+  });
+  router.get('/modifiers/:id/recipe', read, readStock, async (req, res) => {
+    const { id } = parseWith(idParamsSchema, req.params);
+    res.json(await service.recipes.get(requestContext(req), { modifierId: id }));
+  });
+  router.put('/modifiers/:id/recipe', write, async (req, res) => {
+    const { id } = parseWith(idParamsSchema, req.params);
+    const input = parseWith(putRecipeRequestSchema, req.body);
+    res.json(
+      await service.recipes.put(requestContext(req), { modifierId: id }, input, requestMeta(req)),
+    );
   });
 
   router.patch('/modifiers/:id', write, async (req, res) => {

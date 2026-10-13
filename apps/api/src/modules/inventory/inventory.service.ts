@@ -17,6 +17,7 @@ import {
   type UpdateIngredientRequest,
 } from '@pos/shared';
 import { isDeepStrictEqual } from 'node:util';
+import { z } from 'zod';
 import type {
   BranchStock as StockRow,
   Ingredient as IngredientRow,
@@ -38,6 +39,19 @@ export interface InventoryDeps {
 }
 
 const escapeLike = (text: string) => text.replace(/[\\%_]/g, (character) => `\\${character}`);
+
+// What an order line stored about its choices (spec 005): only the ids matter here.
+const lineDetailsSchema = z.object({
+  modifiers: z.array(z.object({ id: z.string() })).default([]),
+  choices: z
+    .array(
+      z.object({
+        itemId: z.string(),
+        modifiers: z.array(z.object({ id: z.string() })).default([]),
+      }),
+    )
+    .default([]),
+});
 const mils = (value: Prisma.Decimal): number => toMils(value.toFixed(3));
 
 function toIngredient(row: IngredientRow): Ingredient {
@@ -296,6 +310,83 @@ export function createInventoryService({ prisma, now }: InventoryDeps) {
         return tx.branchStock.update({ where, data: { quantity: fromMils(after) } });
       });
       return toStock(branch.id, ingredient, stock);
+    },
+
+    // Takes the ingredients of an order's lines off the branch's stock when it is paid, as one
+    // "sold" movement per ingredient that names the order. A dish without a recipe takes nothing
+    // off, and a sale may take the stock below zero. See docs/specs/013-recipes.md, rules 3 to 5.
+    async sellForOrder(
+      tx: Pick<ScopedClient, 'recipeLine' | 'branchStock' | 'stockMovement'>,
+      order: { id: string; number: number; brandId: string; branchId: string },
+      lines: { itemId: string | null; quantity: number; status: string; details: unknown }[],
+      by: { id: string; name: string | null },
+      at: Date,
+    ): Promise<void> {
+      const itemQuantity = new Map<string, number>();
+      const modifierQuantity = new Map<string, number>();
+      const add = (map: Map<string, number>, key: string, quantity: number) =>
+        map.set(key, (map.get(key) ?? 0) + quantity);
+
+      for (const line of lines) {
+        if (line.status === 'voided') continue;
+        const details = lineDetailsSchema.safeParse(line.details);
+        const modifiers = details.success ? details.data.modifiers : [];
+        const choices = details.success ? details.data.choices : [];
+        if (line.itemId) add(itemQuantity, line.itemId, line.quantity);
+        for (const modifier of modifiers) add(modifierQuantity, modifier.id, line.quantity);
+        // A combo uses the recipes of the dishes chosen for its slots (rule 2).
+        for (const choice of choices) {
+          add(itemQuantity, choice.itemId, line.quantity);
+          for (const modifier of choice.modifiers) {
+            add(modifierQuantity, modifier.id, line.quantity);
+          }
+        }
+      }
+      if (itemQuantity.size === 0 && modifierQuantity.size === 0) return;
+
+      const recipes = await tx.recipeLine.findMany({
+        where: {
+          OR: [
+            { itemId: { in: [...itemQuantity.keys()] } },
+            { modifierId: { in: [...modifierQuantity.keys()] } },
+          ],
+        },
+      });
+      const used = new Map<string, number>();
+      for (const recipe of recipes) {
+        const times =
+          (recipe.itemId ? itemQuantity.get(recipe.itemId) : undefined) ??
+          (recipe.modifierId ? modifierQuantity.get(recipe.modifierId) : undefined) ??
+          0;
+        if (times > 0) add(used, recipe.ingredientId, mils(recipe.quantity) * times);
+      }
+      if (used.size === 0) return;
+
+      for (const [ingredientId, quantity] of used) {
+        const where = { branchId_ingredientId: { branchId: order.branchId, ingredientId } };
+        const current = await tx.branchStock.upsert({
+          where,
+          create: { branchId: order.branchId, ingredientId, brandId: order.brandId },
+          update: {},
+        });
+        const after = mils(current.quantity) - quantity;
+        await tx.stockMovement.create({
+          data: {
+            brandId: order.brandId,
+            branchId: order.branchId,
+            ingredientId,
+            kind: 'sold',
+            quantity: fromMils(-quantity),
+            quantityAfter: fromMils(after),
+            note: `Order ${order.number}`,
+            referenceId: order.id,
+            byId: by.id,
+            byName: by.name,
+            createdAt: at,
+          },
+        });
+        await tx.branchStock.update({ where, data: { quantity: fromMils(after) } });
+      }
     },
 
     async listMovements(

@@ -59,6 +59,7 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
     prisma,
     cache: menuCache ?? createMemoryMenuCache({ ttlMs: config.menuCacheTtlSeconds * 1000 }),
   });
+  const inventoryService = createInventoryService({ prisma, now: now ?? (() => new Date()) });
   const ordersService = createOrdersService({
     prisma,
     hasher: passwordHasher,
@@ -66,10 +67,11 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
     loadMenu: async (ctx, branchId) =>
       JSON.parse(await menuService.branchMenu.load(ctx, branchId)) as BranchMenu,
     now: now ?? (() => new Date()),
+    deductStock: (tx, order, lines, by, at) =>
+      inventoryService.sellForOrder(tx, order, lines, by, at),
   });
   const kitchenService = createKitchenService({ now: now ?? (() => new Date()) });
   const shiftsService = createShiftsService({ prisma, now: now ?? (() => new Date()) });
-  const inventoryService = createInventoryService({ prisma, now: now ?? (() => new Date()) });
 
   const v1 = express.Router();
   v1.use('/health', healthRouter);

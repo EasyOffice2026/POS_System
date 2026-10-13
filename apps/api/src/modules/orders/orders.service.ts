@@ -59,12 +59,20 @@ export interface OrdersDeps {
   // The menu of a branch as its terminal loads it (spec 004), which is what prices a line.
   loadMenu: (ctx: ActorContext, branchId: string) => Promise<BranchMenu>;
   now: () => Date;
+  // Takes the ingredients of the paid lines off the branch's stock (spec 013, rule 4).
+  deductStock: (
+    tx: OrderTx,
+    order: OrderRow,
+    lines: LineRow[],
+    by: { id: string; name: string | null },
+    at: Date,
+  ) => Promise<void>;
 }
 
 const notOpen = () => errors.conflict('ORDER_NOT_OPEN', 'This order is not open');
 
 // Orders at a branch. See docs/specs/005-orders.md.
-export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDeps) {
+export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock }: OrdersDeps) {
   const audit = (event: AuditEvent, meta: RequestMeta) =>
     writeAudit(prisma, { ...event, ip: meta.ip, userAgent: meta.userAgent });
   const approvals = createApprovals({ prisma, hasher, audit });
@@ -738,6 +746,15 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
         ]);
       }
 
+      // The name goes on the stock movements; it is read before the transaction, since the
+      // database answers one request at a time while one is open.
+      const by = {
+        id: auth.sub,
+        name:
+          (await prisma.user.findUnique({ where: { id: auth.sub }, select: { name: true } }))
+            ?.name ?? null,
+      };
+
       try {
         return await db.$transaction(async (tx) => {
           const order = await lockOpen(tx, orderId);
@@ -767,6 +784,8 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
           // What was not sent yet goes to the kitchen now (rule 5).
           const at = now();
           await sendPending(tx, order, at);
+          // The stock goes down by what was sold, in the same transaction (spec 013, rule 4).
+          await deductStock(tx, order, lines, by, at);
           await tx.payment.createMany({
             data: input.tenders.map((tender) => ({
               id: tender.id,
