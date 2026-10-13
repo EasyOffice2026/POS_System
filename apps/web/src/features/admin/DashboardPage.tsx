@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { localize } from '../../i18n/localize';
 import { useAuth } from '../auth/auth-context';
+import { StockAlertsPanel } from '../inventory/StockAlertsPanel';
 import { listBranches, listBrands } from './admin-api';
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
@@ -66,6 +67,7 @@ export function DashboardPage() {
 
   const canListBrands = user?.permissions.includes('brands:read') ?? false;
   const canListBranches = user?.permissions.includes('branches:read') ?? false;
+  const canSeeStock = user?.permissions.includes('inventory:read') ?? false;
   const brands = useQuery({ queryKey: ['brands'], queryFn: listBrands, enabled: canListBrands });
 
   if (!user) return null;
@@ -79,6 +81,8 @@ export function DashboardPage() {
           {t('dashboard.role', { role: t(`roles.${user.role.key}`) })}
         </p>
       </div>
+
+      {canSeeStock && <StockAlertsPanel />}
 
       {canListBrands && (
         <>
@@ -98,7 +102,9 @@ export function DashboardPage() {
         <BranchList brandId={user.brandId} title={t('dashboard.branches')} />
       )}
 
-      {!canListBrands && !canListBranches && <Message>{t('dashboard.noAccess')}</Message>}
+      {!canListBrands && !canListBranches && !canSeeStock && (
+        <Message>{t('dashboard.noAccess')}</Message>
+      )}
     </div>
   );
 }

@@ -19,6 +19,7 @@ const LOGOUT = 'POST /api/v1/auth/logout';
 
 // What the dashboard asks for once somebody is signed in.
 const dashboard: Record<string, MockHandler> = {
+  'GET /api/v1/inventory/alerts': () => json({ data: [] }),
   'GET /api/v1/brands': () => json(page([pizzaBrand, burgerBrand])),
   [`GET /api/v1/brands/${pizzaBrand.id}/branches`]: () => json(page([pizzaMall])),
   [`GET /api/v1/brands/${burgerBrand.id}/branches`]: () => json(page([])),
