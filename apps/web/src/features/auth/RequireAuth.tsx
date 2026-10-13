@@ -16,7 +16,10 @@ export function RequireAuth() {
     );
   }
   if (status === 'anonymous') {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    // The query string comes back too, for example /pos/setup?next=/kds.
+    return (
+      <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />
+    );
   }
   return <Outlet />;
 }
