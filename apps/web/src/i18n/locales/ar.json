@@ -104,7 +104,8 @@
     "orders_discount": "منح الخصومات",
     "kitchen_write": "العمل على شاشة المطبخ",
     "settings_write": "تغيير الإعدادات",
-    "shifts_read": "رؤية الورديات"
+    "shifts_read": "رؤية الورديات",
+    "orders_refund": "منح الاسترداد"
   },
   "users": {
     "title": "المستخدمون",
@@ -252,7 +253,10 @@
     "CASH_INVALID": "اكتب مبلغًا 0 أو أكثر، بثلاث خانات عشرية على الأكثر.",
     "SHIFT_ALREADY_OPEN": "لديك وردية مفتوحة في هذا الفرع بالفعل.",
     "SHIFT_NOT_OPEN": "هذه الوردية مغلقة بالفعل.",
-    "SHIFT_REQUIRED": "افتح وردية قبل استلام المدفوعات."
+    "SHIFT_REQUIRED": "افتح وردية قبل استلام المدفوعات.",
+    "REFUND_AMOUNT_INVALID": "اكتب مبلغًا أكبر من 0، بثلاث خانات عشرية على الأكثر.",
+    "REFUND_TOO_MUCH": "هذا أكثر مما تبقّى من الطلب.",
+    "REFUND_METHOD_INVALID": "يعود المال نقدًا، أو بالطريقة التي دُفع بها الطلب."
   },
   "rolesPage": {
     "title": "الأدوار",
@@ -312,7 +316,8 @@
       "order_discount_removed": "إزالة خصم",
       "brand_settings_updated": "تغيير الإعدادات",
       "shift_opened": "فتح وردية",
-      "shift_closed": "إغلاق وردية"
+      "shift_closed": "إغلاق وردية",
+      "order_refunded": "استرداد مبلغ"
     }
   },
   "notFound": {
@@ -743,7 +748,10 @@
         "ready": "جاهز",
         "done": "تم"
       },
-      "markDone": "تم التسليم"
+      "markDone": "تم التسليم",
+      "refund": "استرداد",
+      "refunds": "مسترد",
+      "refundedAmount": "مسترد {{amount}}"
     },
     "openOrders": {
       "button": "الطلبات المفتوحة",
@@ -754,7 +762,12 @@
       "lines_two": "صنفان",
       "lines_few": "{{count}} أصناف",
       "lines_many": "{{count}} صنفًا",
-      "lines_other": "{{count}} صنف"
+      "lines_other": "{{count}} صنف",
+      "tabs": {
+        "open": "مفتوحة",
+        "paid": "مدفوعة"
+      },
+      "nonePaid": "لم يُدفع أي طلب في هذا الفرع بعد."
     },
     "void": {
       "title": "إلغاء {{what}}",
@@ -787,7 +800,8 @@
     },
     "notices": {
       "orderVoided": "تم إلغاء الطلب {{number}}.",
-      "dismiss": "إغلاق الرسالة"
+      "dismiss": "إغلاق الرسالة",
+      "refunded": "الطلب {{number}}: تم إرجاع {{amount}}."
     },
     "errors": {
       "ITEM_NOT_AVAILABLE": "هذا الصنف لم يعد في قائمة الفرع. تم تحميل القائمة من جديد.",
@@ -823,7 +837,12 @@
       "PAYMENT_ID_TAKEN": "هذه الدفعة مستخدمة من قبل. افتح الدفع من جديد.",
       "ORDER_EMPTY": "لا يوجد في هذا الطلب ما يُدفع.",
       "PAYMENT_METHOD_INVALID": "طريقة الدفع هذه متوقفة. تم تحميل الإعدادات من جديد.",
-      "SHIFT_REQUIRED": "ورديتك لم تعد مفتوحة. افتح وردية لاستلام المدفوعات."
+      "SHIFT_REQUIRED": "ورديتك لم تعد مفتوحة. افتح وردية لاستلام المدفوعات.",
+      "ORDER_NOT_PAID": "يمكن استرداد الطلب المدفوع فقط.",
+      "REFUND_TOO_MUCH": "هذا أكثر مما تبقّى من الطلب.",
+      "REFUND_METHOD_INVALID": "يعود المال نقدًا، أو بالطريقة التي دُفع بها الطلب.",
+      "REFUND_AMOUNT_INVALID": "اكتب مبلغًا أكبر من 0.",
+      "REFUND_ID_TAKEN": "هذا الاسترداد مستخدم من قبل. افتح الاسترداد من جديد."
     },
     "pay": {
       "title": "دفع الطلب {{number}}",
@@ -862,6 +881,14 @@
     "shift": {
       "since": "وردية منذ {{time}}",
       "close": "إغلاق الوردية"
+    },
+    "refund": {
+      "title": "استرداد الطلب {{number}}",
+      "left": "المتبقي للاسترداد",
+      "amount": "المبلغ المسترد",
+      "method": "يعود بواسطة",
+      "reason": "السبب",
+      "confirm": "منح الاسترداد"
     }
   },
   "kds": {
@@ -987,7 +1014,9 @@
       "voidedLines_few": "{{count}} أصناف ملغاة",
       "voidedLines_many": "{{count}} صنفًا ملغى",
       "voidedLines_other": "{{count}} صنف ملغى",
-      "done": "تم"
+      "done": "تم",
+      "refunds": "الاستردادات",
+      "refundsTotal": "المبالغ المرجعة"
     }
   }
 }

@@ -60,6 +60,8 @@ export function order(overrides: Partial<Order> = {}): Order {
     lines: [],
     payments: [],
     change: '0.000',
+    refunds: [],
+    refunded: '0.000',
     ...overrides,
   };
 }

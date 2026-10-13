@@ -100,7 +100,8 @@
     "orders_discount": "Give discounts",
     "kitchen_write": "Work the kitchen screen",
     "settings_write": "Change the settings",
-    "shifts_read": "See the shifts"
+    "shifts_read": "See the shifts",
+    "orders_refund": "Give refunds"
   },
   "users": {
     "title": "Users",
@@ -248,7 +249,10 @@
     "CASH_INVALID": "Type an amount of 0 or more, with up to 3 decimals.",
     "SHIFT_ALREADY_OPEN": "You already have an open shift at this branch.",
     "SHIFT_NOT_OPEN": "This shift is closed already.",
-    "SHIFT_REQUIRED": "Open a shift before taking payments."
+    "SHIFT_REQUIRED": "Open a shift before taking payments.",
+    "REFUND_AMOUNT_INVALID": "Type an amount above 0, with up to 3 decimals.",
+    "REFUND_TOO_MUCH": "That is more than what is left of the order.",
+    "REFUND_METHOD_INVALID": "Money goes back in cash, or the way the order was paid."
   },
   "rolesPage": {
     "title": "Roles",
@@ -308,7 +312,8 @@
       "order_discount_removed": "Discount removed",
       "brand_settings_updated": "Settings changed",
       "shift_opened": "Shift opened",
-      "shift_closed": "Shift closed"
+      "shift_closed": "Shift closed",
+      "order_refunded": "Refund given"
     }
   },
   "notFound": {
@@ -735,14 +740,22 @@
         "ready": "Ready",
         "done": "Done"
       },
-      "markDone": "Mark done"
+      "markDone": "Mark done",
+      "refund": "Refund",
+      "refunds": "Refunded",
+      "refundedAmount": "refunded {{amount}}"
     },
     "openOrders": {
       "button": "Open orders",
       "title": "Open orders",
       "none": "No order is open at this branch.",
       "lines_one": "{{count}} item",
-      "lines_other": "{{count}} items"
+      "lines_other": "{{count}} items",
+      "tabs": {
+        "open": "Open",
+        "paid": "Paid"
+      },
+      "nonePaid": "No order was paid at this branch yet."
     },
     "void": {
       "title": "Void {{what}}",
@@ -775,7 +788,8 @@
     },
     "notices": {
       "orderVoided": "Order {{number}} was voided.",
-      "dismiss": "Close the message"
+      "dismiss": "Close the message",
+      "refunded": "Order {{number}}: {{amount}} given back."
     },
     "errors": {
       "ITEM_NOT_AVAILABLE": "This dish is not on the menu of the branch any more. The menu was loaded again.",
@@ -811,7 +825,12 @@
       "PAYMENT_ID_TAKEN": "This payment was already used. Open the payment again.",
       "ORDER_EMPTY": "This order has nothing to pay for.",
       "PAYMENT_METHOD_INVALID": "This way to pay is switched off. The settings were loaded again.",
-      "SHIFT_REQUIRED": "Your shift is not open any more. Open a shift to take payments."
+      "SHIFT_REQUIRED": "Your shift is not open any more. Open a shift to take payments.",
+      "ORDER_NOT_PAID": "Only a paid order can be refunded.",
+      "REFUND_TOO_MUCH": "That is more than what is left of the order.",
+      "REFUND_METHOD_INVALID": "Money goes back in cash, or the way the order was paid.",
+      "REFUND_AMOUNT_INVALID": "Type an amount above 0.",
+      "REFUND_ID_TAKEN": "This refund was already used. Open the refund again."
     },
     "pay": {
       "title": "Pay order {{number}}",
@@ -850,6 +869,14 @@
     "shift": {
       "since": "Shift since {{time}}",
       "close": "Close shift"
+    },
+    "refund": {
+      "title": "Refund order {{number}}",
+      "left": "Left to refund",
+      "amount": "Amount to give back",
+      "method": "Given back",
+      "reason": "Reason",
+      "confirm": "Give the refund"
     }
   },
   "kds": {
@@ -959,7 +986,9 @@
       "voidedOrders_other": "{{count}} orders voided",
       "voidedLines_one": "{{count}} dish voided",
       "voidedLines_other": "{{count}} dishes voided",
-      "done": "Done"
+      "done": "Done",
+      "refunds": "Refunds",
+      "refundsTotal": "Given back"
     }
   }
 }

@@ -10,7 +10,7 @@ import { messageFor, problemsFrom } from '../../lib/error-messages';
 import { normalizeNumberInput } from '../../lib/numbers';
 import { useAuth } from '../auth/auth-context';
 import type { Terminal } from '../pos/terminal-store';
-import { closeShift, currentShift, openShift, shiftKeys } from './shifts-api';
+import { closeShift, currentShift, getShift, openShift, shiftKeys } from './shifts-api';
 import { ShiftReportView } from './ShiftReportView';
 
 interface ShiftGateProps {
@@ -155,6 +155,8 @@ export function CloseShiftDialog({ shift, onClosed, onCancel }: CloseShiftDialog
   const [note, setNote] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
   const [report, setReport] = useState<ShiftReport | null>(null);
+  // The figures as they are now, not as they were when the shift was opened.
+  const live = useQuery({ queryKey: shiftKeys.one(shift.id), queryFn: () => getShift(shift.id) });
 
   const close = useMutation({
     mutationFn: () =>
@@ -191,7 +193,7 @@ export function CloseShiftDialog({ shift, onClosed, onCancel }: CloseShiftDialog
   return (
     <Dialog title={t('shifts.close.title')} onClose={onCancel}>
       <form onSubmit={onSubmit} noValidate className="space-y-4">
-        <ShiftReportView shift={shift} />
+        <ShiftReportView shift={live.data ?? shift} />
         <label className="block text-sm font-medium text-slate-700">
           {t('shifts.countedCash')}
           <input

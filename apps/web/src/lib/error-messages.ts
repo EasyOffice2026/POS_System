@@ -79,6 +79,9 @@ const messageKeys = {
   SHIFT_ALREADY_OPEN: 'validation.SHIFT_ALREADY_OPEN',
   SHIFT_NOT_OPEN: 'validation.SHIFT_NOT_OPEN',
   SHIFT_REQUIRED: 'validation.SHIFT_REQUIRED',
+  REFUND_AMOUNT_INVALID: 'validation.REFUND_AMOUNT_INVALID',
+  REFUND_TOO_MUCH: 'validation.REFUND_TOO_MUCH',
+  REFUND_METHOD_INVALID: 'validation.REFUND_METHOD_INVALID',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;

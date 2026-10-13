@@ -61,6 +61,28 @@ export function ShiftReportView({ shift }: { shift: ShiftSummary | (ShiftReport 
         </dl>
       </section>
 
+      {Number(shift.figures.refunds) > 0 && (
+        <section className="space-y-1">
+          <h3 className="font-semibold">{t('shifts.report.refunds')}</h3>
+          <dl className="space-y-1">
+            <div className={row}>
+              <dt>{t('shifts.report.refundsTotal')}</dt>
+              <dd data-testid="refunds-total">
+                <Price value={shift.figures.refunds} />
+              </dd>
+            </div>
+            {shift.figures.refundsByMethod.map((entry) => (
+              <div key={entry.method} className={`${row} ps-4 text-slate-700`}>
+                <dt>{localize(entry.methodName, i18n.language)}</dt>
+                <dd>
+                  <Price value={entry.amount} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
       <section className="space-y-1">
         <h3 className="font-semibold">{t('shifts.report.drawer')}</h3>
         <dl className="space-y-1">

@@ -15,6 +15,8 @@ import {
   getOrder,
   orderKeys,
   payOrder,
+  refundOrder,
+  type RefundRequestInput,
   removeDiscount,
   removeLine,
   sendOrder,
@@ -35,8 +37,9 @@ interface PendingApproval {
 
 export interface Notice {
   kind: 'error' | 'info';
-  code: Problem | 'orderVoided';
+  code: Problem | 'orderVoided' | 'refunded';
   number?: number;
+  amount?: string;
 }
 
 // The order on the screen of one terminal, and every change to it. Each answer of the API is
@@ -179,6 +182,16 @@ export function useTerminalOrder(branchId: string, brandId: string) {
     },
 
     // Answers the paid order, for the receipt, or null when it failed.
+    // Money back for a paid order, with a manager when the person has no right to it (spec 011).
+    refund: (input: RefundRequestInput) => {
+      if (!order) return;
+      void performApproved(
+        (given) => refundOrder(order.id, input, given),
+        (next) =>
+          setNotice({ kind: 'info', code: 'refunded', number: next.number, amount: input.amount }),
+      );
+    },
+
     pay: (tenders: Parameters<typeof payOrder>[1]) =>
       order ? perform(() => payOrder(order.id, tenders)) : Promise.resolve(null),
 
