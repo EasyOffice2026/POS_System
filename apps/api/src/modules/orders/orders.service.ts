@@ -1,9 +1,18 @@
 import {
+  activePaymentMethods,
   type AddOrderLineRequest,
   type BranchMenu,
+  type BrandSettings,
+  businessDateOn,
+  CASH,
+  CASH_NAME,
   type CreateOrderRequest,
   fromMils,
   MAX_ORDER_LINES,
+  parseBranchConfig,
+  parseBrandSettings,
+  voidNeedsApproval,
+  withinCashierLimit,
   type Order,
   type OrderListQuery,
   type OrderSummary,
@@ -32,7 +41,6 @@ import type { ActorContext } from '../../middleware/authenticate';
 import type { ScopedClient } from '../../tenancy/scoped-client';
 import { createApprovals } from './approvals';
 import {
-  businessDateOn,
   dbDate,
   isNotFound,
   isUniqueViolation,
@@ -69,6 +77,12 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
     return branch;
   }
 
+  // The settings of the brand, which say what a cashier may do alone (docs/specs/009-settings.md).
+  async function settingsOf(db: Pick<OrderTx, 'brand'>, brandId: string): Promise<BrandSettings> {
+    const brand = await db.brand.findUnique({ where: { id: brandId } });
+    return parseBrandSettings(brand?.settings);
+  }
+
   const readLines = (db: Pick<OrderTx, 'orderLine'>, orderId: string) =>
     db.orderLine.findMany({ where: { orderId }, orderBy: [{ position: 'asc' }, { id: 'asc' }] });
 
@@ -96,16 +110,64 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
   // Puts the lines that were not sent on a new kitchen ticket (spec 008, rule 1). Answers how many
   // lines it sent.
   async function sendPending(tx: OrderTx, order: OrderRow, at: Date): Promise<number> {
-    const pending = await tx.orderLine.count({ where: { orderId: order.id, status: 'pending' } });
-    if (pending === 0) return 0;
-    const ticket = await tx.kitchenTicket.create({
-      data: { orderId: order.id, brandId: order.brandId, branchId: order.branchId, sentAt: at },
-    });
-    const sent = await tx.orderLine.updateMany({
+    const pending = await tx.orderLine.findMany({
       where: { orderId: order.id, status: 'pending' },
-      data: { status: 'sent', sentAt: at, ticketId: ticket.id },
+      select: { id: true, itemId: true },
     });
-    return sent.count;
+    if (pending.length === 0) return 0;
+
+    // With kitchen stations, each line goes to the station of its category; a line without one,
+    // and a combo, go to the first station (spec 009, rule 6). Without stations, one ticket.
+    const stations = (await settingsOf(tx, order.brandId)).kitchenStations;
+    const lineIdsByStation = new Map<string | null, string[]>();
+    const first = stations[0];
+    if (!first) {
+      lineIdsByStation.set(
+        null,
+        pending.map((line) => line.id),
+      );
+    } else {
+      const itemIds = pending.flatMap((line) => (line.itemId ? [line.itemId] : []));
+      const items =
+        itemIds.length === 0
+          ? []
+          : await tx.menuItem.findMany({
+              where: { id: { in: itemIds } },
+              select: { id: true, categoryId: true },
+            });
+      const categories = await tx.menuCategory.findMany({
+        where: { id: { in: [...new Set(items.map((item) => item.categoryId))] } },
+        select: { id: true, stationId: true },
+      });
+      const categoryOfItem = new Map(items.map((item) => [item.id, item.categoryId]));
+      const stationOfCategory = new Map(
+        categories.map((category) => [category.id, category.stationId]),
+      );
+      const known = new Set(stations.map((station) => station.id));
+      for (const line of pending) {
+        const category = line.itemId ? categoryOfItem.get(line.itemId) : undefined;
+        const stationId = category ? stationOfCategory.get(category) : null;
+        const target = stationId && known.has(stationId) ? stationId : first.id;
+        lineIdsByStation.set(target, [...(lineIdsByStation.get(target) ?? []), line.id]);
+      }
+    }
+
+    for (const [stationId, lineIds] of lineIdsByStation) {
+      const ticket = await tx.kitchenTicket.create({
+        data: {
+          orderId: order.id,
+          brandId: order.brandId,
+          branchId: order.branchId,
+          stationId,
+          sentAt: at,
+        },
+      });
+      await tx.orderLine.updateMany({
+        where: { id: { in: lineIds } },
+        data: { status: 'sent', sentAt: at, ticketId: ticket.id },
+      });
+    }
+    return pending.length;
   }
 
   // An order the person cannot see is answered like one that does not exist.
@@ -247,7 +309,11 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
       }
 
       const branch = await openBranch(db, input.branchId);
-      const businessDate = businessDateOn(now(), branch.timezone);
+      const businessDate = businessDateOn(
+        now(),
+        branch.timezone,
+        parseBranchConfig(branch.config).dayEndsAt,
+      );
       const number = await nextNumber(db, branch, businessDate);
 
       try {
@@ -412,13 +478,10 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
       if (order.status !== 'open') throw notOpen();
       assertVoidable(await lineOf(db, orderId, lineId));
 
-      const approvedById = await approvals.authorize(
-        ctx,
-        order,
-        'orders:void',
-        input.approval,
-        meta,
-      );
+      // A sent line: the brand's rule says whether a manager is needed (spec 009, rule 5).
+      const approvedById = voidNeedsApproval(await settingsOf(db, order.brandId), true)
+        ? await approvals.authorize(ctx, order, 'orders:void', input.approval, meta)
+        : null;
 
       const { result, line } = await db.$transaction(async (tx) => {
         const locked = await lockOpen(tx, orderId);
@@ -471,19 +534,26 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
       const order = await load(db, orderId);
       if (order.status !== 'open') throw notOpen();
 
-      // A cashier may cancel their own order while nothing of it was sent (rule 7).
+      // The brand's rule says whether a manager is needed, which may depend on whether anything
+      // was sent to the kitchen (spec 009, rule 5).
+      const settings = await settingsOf(db, order.brandId);
       const sentLines = (where: Pick<OrderTx, 'orderLine'>) =>
         where.orderLine.count({ where: { orderId, sentAt: { not: null } } });
       const anySent = (await sentLines(db)) > 0;
-      const approvedById = anySent
+      const needs = voidNeedsApproval(settings, anySent);
+      const approvedById = needs
         ? await approvals.authorize(ctx, order, 'orders:void', input.approval, meta)
         : null;
 
       const result = await db.$transaction(async (tx) => {
         await lockOpen(tx, orderId);
-        // A line sent in the meantime needs the right after all.
+        // A line sent in the meantime may need the right after all.
         const sentNow = await sentLines(tx);
-        if (sentNow > 0 && !anySent && !auth.permissions.includes('orders:void')) {
+        if (
+          !needs &&
+          voidNeedsApproval(settings, sentNow > 0) &&
+          !auth.permissions.includes('orders:void')
+        ) {
           throw errors.validation([{ path: 'approval', message: 'APPROVAL_REQUIRED' }]);
         }
         const row = await tx.order.update({
@@ -531,13 +601,10 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
       const order = await load(db, orderId);
       if (order.status !== 'open') throw notOpen();
 
-      const approvedById = await approvals.authorize(
-        ctx,
-        order,
-        'orders:discount',
-        input.approval,
-        meta,
-      );
+      // A percentage within the cashier's limit needs no manager (spec 009, rule 3).
+      const approvedById = withinCashierLimit(await settingsOf(db, order.brandId), input)
+        ? null
+        : await approvals.authorize(ctx, order, 'orders:discount', input.approval, meta);
 
       const result = await db.$transaction(async (tx) => {
         await lockOpen(tx, orderId);
@@ -588,13 +655,14 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
       // Nothing to remove, so nothing to allow and nothing to record.
       if (!order.discountKind) return describe(db, order);
 
-      const approvedById = await approvals.authorize(
-        ctx,
-        order,
-        'orders:discount',
-        input.approval,
-        meta,
-      );
+      // Taking back a discount the cashier could give alone needs no manager either.
+      const given = {
+        kind: order.discountKind,
+        value: order.discountValue?.toFixed(order.discountKind === 'percent' ? 2 : 3) ?? '0',
+      };
+      const approvedById = withinCashierLimit(await settingsOf(db, order.brandId), given)
+        ? null
+        : await approvals.authorize(ctx, order, 'orders:discount', input.approval, meta);
 
       const result = await db.$transaction(async (tx) => {
         await lockOpen(tx, orderId);
@@ -649,6 +717,21 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
       const before = await repeated();
       if (before) return before;
 
+      // Every way to pay must be cash or one of the brand's active methods (spec 009, rule 2).
+      const methods = new Map(
+        activePaymentMethods(await settingsOf(db, (await load(db, orderId)).brandId)).map(
+          (method) => [method.key, method.name],
+        ),
+      );
+      const unknown = input.tenders.findIndex(
+        (tender) => tender.method !== CASH && !methods.has(tender.method),
+      );
+      if (unknown >= 0) {
+        throw errors.validation([
+          { path: `tenders.${unknown}.method`, message: 'PAYMENT_METHOD_INVALID' },
+        ]);
+      }
+
       try {
         return await db.$transaction(async (tx) => {
           const order = await lockOpen(tx, orderId);
@@ -677,13 +760,14 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
               brandId: order.brandId,
               branchId: order.branchId,
               method: tender.method,
+              methodName: tender.method === CASH ? CASH_NAME : (methods.get(tender.method) ?? {}),
               amount: tender.amount,
-              tendered: tender.method === 'cash' ? tender.tendered : null,
+              tendered: tender.method === CASH ? (tender.tendered ?? tender.amount) : null,
               change:
-                tender.method === 'cash'
-                  ? fromMils(toMils(tender.tendered) - toMils(tender.amount))
+                tender.method === CASH
+                  ? fromMils(toMils(tender.tendered ?? tender.amount) - toMils(tender.amount))
                   : '0',
-              reference: tender.method === 'card' ? (tender.reference ?? null) : null,
+              reference: tender.method === CASH ? null : (tender.reference ?? null),
               takenById: auth.sub,
               createdAt: at,
             })),

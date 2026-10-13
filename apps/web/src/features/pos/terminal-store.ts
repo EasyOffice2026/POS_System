@@ -10,6 +10,10 @@ export const terminalSchema = z.object({
   branchName: localizedTextSchema,
   // A branch manager cannot read the names of brands, so a terminal they set up has none.
   brandName: localizedTextSchema.nullable(),
+  // The kitchen station a kitchen screen is for, when the brand has stations (spec 009, rule 6).
+  // Missing on a terminal set up before stations existed, which is the same as all of them.
+  stationId: z.uuid().nullable().optional(),
+  stationName: localizedTextSchema.nullable().optional(),
 });
 
 export type Terminal = z.infer<typeof terminalSchema>;

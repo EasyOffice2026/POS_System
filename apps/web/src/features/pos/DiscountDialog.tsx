@@ -14,8 +14,6 @@ import { Price } from '../../components/Price';
 import { normalizeNumberInput } from '../../lib/numbers';
 import type { DiscountInput } from './pos-api';
 
-const presets = ['5', '10', '15', '20', '25', '50'];
-
 // What the discount comes to on the order as it is now, worked out like the API does (spec 005,
 // rule 10), or null while the value is not valid.
 function amountOf(kind: DiscountKind, value: string, subtotal: string): string | null {
@@ -31,6 +29,8 @@ function amountOf(kind: DiscountKind, value: string, subtotal: string): string |
 
 interface DiscountDialogProps {
   order: Order;
+  // The percentage buttons of the brand, from its settings (spec 009, rule 3).
+  presets: string[];
   onApply: (input: DiscountInput) => void;
   onRemove: () => void;
   onCancel: () => void;
@@ -38,7 +38,13 @@ interface DiscountDialogProps {
 
 // One discount on the whole order: a percentage or an amount, and why. See
 // docs/specs/006-pos-terminal.md, rule 11.
-export function DiscountDialog({ order, onApply, onRemove, onCancel }: DiscountDialogProps) {
+export function DiscountDialog({
+  order,
+  presets,
+  onApply,
+  onRemove,
+  onCancel,
+}: DiscountDialogProps) {
   const { t } = useTranslation();
   const [kind, setKind] = useState<DiscountKind>(order.discount?.kind ?? 'percent');
   const [value, setValue] = useState(order.discount?.value ?? '');
@@ -95,10 +101,10 @@ export function DiscountDialog({ order, onApply, onRemove, onCancel }: DiscountD
               <button
                 key={preset}
                 type="button"
-                onClick={() => setValue(preset)}
+                onClick={() => setValue(Number(preset).toString())}
                 className="rounded-md border border-slate-200 py-2 text-sm font-medium hover:bg-slate-100"
               >
-                {preset}%
+                {Number(preset)}%
               </button>
             ))}
           </div>

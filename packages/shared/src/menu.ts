@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { openingHoursSchema } from './branch-config';
 import { localizedNameSchema, localizedTextSchema } from './localized';
-import { priceChangeSchema, priceSchema } from './money';
+import { CURRENCY, priceChangeSchema, priceSchema } from './money';
 import { cursorQuerySchema } from './pagination';
 import { searchQuerySchema } from './search';
 import { webLinkSchema } from './web-link';
@@ -45,6 +45,8 @@ export const menuCategorySchema = z.object({
   name: localizedTextSchema,
   sortOrder: z.number().int(),
   isActive: z.boolean(),
+  // The kitchen station its dishes go to, or null for the first one (docs/specs/009-settings.md).
+  stationId: z.uuid().nullable(),
 });
 export type MenuCategory = z.infer<typeof menuCategorySchema>;
 
@@ -162,7 +164,7 @@ export const branchMenuComboSchema = z.object({
 export const branchMenuSchema = z.object({
   branchId: z.uuid(),
   brandId: z.uuid(),
-  currency: z.literal('SAR'),
+  currency: z.literal(CURRENCY),
   // The branch's time zone, so a schedule is read on the branch's clock.
   timezone: z.string(),
   categories: z.array(branchMenuCategorySchema),
@@ -186,6 +188,7 @@ export const createCategoryRequestSchema = z.strictObject({
   brandId: z.uuid().optional(),
   name: localizedNameSchema,
   isActive: z.boolean().default(true),
+  stationId: z.uuid({ error: 'STATION_NOT_FOUND' }).nullable().default(null),
 });
 export type CreateCategoryRequest = z.infer<typeof createCategoryRequestSchema>;
 
@@ -193,6 +196,7 @@ export const updateCategoryRequestSchema = z
   .strictObject({
     name: localizedNameSchema.optional(),
     isActive: z.boolean().optional(),
+    stationId: z.uuid({ error: 'STATION_NOT_FOUND' }).nullable().optional(),
   })
   .refine(somethingToUpdate, { message: 'NOTHING_TO_UPDATE' });
 export type UpdateCategoryRequest = z.infer<typeof updateCategoryRequestSchema>;

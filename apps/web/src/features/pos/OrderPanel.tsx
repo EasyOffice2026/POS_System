@@ -35,11 +35,22 @@ interface LineRowProps {
   busy: boolean;
   // The order is paid or voided: its lines can only be looked at.
   closed: boolean;
+  // The cashier marks ready dishes done when the food is handed over (spec 009, rule 7).
+  canMarkDone: boolean;
   onQuantity: (line: OrderLine, quantity: number) => void;
   onVoid: (line: OrderLine) => void;
+  onMarkDone: (line: OrderLine) => void;
 }
 
-function LineRow({ line, busy, closed, onQuantity, onVoid }: LineRowProps) {
+function LineRow({
+  line,
+  busy,
+  closed,
+  canMarkDone,
+  onQuantity,
+  onVoid,
+  onMarkDone,
+}: LineRowProps) {
   const { t, i18n } = useTranslation();
   const name = localize(line.name, i18n.language);
   const voided = line.status === 'voided';
@@ -106,6 +117,17 @@ function LineRow({ line, busy, closed, onQuantity, onVoid }: LineRowProps) {
             </span>
           </p>
         )}
+        {line.status === 'sent' && canMarkDone && line.kitchenStatus === 'ready' && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onMarkDone(line)}
+            className="rounded-md bg-emerald-700 px-2 py-1 text-sm font-medium text-white hover:bg-emerald-800"
+            aria-label={`${t('pos.order.markDone')}: ${name}`}
+          >
+            {t('pos.order.markDone')}
+          </button>
+        )}
         {line.status === 'sent' && !closed && (
           <button
             type="button"
@@ -134,6 +156,8 @@ interface OrderPanelProps {
   onVoidOrder: () => void;
   onNewOrder: () => void;
   onPay: () => void;
+  canMarkDone: boolean;
+  onMarkDone: (line: OrderLine) => void;
 }
 
 // The order on the screen: its type, its lines, the totals, and what can be done with it.
@@ -198,8 +222,10 @@ export function OrderPanel(props: OrderPanelProps) {
                 line={line}
                 busy={busy || !open}
                 closed={!open}
+                canMarkDone={props.canMarkDone}
                 onQuantity={props.onQuantity}
                 onVoid={props.onVoidLine}
+                onMarkDone={props.onMarkDone}
               />
             ))}
           </ul>

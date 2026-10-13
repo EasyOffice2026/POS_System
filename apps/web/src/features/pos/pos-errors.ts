@@ -34,6 +34,7 @@ const knownCodes = [
   'PAYMENT_AMOUNT_INVALID',
   'PAYMENT_TENDERS_INVALID',
   'PAYMENT_ID_TAKEN',
+  'PAYMENT_METHOD_INVALID',
   'ORDER_EMPTY',
   'network',
 ] as const;

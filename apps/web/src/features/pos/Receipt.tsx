@@ -91,7 +91,7 @@ export function Receipt({ order, terminal, cashier }: ReceiptProps) {
             <div key={payment.id}>
               <div className={row}>
                 <dt>
-                  {t(`pos.pay.methods.${payment.method}`)}
+                  {localize(payment.methodName, i18n.language)}
                   {payment.reference && (
                     <span className="text-xs text-slate-600">
                       {' '}

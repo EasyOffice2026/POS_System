@@ -2,9 +2,9 @@ import { z } from 'zod';
 
 // Prices have 3 decimal places and travel as text ("12.500"), never as floating-point numbers, so
 // no digit is ever lost. The database holds numeric(10,3): up to 7 digits before the point.
-// The currency is SAR for now.
+// The currency is the Kuwaiti dinar, whose fils are the third decimal (docs/specs/009-settings.md).
 
-export const CURRENCY = 'SAR';
+export const CURRENCY = 'KWD';
 
 const unsigned = /^\d{1,7}(\.\d{1,3})?$/;
 const signed = /^-?\d{1,7}(\.\d{1,3})?$/;

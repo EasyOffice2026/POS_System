@@ -1,4 +1,4 @@
-import type { Order, OrderLine } from '@pos/shared';
+import { defaultBrandSettings, type Order, type OrderLine } from '@pos/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,10 @@ import { OpenOrdersDialog } from './OpenOrdersDialog';
 import { OrderPanel } from './OrderPanel';
 import { PaymentDialog } from './PaymentDialog';
 import { Receipt, ReceiptDialog } from './Receipt';
+import { useBrandSettings } from '../settings/settings-api';
+
+// How often a terminal asks for the brand's settings again (spec 009, rule 8).
+export const SETTINGS_REFRESH_MS = 180_000;
 import type { Terminal } from './terminal-store';
 import { useTerminalOrder } from './use-terminal-order';
 import { VoidDialog } from './VoidDialog';
@@ -30,7 +34,10 @@ export function OrderScreen({ terminal }: { terminal: Terminal }) {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const now = useNow();
-  const terminalOrder = useTerminalOrder(terminal.branchId);
+  const terminalOrder = useTerminalOrder(terminal.branchId, terminal.brandId);
+  // The brand's settings: ways to pay, discount buttons, who marks dishes done (spec 009).
+  const settings = useBrandSettings(terminal.brandId, SETTINGS_REFRESH_MS);
+  const brandSettings = settings.data ?? defaultBrandSettings;
   const { order, busy, notice } = terminalOrder;
 
   const [choosing, setChoosing] = useState<Choosing | null>(null);
@@ -141,6 +148,8 @@ export function OrderScreen({ terminal }: { terminal: Terminal }) {
             onVoidOrder={() => setVoiding({ kind: 'order' })}
             onNewOrder={terminalOrder.newOrder}
             onPay={() => setPaying(true)}
+            canMarkDone={brandSettings.ticketDoneBy === 'cashier'}
+            onMarkDone={terminalOrder.markDone}
           />
         </div>
 
@@ -176,6 +185,7 @@ export function OrderScreen({ terminal }: { terminal: Terminal }) {
         {discounting && order && (
           <DiscountDialog
             order={order}
+            presets={brandSettings.discountPresets}
             onCancel={() => setDiscounting(false)}
             onApply={(input) => {
               setDiscounting(false);
@@ -212,6 +222,7 @@ export function OrderScreen({ terminal }: { terminal: Terminal }) {
         {paying && order && (
           <PaymentDialog
             order={order}
+            settings={brandSettings}
             onCancel={() => setPaying(false)}
             onPay={(tenders) => {
               setPaying(false);

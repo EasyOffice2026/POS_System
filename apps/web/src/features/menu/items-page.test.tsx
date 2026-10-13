@@ -134,7 +134,7 @@ describe('the items of the menu', () => {
 
     expect(within(row).getByText('Margherita')).toHaveAttribute('lang', 'en');
     expect(within(row).getByText('البيتزا')).toBeInTheDocument();
-    expect(within(row).getByText('ر.س', { exact: false })).toBeInTheDocument();
+    expect(within(row).getByText('د.ك', { exact: false })).toBeInTheDocument();
   });
 });
 

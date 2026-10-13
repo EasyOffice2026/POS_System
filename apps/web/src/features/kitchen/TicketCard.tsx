@@ -15,10 +15,12 @@ interface TicketCardProps {
   // Null when the person may only look (spec 008, criterion 6).
   onMove: ((ticket: KitchenTicket) => void) | null;
   busy: boolean;
+  // The cashier marks tickets done on the POS, so a ready ticket has no button here (spec 009).
+  doneByCashier?: boolean;
 }
 
 // One ticket: the order, how long it has waited, its dishes, and one big button for the next step.
-export function TicketCard({ ticket, now, onMove, busy }: TicketCardProps) {
+export function TicketCard({ ticket, now, onMove, busy, doneByCashier = false }: TicketCardProps) {
   const { t, i18n } = useTranslation();
   const waited = minutesSince(ticket.sentAt, now);
   const done = ticket.status === 'done';
@@ -97,7 +99,7 @@ export function TicketCard({ ticket, now, onMove, busy }: TicketCardProps) {
         )}
       </ul>
 
-      {onMove && (
+      {onMove && !(doneByCashier && ticket.status === 'ready') && (
         <button
           type="button"
           disabled={busy}

@@ -3,6 +3,7 @@ import {
   type KitchenTicket,
   type KitchenTicketQuery,
   type MoveTicketRequest,
+  parseBrandSettings,
   type TicketStatus,
 } from '@pos/shared';
 import type { KitchenTicket as TicketRow, Prisma } from '../../generated/prisma/client';
@@ -58,6 +59,7 @@ export function createKitchenService({ now }: KitchenDeps) {
           orderNumber: order.number,
           orderType: order.type,
           orderNote: order.note,
+          stationId: row.stationId,
           status: row.status,
           sentAt: row.sentAt.toISOString(),
           startedAt: iso(row.startedAt),
@@ -83,13 +85,15 @@ export function createKitchenService({ now }: KitchenDeps) {
       const branch = await db.branch.findUnique({ where: { id: query.branchId } });
       if (!branch) throw errors.notFound('Branch');
 
+      // One station's tickets, or every ticket of the branch (spec 009, rule 6).
+      const station = query.stationId ? { stationId: query.stationId } : {};
       const open = await db.kitchenTicket.findMany({
-        where: { branchId: branch.id, status: { in: ['new', 'preparing', 'ready'] } },
+        where: { branchId: branch.id, status: { in: ['new', 'preparing', 'ready'] }, ...station },
         orderBy: [{ sentAt: 'asc' }, { id: 'asc' }],
         take: 200,
       });
       const done = await db.kitchenTicket.findMany({
-        where: { branchId: branch.id, status: 'done' },
+        where: { branchId: branch.id, status: 'done', ...station },
         orderBy: [{ doneAt: 'desc' }, { id: 'desc' }],
         take: DONE_TICKETS_SHOWN,
       });
@@ -98,7 +102,25 @@ export function createKitchenService({ now }: KitchenDeps) {
 
     // Moves a ticket from the status the screen saw. If another screen moved it first, nothing
     // changes and the screen is told (rule 3).
-    async move({ db }: ActorContext, id: string, input: MoveTicketRequest): Promise<KitchenTicket> {
+    async move(
+      { auth, db }: ActorContext,
+      id: string,
+      input: MoveTicketRequest,
+    ): Promise<KitchenTicket> {
+      const found = await db.kitchenTicket.findUnique({ where: { id } });
+      if (!found) throw errors.notFound('Ticket');
+
+      // The kitchen works tickets. A cashier may only mark one done, when the brand says the
+      // cashier does that (spec 009, rule 7).
+      if (!auth.permissions.includes('kitchen:write')) {
+        const brand = await db.brand.findUnique({ where: { id: found.brandId } });
+        const cashierMay =
+          parseBrandSettings(brand?.settings).ticketDoneBy === 'cashier' &&
+          input.to === 'done' &&
+          auth.permissions.includes('orders:write');
+        if (!cashierMay) throw errors.forbidden();
+      }
+
       const moved = await db.kitchenTicket.updateMany({
         where: { id, status: input.from },
         data: { status: input.to, ...timesOf(input.to, now()) },

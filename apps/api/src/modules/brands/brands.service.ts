@@ -2,6 +2,8 @@ import {
   type Branch,
   type BranchDetail,
   type Brand,
+  type BrandSettings,
+  type brandSettingsRequestSchema,
   closedWeek,
   type CreateBranchRequest,
   type CreateBrandRequest,
@@ -9,12 +11,14 @@ import {
   localizedTextSchema,
   type Page,
   parseBranchConfig,
+  parseBrandSettings,
   type Printer,
   type UpdateBranchRequest,
   type UpdateBrandRequest,
 } from '@pos/shared';
 import { randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
+import type { z } from 'zod';
 import type { Branch as BranchRow, Brand as BrandRow, Prisma } from '../../generated/prisma/client';
 import { type AuditEvent, writeAudit } from '../../lib/audit';
 import { errors } from '../../lib/http-errors';
@@ -92,6 +96,51 @@ export function createBrandsService({ prisma }: { prisma: PrismaClient }) {
 
     async getBrand(ctx: ActorContext, id: string): Promise<Brand> {
       return toBrand(await loadBrand(ctx, id));
+    },
+
+    // The settings of a brand, with the defaults filled in. See docs/specs/009-settings.md.
+    async getSettings(ctx: ActorContext, id: string): Promise<BrandSettings> {
+      return parseBrandSettings((await loadBrand(ctx, id)).settings);
+    },
+
+    // Replaces the settings. A new kitchen station gets its id here, so categories and kitchen
+    // screens can point at it.
+    async updateSettings(
+      ctx: ActorContext,
+      id: string,
+      input: z.output<typeof brandSettingsRequestSchema>,
+      meta: RequestMeta,
+    ): Promise<BrandSettings> {
+      const { auth, db } = ctx;
+      const before = parseBrandSettings((await loadBrand(ctx, id)).settings);
+      const settings: BrandSettings = {
+        ...input,
+        kitchenStations: input.kitchenStations.map((station) => ({
+          id: station.id ?? randomUUID(),
+          name: station.name,
+        })),
+      };
+      const changed = (Object.keys(settings) as (keyof BrandSettings)[]).filter(
+        (key) => !isDeepStrictEqual(settings[key], before[key]),
+      );
+      if (changed.length === 0) return before;
+
+      const updated = await db.brand.update({
+        where: { id },
+        data: { settings: settings as unknown as Prisma.InputJsonObject },
+      });
+      await audit(
+        {
+          action: 'brand.settings_updated',
+          userId: auth.sub,
+          brandId: id,
+          entityType: 'brand',
+          entityId: id,
+          metadata: { changed },
+        },
+        meta,
+      );
+      return parseBrandSettings(updated.settings);
     },
 
     async createBrand(

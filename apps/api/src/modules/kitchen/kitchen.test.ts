@@ -114,7 +114,7 @@ describe('GET /kitchen/tickets', () => {
       tenders: [
         {
           id: '01990000-0000-7000-8000-000000000999',
-          method: 'card',
+          method: 'knet',
           amount: paid.total,
         },
       ],

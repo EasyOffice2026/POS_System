@@ -123,7 +123,7 @@ describe('the branch menu preview', () => {
 
     const line = (await screen.findByText(/Asia\/Riyadh/)).closest('p');
 
-    expect(line).toHaveTextContent('Asia/Riyadh · SAR');
+    expect(line).toHaveTextContent('Asia/Riyadh · KWD');
   });
 
   it('loads the menu of another branch when it is chosen, and keeps the choice in the address', async () => {
@@ -230,7 +230,7 @@ describe('the branch menu preview', () => {
 
     expect(await screen.findByRole('heading', { name: 'البيتزا' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'الوجبات المركبة' })).toBeInTheDocument();
-    expect(screen.getAllByText('ر.س').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('د.ك').length).toBeGreaterThan(0);
   });
 
   it('asks the group admin for the branches of the brand that is chosen', async () => {

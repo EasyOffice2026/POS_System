@@ -68,9 +68,9 @@ describe('POST /brands/:id/branches', () => {
       brandId: world.pizza.id,
       name,
       address: null,
-      timezone: 'Asia/Riyadh',
+      timezone: 'Asia/Kuwait',
       isActive: true,
-      config: { openingHours: closedWeek(), printers: [] },
+      config: { openingHours: closedWeek(), printers: [], dayEndsAt: '00:00' },
     });
 
     const list = pageSchema(branchSchema).parse((await api.get(branchesOf(world.pizza.id))).body);
@@ -250,6 +250,7 @@ describe('GET /branches/:id', () => {
     expect(branchDetailSchema.parse(res.body).config).toEqual({
       openingHours: closedWeek(),
       printers: [],
+      dayEndsAt: '00:00',
     });
   });
 

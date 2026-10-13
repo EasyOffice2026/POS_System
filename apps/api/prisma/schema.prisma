@@ -49,7 +49,7 @@ model Branch {
   brandId   String   @map("brand_id") @db.Uuid
   name      Json
   address   String?
-  timezone  String   @default("Asia/Riyadh")
+  timezone  String   @default("Asia/Kuwait")
   config    Json     @default("{}")
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -182,6 +182,8 @@ model MenuCategory {
   name      Json
   sortOrder Int      @default(0) @map("sort_order")
   isActive  Boolean  @default(true) @map("is_active")
+  // The kitchen station of the brand's settings its dishes go to (docs/specs/009-settings.md).
+  stationId String?  @map("station_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -473,30 +475,26 @@ model OrderCounter {
 
 // ---- Payments. See docs/specs/007-payments.md.
 
-enum PaymentMethod {
-  cash
-  card
-
-  @@map("payment_method")
-}
-
 // One way an order was paid. The parts of one payment together pay the order's total exactly.
 model Payment {
   // Made on the terminal, so a payment sent twice is taken once.
-  id        String        @id @db.Uuid
-  orderId   String        @map("order_id") @db.Uuid
-  brandId   String        @map("brand_id") @db.Uuid
-  branchId  String        @map("branch_id") @db.Uuid
-  method    PaymentMethod
+  id         String   @id @db.Uuid
+  orderId    String   @map("order_id") @db.Uuid
+  brandId    String   @map("brand_id") @db.Uuid
+  branchId   String   @map("branch_id") @db.Uuid
+  // Cash, or the key of a way to pay from the brand's settings (docs/specs/009-settings.md).
+  method     String
+  // The name of the way to pay as it was at the time.
+  methodName Json     @default("{}") @map("method_name")
   // The part of the order it pays.
-  amount    Decimal       @db.Decimal(15, 3)
+  amount     Decimal  @db.Decimal(15, 3)
   // Cash only: what the customer handed over, and the change given back.
-  tendered  Decimal?      @db.Decimal(15, 3)
-  change    Decimal       @default(0) @db.Decimal(15, 3)
+  tendered   Decimal? @db.Decimal(15, 3)
+  change     Decimal  @default(0) @db.Decimal(15, 3)
   // Card only: the slip number, when the cashier typed it.
-  reference String?
-  takenById String        @map("taken_by_id") @db.Uuid
-  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  reference  String?
+  takenById  String   @map("taken_by_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   order Order @relation(fields: [orderId, branchId, brandId], references: [id, branchId, brandId], onDelete: Restrict)
 
@@ -522,6 +520,8 @@ model KitchenTicket {
   orderId   String       @map("order_id") @db.Uuid
   brandId   String       @map("brand_id") @db.Uuid
   branchId  String       @map("branch_id") @db.Uuid
+  // The kitchen station of the brand's settings it is for, or null when the brand has none.
+  stationId String?      @map("station_id") @db.Uuid
   status    TicketStatus @default(new)
   sentAt    DateTime     @map("sent_at") @db.Timestamptz(3)
   startedAt DateTime?    @map("started_at") @db.Timestamptz(3)

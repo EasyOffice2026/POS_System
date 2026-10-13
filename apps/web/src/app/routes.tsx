@@ -21,6 +21,7 @@ import { MenuIndexRedirect, MenuLayout } from '../features/menu/MenuLayout';
 import { PosPage } from '../features/pos/PosPage';
 import { PosSetupPage } from '../features/pos/PosSetupPage';
 import { RolesPage } from '../features/roles/RolesPage';
+import { SettingsPage } from '../features/settings/SettingsPage';
 import { UserFormPage } from '../features/users/UserFormPage';
 import { UsersPage } from '../features/users/UsersPage';
 import { NotFoundPage } from './NotFoundPage';
@@ -170,6 +171,14 @@ export const routes: RouteObject[] = [
             element: (
               <RequirePermission permission="roles:read">
                 <RolesPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'settings',
+            element: (
+              <RequirePermission permission="settings:write">
+                <SettingsPage />
               </RequirePermission>
             ),
           },

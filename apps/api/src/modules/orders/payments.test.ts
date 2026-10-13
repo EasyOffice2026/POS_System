@@ -44,7 +44,7 @@ const cash = (amount: string, tendered: string, id = randomUUID()) => ({
 });
 const card = (amount: string, reference?: string, id = randomUUID()) => ({
   id,
-  method: 'card',
+  method: 'knet',
   amount,
   ...(reference === undefined ? {} : { reference }),
 });
@@ -120,7 +120,7 @@ describe('POST /orders/:id/pay', () => {
     expect(parts).toHaveLength(2);
     expect(parts).toEqual(
       expect.arrayContaining([
-        ['card', '50.000', '4821'],
+        ['knet', '50.000', '4821'],
         ['cash', '22.000', null],
       ]),
     );

@@ -95,7 +95,7 @@ describe('the modifiers of an item', () => {
     expect(within(size).getByText('-5.000')).toBeInTheDocument();
     expect(within(size).getByText('0.000')).toBeInTheDocument();
     expect(within(size).getByText('+6.000')).toBeInTheDocument();
-    expect(within(size).getAllByText('SAR')).toHaveLength(3);
+    expect(within(size).getAllByText('KWD')).toHaveLength(3);
     const olives = within(toppings).getByText('Olives').closest('li') as HTMLElement;
     expect(within(olives).getByText('Inactive')).toBeInTheDocument();
   });

@@ -38,6 +38,11 @@ beforeEach(async () => {
     where: { id: world.users.mallManager.id },
     data: { staffCode: MANAGER.staffCode, pinHash: await hasher.hash(MANAGER.pin) },
   });
+  // The tests here follow spec 005: a void needs a manager once something was sent.
+  await prisma.brand.update({
+    where: { id: world.pizza.id },
+    data: { settings: { voidNeedsManager: 'after_send' } },
+  });
 });
 
 type Api = ReturnType<typeof as>;

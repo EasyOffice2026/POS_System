@@ -1,7 +1,9 @@
 import type { Approval, Order, OrderLine, OrderType } from '@pos/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { moveTicket } from '../kitchen/kitchen-api';
 import { menuKeys } from '../menu/menu-api';
+import { settingsKeys } from '../settings/settings-api';
 import {
   type AddLineInput,
   addLine,
@@ -38,7 +40,7 @@ export interface Notice {
 
 // The order on the screen of one terminal, and every change to it. Each answer of the API is
 // the whole order, which replaces what the screen shows. See docs/specs/006-pos-terminal.md.
-export function useTerminalOrder(branchId: string) {
+export function useTerminalOrder(branchId: string, brandId: string) {
   const queryClient = useQueryClient();
   const [orderId, setOrderId] = useState<string | null>(null);
   const [draftType, setDraftType] = useState<OrderType>('takeaway');
@@ -68,6 +70,10 @@ export function useTerminalOrder(branchId: string) {
     // The menu on the screen is out of date, or the order was changed elsewhere.
     if (menuIsStale(code)) {
       void queryClient.invalidateQueries({ queryKey: menuKeys.branchMenu(branchId) });
+    }
+    // A way to pay was switched off in the settings since the terminal loaded them.
+    if (code === 'PAYMENT_METHOD_INVALID') {
+      void queryClient.invalidateQueries({ queryKey: settingsKeys.brand(brandId) });
     }
     const changedElsewhere = ['ORDER_NOT_OPEN', 'LINE_VOIDED', 'PAYMENT_TOTAL_MISMATCH'];
     if (changedElsewhere.includes(code) && orderId) {
@@ -170,6 +176,17 @@ export function useTerminalOrder(branchId: string) {
     // Answers the paid order, for the receipt, or null when it failed.
     pay: (tenders: Parameters<typeof payOrder>[1]) =>
       order ? perform(() => payOrder(order.id, tenders)) : Promise.resolve(null),
+
+    // The food of a ready ticket was handed over (spec 009, rule 7). The order is read again,
+    // so every line of that ticket shows it.
+    markDone: (line: OrderLine) => {
+      if (!order || !line.ticketId) return;
+      const { ticketId } = line;
+      void perform(async () => {
+        await moveTicket(ticketId, 'ready', 'done');
+        return getOrder(order.id);
+      });
+    },
 
     newOrder: () => {
       setOrderId(null);

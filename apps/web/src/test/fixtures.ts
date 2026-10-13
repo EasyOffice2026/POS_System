@@ -5,7 +5,9 @@ import {
   type Branch,
   type BranchDetail,
   type Brand,
+  type BrandSettings,
   closedWeek,
+  defaultBrandSettings,
   permissions,
   type Printer,
   type RoleInfo,
@@ -237,7 +239,7 @@ export const kitchenStaff: AuthUser = {
 export function branchDetail(overrides: Partial<BranchDetail> = {}): BranchDetail {
   return {
     ...pizzaMall,
-    config: { openingHours: closedWeek(), printers: [] },
+    config: { openingHours: closedWeek(), printers: [], dayEndsAt: '00:00' },
     ...overrides,
   };
 }
@@ -251,4 +253,9 @@ export function printer(n: number, overrides: Partial<Printer> = {}): Printer {
     port: 9100,
     ...overrides,
   };
+}
+
+// The settings of a brand, as the API answers them with the defaults filled in.
+export function brandSettings(overrides: Partial<BrandSettings> = {}): BrandSettings {
+  return { ...defaultBrandSettings, ...overrides };
 }

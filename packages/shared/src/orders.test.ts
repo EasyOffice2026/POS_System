@@ -245,7 +245,7 @@ describe('payOrderRequestSchema', () => {
     amount,
     tendered,
   });
-  const card = (amount: string, tenderId = other) => ({ id: tenderId, method: 'card', amount });
+  const card = (amount: string, tenderId = other) => ({ id: tenderId, method: 'knet', amount });
 
   it('writes the amounts with 3 decimals and keeps the slip number', () => {
     const parsed = payOrderRequestSchema.parse({
@@ -253,7 +253,7 @@ describe('payOrderRequestSchema', () => {
     });
     expect(parsed.tenders).toEqual([
       { id, method: 'cash', amount: '22.000', tendered: '50.500' },
-      { id: other, method: 'card', amount: '50.000', reference: '123456' },
+      { id: other, method: 'knet', amount: '50.000', reference: '123456' },
     ]);
   });
 
@@ -284,8 +284,8 @@ describe('payOrderRequestSchema', () => {
     ]);
     expect(
       codesOf(
-        payOrderRequestSchema.safeParse({ tenders: [{ id, method: 'wallet', amount: '1' }] }),
+        payOrderRequestSchema.safeParse({ tenders: [{ id, method: 'Not a key!', amount: '1' }] }),
       ),
-    ).toEqual(['tenders.0.method: PAYMENT_METHOD_INVALID']);
+    ).toEqual(['tenders.0.method: PAYMENT_METHOD_KEY_INVALID']);
   });
 });

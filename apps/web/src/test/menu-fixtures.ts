@@ -25,6 +25,7 @@ export function menuCategory(overrides: Partial<MenuCategory> = {}): MenuCategor
     name: { en: 'Pizzas', ar: 'البيتزا' },
     sortOrder: 0,
     isActive: true,
+    stationId: null,
     ...overrides,
   };
 }
@@ -224,7 +225,7 @@ export function branchMenu(overrides: Partial<BranchMenu> = {}): BranchMenu {
   return {
     branchId: ids.pizzaMall,
     brandId: ids.pizza,
-    currency: 'SAR',
+    currency: 'KWD',
     timezone: 'Asia/Riyadh',
     categories: [
       {

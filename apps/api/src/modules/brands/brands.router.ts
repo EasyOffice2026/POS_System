@@ -1,4 +1,5 @@
 import {
+  brandSettingsRequestSchema,
   createBranchRequestSchema,
   createBrandRequestSchema,
   cursorQuerySchema,
@@ -38,6 +39,19 @@ export function createBrandsRouter({ service }: { service: BrandsService }): Rou
     const { id } = parseWith(idParamsSchema, req.params);
     const input = parseWith(updateBrandRequestSchema, req.body);
     res.json(await service.updateBrand(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  // The terminals of a brand need its settings, so anybody of the brand may read them. The scoped
+  // client answers 404 for another brand. See docs/specs/009-settings.md.
+  router.get('/:id/settings', async (req, res) => {
+    const { id } = parseWith(idParamsSchema, req.params);
+    res.json(await service.getSettings(requestContext(req), id));
+  });
+
+  router.put('/:id/settings', requirePermission('settings:write'), async (req, res) => {
+    const { id } = parseWith(idParamsSchema, req.params);
+    const input = parseWith(brandSettingsRequestSchema, req.body);
+    res.json(await service.updateSettings(requestContext(req), id, input, requestMeta(req)));
   });
 
   router.get('/:id/branches', requirePermission('branches:read'), async (req, res) => {

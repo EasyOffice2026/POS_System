@@ -24,21 +24,18 @@ import type { ScopedClient } from '../../tenancy/scoped-client';
 // What a change to an order reads and writes, whether through the client or a transaction.
 export type OrderTx = Pick<
   ScopedClient,
-  'order' | 'orderLine' | 'payment' | 'kitchenTicket' | 'branch' | 'brand'
+  | 'order'
+  | 'orderLine'
+  | 'payment'
+  | 'kitchenTicket'
+  | 'branch'
+  | 'brand'
+  | 'menuItem'
+  | 'menuCategory'
 >;
 
 export const mils = (value: Prisma.Decimal): number => toMils(value.toFixed(3));
 const iso = (value: Date | null) => (value ? value.toISOString() : null);
-
-// The day on the clock of a time zone, as YYYY-MM-DD.
-export function businessDateOn(at: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(at);
-}
 
 // A date column holds midnight UTC of that day.
 export const dbDate = (date: string) => new Date(`${date}T00:00:00.000Z`);
@@ -73,6 +70,7 @@ export function toOrderLine(row: LineRow, tickets: TicketStatuses = new Map()): 
     note: row.note,
     status: row.status,
     kitchenStatus: row.ticketId ? (tickets.get(row.ticketId) ?? null) : null,
+    ticketId: row.ticketId,
     sentAt: iso(row.sentAt),
     voidedAt: iso(row.voidedAt),
     voidReason: row.voidReason,
@@ -115,6 +113,7 @@ export function toPayment(row: PaymentRow): OrderPayment {
   return {
     id: row.id,
     method: row.method,
+    methodName: localizedTextSchema.parse(row.methodName),
     amount: row.amount.toFixed(3),
     tendered: row.tendered?.toFixed(3) ?? null,
     change: row.change.toFixed(3),

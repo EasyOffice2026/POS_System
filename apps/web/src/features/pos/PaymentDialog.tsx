@@ -1,64 +1,79 @@
-import { fromMils, type Order, toMils } from '@pos/shared';
+import {
+  activePaymentMethods,
+  type BrandSettings,
+  CASH,
+  fromMils,
+  type Order,
+  toMils,
+} from '@pos/shared';
 import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '../../components/Dialog';
 import { fieldClass, primaryButtonClass, secondaryButtonClass } from '../../components/form';
 import { Price } from '../../components/Price';
+import { localize } from '../../i18n/localize';
 import { normalizeNumberInput } from '../../lib/numbers';
 import type { TenderInput } from './pos-api';
 
-type Mode = 'cash' | 'card' | 'split';
+// Cash alone, one other way to pay alone, or that way and the rest in cash.
+type Mode = 'cash' | 'method' | 'mixed';
 
 // Banknotes offered as quick buttons when they cover what is due.
-const notes = [10, 20, 50, 100, 200, 500];
+const notes = [1, 5, 10, 20, 50, 100];
 
 const amountText = /^\d{1,12}(\.\d{1,3})?$/;
 const milsOf = (text: string) => (amountText.test(text.trim()) ? toMils(text.trim()) : null);
 
 interface PaymentDialogProps {
   order: Order;
+  // The ways to pay of the brand (spec 009, rule 2).
+  settings: BrandSettings;
   // Sends the payment. The dialog closes when it is done, whether it worked or not.
   onPay: (tenders: TenderInput[]) => void;
   onCancel: () => void;
 }
 
-// Takes the money for the whole order: in cash with the change shown, by card (recorded by hand
-// until a card provider is chosen), or part by card and the rest in cash.
+// Takes the money for the whole order: in cash with the change shown, by one of the brand's ways
+// to pay (KNET, Link, a delivery platform), or part by one of them and the rest in cash.
 // See docs/specs/007-payments.md, rules 1 to 3.
-export function PaymentDialog({ order, onPay, onCancel }: PaymentDialogProps) {
-  const { t } = useTranslation();
+export function PaymentDialog({ order, settings, onPay, onCancel }: PaymentDialogProps) {
+  const { t, i18n } = useTranslation();
+  const methods = activePaymentMethods(settings);
   // Made once, so the same payment sent again is recognised (spec 007, rule 7).
-  const [ids] = useState(() => ({ cash: crypto.randomUUID(), card: crypto.randomUUID() }));
+  const [ids] = useState(() => ({ cash: crypto.randomUUID(), other: crypto.randomUUID() }));
   const [mode, setMode] = useState<Mode>('cash');
+  const [methodKey, setMethodKey] = useState(methods[0]?.key ?? '');
   const [tendered, setTendered] = useState('');
-  const [cardAmount, setCardAmount] = useState('');
+  const [methodAmount, setMethodAmount] = useState('');
   const [reference, setReference] = useState('');
 
+  const method = methods.find((candidate) => candidate.key === methodKey);
+  const methodName = method ? localize(method.name, i18n.language) : '';
   const due = toMils(order.total);
-  const cardPart = mode === 'card' ? due : mode === 'split' ? milsOf(cardAmount) : 0;
-  const cashPart = cardPart === null ? null : due - cardPart;
+  const otherPart = mode === 'method' ? due : mode === 'mixed' ? milsOf(methodAmount) : 0;
+  const cashPart = otherPart === null ? null : due - otherPart;
   const handed = milsOf(tendered);
 
-  // What is wrong with the payment as typed, or null when it can be sent.
-  let ready = cardPart !== null && cashPart !== null && cashPart >= 0;
-  if (mode === 'split' && (cardPart === null || cardPart <= 0 || cardPart > due)) ready = false;
+  let ready = otherPart !== null && cashPart !== null && cashPart >= 0;
+  if (mode !== 'cash' && !method) ready = false;
+  if (mode === 'mixed' && (otherPart === null || otherPart <= 0 || otherPart > due)) ready = false;
   if (cashPart !== null && cashPart > 0 && (handed === null || handed < cashPart)) ready = false;
   const change = ready && cashPart && handed !== null ? handed - cashPart : 0;
 
   function tenders(): TenderInput[] {
     const parts: TenderInput[] = [];
-    if (cardPart && cardPart > 0) {
+    if (method && otherPart && otherPart > 0) {
       parts.push({
-        id: ids.card,
-        method: 'card',
-        amount: fromMils(cardPart),
+        id: ids.other,
+        method: method.key,
+        amount: fromMils(otherPart),
         ...(reference.trim() ? { reference: reference.trim() } : {}),
       });
     }
     if (cashPart && cashPart > 0 && handed !== null) {
       parts.push({
         id: ids.cash,
-        method: 'cash',
+        method: CASH,
         amount: fromMils(cashPart),
         tendered: fromMils(handed),
       });
@@ -71,26 +86,27 @@ export function PaymentDialog({ order, onPay, onCancel }: PaymentDialogProps) {
     if (ready) onPay(tenders());
   }
 
-  const tab = (key: Mode) => (
+  const tab = (key: string, label: string, pick: () => void, active: boolean) => (
     <button
+      key={key}
       type="button"
-      aria-pressed={mode === key}
+      aria-pressed={active}
       onClick={() => {
-        setMode(key);
+        pick();
         setTendered('');
       }}
-      className={`flex-1 rounded-md px-3 py-2 text-sm font-medium ${
-        mode === key ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+      className={`rounded-md px-3 py-2 text-sm font-medium ${
+        active ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
       }`}
     >
-      {t(`pos.pay.modes.${key}`)}
+      {label}
     </button>
   );
 
   const cashFields = cashPart !== null && cashPart > 0 && (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-slate-700">
-        {mode === 'split'
+        {mode === 'mixed'
           ? t('pos.pay.tenderedRest', { amount: fromMils(cashPart) })
           : t('pos.pay.tendered')}
         <input
@@ -143,6 +159,23 @@ export function PaymentDialog({ order, onPay, onCancel }: PaymentDialogProps) {
     </label>
   );
 
+  const methodPicker = methods.length > 1 && (
+    <label className="block text-sm font-medium text-slate-700">
+      {t('pos.pay.mixedMethod')}
+      <select
+        value={methodKey}
+        onChange={(event) => setMethodKey(event.target.value)}
+        className={fieldClass}
+      >
+        {methods.map((candidate) => (
+          <option key={candidate.key} value={candidate.key}>
+            {localize(candidate.name, i18n.language)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
   return (
     <Dialog title={t('pos.pay.title', { number: order.number })} onClose={onCancel}>
       <form onSubmit={onSubmit} className="space-y-4">
@@ -154,31 +187,45 @@ export function PaymentDialog({ order, onPay, onCancel }: PaymentDialogProps) {
         </p>
 
         {due > 0 && (
-          <div className="flex gap-2">
-            {tab('cash')}
-            {tab('card')}
-            {tab('split')}
+          <div className="flex flex-wrap gap-2">
+            {tab(CASH, t('pos.pay.modes.cash'), () => setMode('cash'), mode === 'cash')}
+            {methods.map((candidate) =>
+              tab(
+                candidate.key,
+                localize(candidate.name, i18n.language),
+                () => {
+                  setMode('method');
+                  setMethodKey(candidate.key);
+                },
+                mode === 'method' && methodKey === candidate.key,
+              ),
+            )}
+            {methods.length > 0 &&
+              tab('mixed', t('pos.pay.modes.mixed'), () => setMode('mixed'), mode === 'mixed')}
           </div>
         )}
 
         {due > 0 && mode === 'cash' && cashFields}
-        {due > 0 && mode === 'card' && (
+        {due > 0 && mode === 'method' && (
           <>
-            <p className="text-sm text-slate-600">{t('pos.pay.cardHint')}</p>
+            <p className="text-sm text-slate-600">
+              {t('pos.pay.otherHint', { method: methodName })}
+            </p>
             {referenceField}
           </>
         )}
-        {due > 0 && mode === 'split' && (
+        {due > 0 && mode === 'mixed' && (
           <>
+            {methodPicker}
             <label className="block text-sm font-medium text-slate-700">
-              {t('pos.pay.cardAmount')}
+              {t('pos.pay.methodAmount', { method: methodName })}
               <input
                 type="text"
                 inputMode="decimal"
                 dir="ltr"
                 autoComplete="off"
-                value={cardAmount}
-                onChange={(event) => setCardAmount(normalizeNumberInput(event.target.value))}
+                value={methodAmount}
+                onChange={(event) => setMethodAmount(normalizeNumberInput(event.target.value))}
                 className={fieldClass}
               />
             </label>

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { localizedTextSchema } from './localized';
-import { formatMoney, priceSchema, toMils } from './money';
+import { CURRENCY, formatMoney, priceSchema, toMils } from './money';
+import { CASH, paymentMethodKeySchema } from './settings';
 import { cursorQuerySchema } from './pagination';
 
 // Orders at a branch: dishes and combos copied from the branch menu with their prices, sent to the
@@ -34,8 +35,11 @@ export const discountKindSchema = z.enum(discountKinds, { error: 'DISCOUNT_KIND_
 export type DiscountKind = z.infer<typeof discountKindSchema>;
 
 // A card payment is recorded by hand until a card provider is chosen. See docs/specs/007-payments.md.
-export const paymentMethods = ['cash', 'card'] as const;
-export const paymentMethodSchema = z.enum(paymentMethods, { error: 'PAYMENT_METHOD_INVALID' });
+// How an order is paid: cash, or a way to pay from the brand's settings, by its key ("knet").
+// See docs/specs/009-settings.md, rule 2.
+export const paymentMethodSchema = z.union([z.literal(CASH), paymentMethodKeySchema], {
+  error: 'PAYMENT_METHOD_INVALID',
+});
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
 
 export const MAX_TENDERS = 10;
@@ -81,6 +85,8 @@ export const orderLineSchema = z.object({
   status: orderLineStatusSchema,
   // The status of the kitchen ticket it was sent on, or null before it is sent.
   kitchenStatus: ticketStatusSchema.nullable(),
+  // The kitchen ticket it was sent on, so the cashier can mark it done (spec 009, rule 7).
+  ticketId: z.uuid().nullable(),
   sentAt: z.iso.datetime().nullable(),
   voidedAt: z.iso.datetime().nullable(),
   voidReason: z.string().nullable(),
@@ -101,6 +107,9 @@ export type OrderDiscount = z.infer<typeof orderDiscountSchema>;
 export const orderPaymentSchema = z.object({
   id: z.uuid(),
   method: paymentMethodSchema,
+  // The name of the way to pay as it was at the time, so a method renamed later leaves old
+  // receipts as they were.
+  methodName: localizedTextSchema,
   // The part of the order it pays.
   amount: z.string(),
   // Cash only: what the customer handed over, and what they got back.
@@ -124,7 +133,7 @@ const orderFields = {
   type: orderTypeSchema,
   status: orderStatusSchema,
   note: z.string().nullable(),
-  currency: z.literal('SAR'),
+  currency: z.literal(CURRENCY),
   subtotal: z.string(),
   discount: orderDiscountSchema.nullable(),
   total: z.string(),
@@ -304,29 +313,31 @@ const amountField = z
   .transform(formatMoney)
   .refine((amount) => Number(amount) > 0, 'PAYMENT_AMOUNT_INVALID');
 
-const tenderSchema = z.discriminatedUnion(
-  'method',
-  [
-    z.strictObject({
-      id: z.uuid(),
-      method: z.literal('cash'),
-      amount: amountField,
-      tendered: amountField,
-    }),
-    z.strictObject({
-      id: z.uuid(),
-      method: z.literal('card'),
-      amount: amountField,
-      reference: z
-        .string()
-        .trim()
-        .max(40, 'PAYMENT_REFERENCE_TOO_LONG')
-        .transform((text) => (text === '' ? null : text))
-        .optional(),
-    }),
-  ],
-  { error: 'PAYMENT_METHOD_INVALID' },
-);
+const referenceField = z
+  .string()
+  .trim()
+  .max(40, 'PAYMENT_REFERENCE_TOO_LONG')
+  .transform((text) => (text === '' ? null : text));
+
+// One part of a payment. Cash says what the customer handed over; any other way to pay may carry
+// a slip or transaction number.
+const tenderSchema = z
+  .strictObject({
+    id: z.uuid(),
+    method: paymentMethodSchema,
+    amount: amountField,
+    tendered: amountField.optional(),
+    reference: referenceField.optional(),
+  })
+  .superRefine((tender, ctx) => {
+    if (tender.method === CASH) {
+      if (tender.tendered === undefined) {
+        ctx.addIssue({ code: 'custom', path: ['tendered'], message: 'PAYMENT_TENDERED_REQUIRED' });
+      }
+    } else if (tender.tendered !== undefined) {
+      ctx.addIssue({ code: 'custom', path: ['tendered'], message: 'PAYMENT_TENDERED_ONLY_CASH' });
+    }
+  });
 export type Tender = z.infer<typeof tenderSchema>;
 
 // The whole payment of an order at once: the parts must add up to its total, which the API checks
@@ -339,11 +350,15 @@ export const payOrderRequestSchema = z.strictObject({
       if (new Set(tenders.map((tender) => tender.id)).size !== tenders.length) {
         ctx.addIssue({ code: 'custom', message: 'PAYMENT_ID_DUPLICATE' });
       }
-      if (tenders.filter((tender) => tender.method === 'cash').length > 1) {
+      if (tenders.filter((tender) => tender.method === CASH).length > 1) {
         ctx.addIssue({ code: 'custom', message: 'PAYMENT_TOO_MANY_CASH' });
       }
       tenders.forEach((tender, index) => {
-        if (tender.method === 'cash' && toMils(tender.tendered) < toMils(tender.amount)) {
+        if (
+          tender.method === CASH &&
+          tender.tendered !== undefined &&
+          toMils(tender.tendered) < toMils(tender.amount)
+        ) {
           ctx.addIssue({
             code: 'custom',
             path: [index, 'tendered'],

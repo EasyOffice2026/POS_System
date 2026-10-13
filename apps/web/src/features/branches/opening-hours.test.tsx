@@ -27,7 +27,7 @@ const ranges = (...pairs: [string, string][]) => ({
 });
 
 const withHours = (days: Partial<OpeningHours>) =>
-  branchDetail({ config: { openingHours: week(days), printers: [] } });
+  branchDetail({ config: { openingHours: week(days), printers: [], dayEndsAt: '00:00' } });
 
 function openHours(branch = branchDetail(), extra: Record<string, MockHandler> = {}) {
   const api = mockApi({
@@ -200,6 +200,7 @@ describe('saving the opening hours', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Opening hours saved.');
     expect(bodyOf(api)).toEqual({
       config: {
+        dayEndsAt: '00:00',
         openingHours: week({ sunday: ranges(['09:00', '17:00']), friday: { kind: 'all_day' } }),
       },
     });
@@ -215,7 +216,7 @@ describe('saving the opening hours', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await screen.findByRole('status');
-    expect(bodyOf(api)).toEqual({ config: { openingHours: closedWeek() } });
+    expect(bodyOf(api)).toEqual({ config: { openingHours: closedWeek(), dayEndsAt: '00:00' } });
   });
 
   it('shows the hours the way the server kept them, the ranges in the order of the clock', async () => {

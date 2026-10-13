@@ -381,7 +381,7 @@ describe('creating a branch', () => {
     );
     expect(bodyOf(api, create(pizzaBrand.id))).toEqual({
       name: { en: 'Pizza Palace - Corniche', ar: 'بيتزا بالاس - الكورنيش' },
-      timezone: 'Asia/Riyadh',
+      timezone: 'Asia/Kuwait',
       isActive: true,
     });
     expect(

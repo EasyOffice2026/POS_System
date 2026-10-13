@@ -18,7 +18,8 @@ export function createKitchenRouter({ service }: { service: KitchenService }): R
     res.json({ data: await service.list(requestContext(req), query) });
   });
 
-  router.patch('/tickets/:id', requirePermission('kitchen:write'), async (req, res) => {
+  // Who may move a ticket depends on the brand's settings, so the service decides.
+  router.patch('/tickets/:id', requirePermission('orders:read'), async (req, res) => {
     const { id } = parseWith(ticketParams, req.params);
     const input = parseWith(moveTicketRequestSchema, req.body);
     res.json(await service.move(requestContext(req), id, input));

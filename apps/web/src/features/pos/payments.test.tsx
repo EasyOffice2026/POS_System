@@ -2,7 +2,15 @@ import type { Order } from '@pos/shared';
 import { screen, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fullCashier, ids, page, pizzaBrand, pizzaMall, sessionFor } from '../../test/fixtures';
+import {
+  brandSettings,
+  fullCashier,
+  ids,
+  page,
+  pizzaBrand,
+  pizzaMall,
+  sessionFor,
+} from '../../test/fixtures';
 import { branchMenu } from '../../test/menu-fixtures';
 import { errorResponse, json, type MockHandler, mockApi } from '../../test/mock-api';
 import { order, orderIds, orderLine, orderSummary } from '../../test/order-fixtures';
@@ -54,6 +62,15 @@ function payApi(pay: MockHandler, current: () => Order = () => due72) {
   return mockApi({
     'POST /api/v1/auth/refresh': () => json(sessionFor(fullCashier)),
     'GET /api/v1/menu': () => json(branchMenu()),
+    [`GET /api/v1/brands/${ids.pizza}/settings`]: () =>
+      json(
+        brandSettings({
+          paymentMethods: [
+            { key: 'knet', name: { en: 'KNET', ar: 'كي نت' }, isActive: true },
+            { key: 'link', name: { en: 'Link', ar: 'لينك' }, isActive: true },
+          ],
+        }),
+      ),
     'GET /api/v1/orders': () => json(page([orderSummary(due72)])),
     [GET_FIRST]: () => json(current()),
     [PAY]: pay,
@@ -77,6 +94,7 @@ describe('paying an order', () => {
             {
               id: cashId,
               method: 'cash',
+              methodName: { en: 'Cash', ar: 'نقدًا' },
               amount: '72.000',
               tendered: '100.000',
               change: '28.000',
@@ -123,9 +141,9 @@ describe('paying an order', () => {
     renderApp('/pos');
 
     const dialog = await openPayment(user);
-    await user.click(within(dialog).getByRole('button', { name: 'Card + cash' }));
-    await user.type(within(dialog).getByLabelText('Amount by card'), '50');
-    await user.type(within(dialog).getByLabelText('Card slip number (optional)'), '4821');
+    await user.click(within(dialog).getByRole('button', { name: 'Mixed' }));
+    await user.type(within(dialog).getByLabelText('Amount by KNET'), '50');
+    await user.type(within(dialog).getByLabelText('Reference number (optional)'), '4821');
     await user.click(within(dialog).getByRole('button', { name: 'Exact' }));
     expect(within(dialog).getByTestId('change-due')).toHaveTextContent('0.000');
     await user.click(within(dialog).getByRole('button', { name: 'Confirm payment' }));
@@ -133,7 +151,7 @@ describe('paying an order', () => {
     expect(await screen.findByRole('dialog', { name: 'Receipt' })).toBeVisible();
     expect(api.calls.find((call) => call.key === PAY)?.body).toEqual({
       tenders: [
-        { id: cardId, method: 'card', amount: '50.000', reference: '4821' },
+        { id: cardId, method: 'knet', amount: '50.000', reference: '4821' },
         { id: cashId, method: 'cash', amount: '22.000', tendered: '22.000' },
       ],
     });
@@ -145,13 +163,13 @@ describe('paying an order', () => {
     renderApp('/pos');
 
     const dialog = await openPayment(user);
-    await user.click(within(dialog).getByRole('button', { name: 'Card' }));
+    await user.click(within(dialog).getByRole('button', { name: 'KNET' }));
     expect(within(dialog).queryByTestId('change-due')).not.toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Confirm payment' }));
 
     expect(await screen.findByRole('dialog', { name: 'Receipt' })).toBeVisible();
     expect(api.calls.find((call) => call.key === PAY)?.body).toEqual({
-      tenders: [{ id: cardId, method: 'card', amount: '72.000' }],
+      tenders: [{ id: cardId, method: 'knet', amount: '72.000' }],
     });
   });
 

@@ -3,6 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  brandSettings,
   fullBrandManager,
   fullCashier,
   ids,
@@ -37,6 +38,7 @@ function ticket(overrides: Partial<KitchenTicket> = {}): KitchenTicket {
     orderNumber: 12,
     orderType: 'dine_in',
     orderNote: null,
+    stationId: null,
     status: 'new',
     sentAt: minutesAgo(2.5),
     startedAt: null,
@@ -83,6 +85,7 @@ function kitchenApi(handlers: Record<string, MockHandler> = {}, user = kitchenSt
   return mockApi({
     'POST /api/v1/auth/refresh': () => json(sessionFor(user)),
     [TICKETS]: () => json({ data: [ticket()] }),
+    [`GET /api/v1/brands/${ids.pizza}/settings`]: () => json(brandSettings()),
     ...handlers,
   });
 }

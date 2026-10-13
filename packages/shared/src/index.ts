@@ -13,5 +13,6 @@ export * from './money';
 export * from './orders';
 export * from './pagination';
 export * from './search';
+export * from './settings';
 export * from './users';
 export * from './web-link';

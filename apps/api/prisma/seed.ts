@@ -1,12 +1,17 @@
 // Demo data for local development: two brands, their branches, a menu for each brand and one
 // account per role. Safe to run again: it updates the same rows and clears any sign-in lockout.
-import { branchConfigSchema, type OpeningHours, weekdays } from '@pos/shared';
+import {
+  branchConfigSchema,
+  brandSettingsRequestSchema,
+  type OpeningHours,
+  weekdays,
+} from '@pos/shared';
 import { loadConfig } from '../src/config';
 import { isLocalDatabase } from '../src/lib/database-url';
 import { createPasswordHasher, hashProfiles } from '../src/lib/password';
 import { createPrismaClient } from '../src/lib/prisma';
 import { syncSystemRoles } from '../src/lib/roles';
-import { seedDemoMenus } from './demo-menu';
+import { demoStationIds, seedDemoMenus } from './demo-menu';
 
 if (process.env.NODE_ENV === 'production') {
   throw new Error('The demo seed must not run in production.');
@@ -26,9 +31,49 @@ const branchIds = {
   burgerCorniche: '01990000-0000-7000-8000-000000000022',
 };
 
+// The ways to pay in Kuwait, and what the client asked for (docs/specs/009-settings.md).
+const method = (key: string, en: string, ar: string) => ({ key, name: { en, ar }, isActive: true });
+const kuwaitMethods = [
+  method('knet', 'KNET', 'كي نت'),
+  method('link', 'Link', 'لينك'),
+  method('talabat', 'Talabat', 'طلبات'),
+  method('keeta', 'Keeta', 'كيتا'),
+  method('jahez', 'Jahez', 'جاهز'),
+];
+
 const brands = [
-  { id: brandIds.pizza, name: { en: 'Pizza Palace', ar: 'بيتزا بالاس' } },
-  { id: brandIds.burger, name: { en: 'Burger Hub', ar: 'برجر هب' } },
+  {
+    id: brandIds.pizza,
+    name: { en: 'Pizza Palace', ar: 'بيتزا بالاس' },
+    // Two kitchen screens, a cashier who may give up to 10% alone, and the kitchen marks done.
+    settings: brandSettingsRequestSchema.parse({
+      paymentMethods: kuwaitMethods,
+      discountPresets: ['5', '10', '15', '20', '25', '50'],
+      cashierDiscountLimit: '10',
+      voidNeedsManager: 'after_send',
+      ticketDoneBy: 'kitchen',
+      kitchenStations: [
+        { id: demoStationIds.pizzaOven, name: { en: 'Pizza oven', ar: 'فرن البيتزا' } },
+        {
+          id: demoStationIds.pizzaDrinks,
+          name: { en: 'Drinks and desserts', ar: 'المشروبات والحلويات' },
+        },
+      ],
+    }),
+  },
+  {
+    id: brandIds.burger,
+    name: { en: 'Burger Hub', ar: 'برجر هب' },
+    // One kitchen screen, every discount through a manager, the cashier marks orders done.
+    settings: brandSettingsRequestSchema.parse({
+      paymentMethods: kuwaitMethods.slice(0, 2),
+      discountPresets: ['10', '20'],
+      cashierDiscountLimit: '0',
+      voidNeedsManager: 'never',
+      ticketDoneBy: 'cashier',
+      kitchenStations: [],
+    }),
+  },
 ];
 
 // Opening hours and printers for the demo branches. They are checked against the same rules the
@@ -58,7 +103,7 @@ const branches = [
     id: branchIds.pizzaMall,
     brandId: brandIds.pizza,
     name: { en: 'Pizza Palace - Mall Branch', ar: 'بيتزا بالاس - فرع المول' },
-    address: 'Level 1, City Mall, Riyadh',
+    address: 'Level 1, The Avenues, Al Rai',
     // Friday opens in the afternoon and closes after midnight.
     config: branchConfigSchema.parse({
       openingHours: everyDay(ranges(['10:00', '23:00']), { friday: ranges(['14:00', '01:00']) }),
@@ -72,12 +117,13 @@ const branches = [
     id: branchIds.pizzaDowntown,
     brandId: brandIds.pizza,
     name: { en: 'Pizza Palace - Downtown Branch', ar: 'بيتزا بالاس - فرع وسط المدينة' },
-    address: 'King Fahd Road, Riyadh',
-    // Lunch and dinner, with a break between.
+    address: 'Salem Al Mubarak Street, Salmiya',
+    // Lunch and dinner, with a break between. Its business day ends at four in the morning.
     config: branchConfigSchema.parse({
       openingHours: everyDay(ranges(['11:00', '15:00'], ['18:00', '23:30']), {
         friday: ranges(['18:00', '23:30']),
       }),
+      dayEndsAt: '04:00',
       printers: [
         printer(3, 'Cash desk', 'receipt', '192.168.20.50'),
         printer(4, 'Drive-through desk', 'receipt', '192.168.20.52'),
@@ -89,7 +135,7 @@ const branches = [
     id: branchIds.burgerAirport,
     brandId: brandIds.burger,
     name: { en: 'Burger Hub - Airport Branch', ar: 'برجر هب - فرع المطار' },
-    address: 'Terminal 2, King Khalid Airport, Riyadh',
+    address: 'Terminal 1, Kuwait International Airport',
     // An airport branch never closes.
     config: branchConfigSchema.parse({
       openingHours: everyDay({ kind: 'all_day' }),
@@ -104,7 +150,7 @@ const branches = [
     id: branchIds.burgerCorniche,
     brandId: brandIds.burger,
     name: { en: 'Burger Hub - Corniche Branch', ar: 'برجر هب - فرع الكورنيش' },
-    address: 'Corniche Road, Jeddah',
+    address: 'Gulf Road, Kuwait City',
     // Open until two in the morning.
     config: branchConfigSchema.parse({
       openingHours: everyDay(ranges(['12:00', '02:00'])),
@@ -229,7 +275,7 @@ try {
   for (const brand of brands) {
     await prisma.brand.upsert({
       where: { id: brand.id },
-      update: { name: brand.name, isActive: true },
+      update: { name: brand.name, settings: brand.settings, isActive: true },
       create: brand,
     });
   }

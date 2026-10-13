@@ -72,6 +72,7 @@ export function toMenuCategory(row: CategoryRow): MenuCategory {
     name: localizedTextSchema.parse(row.name),
     sortOrder: row.sortOrder,
     isActive: row.isActive,
+    stationId: row.stationId,
   };
 }
 

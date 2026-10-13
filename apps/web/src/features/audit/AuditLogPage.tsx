@@ -39,6 +39,7 @@ const actionKeys = {
   'order.line_voided': 'audit.actions.order_line_voided',
   'order.discount_set': 'audit.actions.order_discount_set',
   'order.discount_removed': 'audit.actions.order_discount_removed',
+  'brand.settings_updated': 'audit.actions.brand_settings_updated',
 } as const satisfies Record<AuditAction, string>;
 
 type ActionKey = (typeof actionKeys)[AuditAction];

@@ -48,9 +48,17 @@ interface DemoOverride {
   schedule?: OpeningHours;
 }
 
+// The kitchen stations of Pizza Palace, named in its settings by the seed (spec 009, rule 6).
+export const demoStationIds = {
+  pizzaOven: '01990000-0000-7000-8000-000000008001',
+  pizzaDrinks: '01990000-0000-7000-8000-000000008002',
+};
+
 interface DemoMenu {
   brandId: string;
   categories: Record<string, Text>;
+  // The station each category goes to, when the brand has stations.
+  stations?: Record<string, string>;
   groups: Record<string, DemoGroup>;
   items: Record<string, DemoItem>;
   combos: DemoCombo[];
@@ -98,6 +106,12 @@ function demoMenus(
       sides: { en: 'Sides', ar: 'المقبلات' },
       drinks: { en: 'Drinks', ar: 'المشروبات' },
       desserts: { en: 'Desserts', ar: 'الحلويات' },
+    },
+    stations: {
+      pizzas: demoStationIds.pizzaOven,
+      sides: demoStationIds.pizzaOven,
+      drinks: demoStationIds.pizzaDrinks,
+      desserts: demoStationIds.pizzaDrinks,
     },
     groups: {
       pizzaSize: {
@@ -393,7 +407,12 @@ export async function seedDemoMenus(
     for (const [index, [key, text]] of Object.entries(menu.categories).entries()) {
       const categoryId = id(4, next('category'));
       categoryIds.set(key, categoryId);
-      const data = { name: names(text), sortOrder: index, isActive: true };
+      const data = {
+        name: names(text),
+        sortOrder: index,
+        isActive: true,
+        stationId: menu.stations?.[key] ?? null,
+      };
       await prisma.menuCategory.upsert({
         where: { id: categoryId },
         update: data,

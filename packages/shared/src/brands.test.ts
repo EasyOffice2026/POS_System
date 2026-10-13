@@ -133,10 +133,10 @@ describe('updateBrandRequestSchema', () => {
 });
 
 describe('createBranchRequestSchema', () => {
-  it('accepts only the names, and defaults to the Riyadh time zone and active', () => {
+  it('accepts only the names, and defaults to the Kuwait time zone and active', () => {
     expect(createBranchRequestSchema.parse({ name })).toEqual({
       name,
-      timezone: 'Asia/Riyadh',
+      timezone: 'Asia/Kuwait',
       isActive: true,
     });
   });
@@ -235,7 +235,7 @@ describe('what the API answers', () => {
       address: null,
       timezone: 'Asia/Riyadh',
       isActive: true,
-      config: { openingHours: closedWeek(), printers: [] },
+      config: { openingHours: closedWeek(), printers: [], dayEndsAt: '00:00' },
     };
 
     expect(branchDetailSchema.parse(branch).config.printers).toEqual([]);

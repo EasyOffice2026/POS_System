@@ -32,7 +32,8 @@
     "branches": "Branches",
     "menu": "Menu",
     "pos": "POS terminal",
-    "kds": "Kitchen screen"
+    "kds": "Kitchen screen",
+    "settings": "Settings"
   },
   "language": {
     "switchTo": "Switch language",
@@ -96,7 +97,8 @@
     "orders_write": "Take orders",
     "orders_void": "Void orders",
     "orders_discount": "Give discounts",
-    "kitchen_write": "Work the kitchen screen"
+    "kitchen_write": "Work the kitchen screen",
+    "settings_write": "Change the settings"
   },
   "users": {
     "title": "Users",
@@ -229,7 +231,18 @@
     "TOO_MANY_OPTIONS": "A choice can have at most 30 items.",
     "OPTION_DUPLICATE": "This item is already in this choice.",
     "CATEGORY_REQUIRED": "Choose a category.",
-    "ITEM_REQUIRED": "Choose an item."
+    "ITEM_REQUIRED": "Choose an item.",
+    "STATION_NOT_FOUND": "Choose a kitchen station of this brand.",
+    "PAYMENT_METHOD_INVALID": "This way to pay is not available.",
+    "PAYMENT_METHOD_KEY_INVALID": "A key has only small letters, digits and underscores, and is not \"cash\".",
+    "PAYMENT_METHOD_KEY_TAKEN": "Two ways to pay have the same key.",
+    "PAYMENT_METHODS_TOO_MANY": "At most 20 ways to pay.",
+    "DISCOUNT_PRESET_INVALID": "Each button is a percentage above 0, listed once.",
+    "DISCOUNT_PRESETS_TOO_MANY": "At most 10 buttons.",
+    "PERCENT_INVALID": "Type a percentage from 0 to 100.",
+    "VOID_RULE_INVALID": "Choose one of the options.",
+    "TICKET_DONE_BY_INVALID": "Choose one of the options.",
+    "KITCHEN_STATIONS_TOO_MANY": "At most 10 stations."
   },
   "rolesPage": {
     "title": "Roles",
@@ -286,7 +299,8 @@
       "order_voided": "Order voided",
       "order_line_voided": "Order line voided",
       "order_discount_set": "Discount given",
-      "order_discount_removed": "Discount removed"
+      "order_discount_removed": "Discount removed",
+      "brand_settings_updated": "Settings changed"
     }
   },
   "notFound": {
@@ -387,7 +401,9 @@
     "addRange": "Add hours",
     "removeRange": "Remove range {{n}} of {{day}}",
     "copyToAll": "Copy to all days",
-    "saved": "Opening hours saved."
+    "saved": "Opening hours saved.",
+    "dayEndsAt": "The business day ends at",
+    "dayEndsAtHint": "Orders before this hour count for the day before, and the order numbers start again after it. 00:00 is midnight."
   },
   "printers": {
     "intro": "Network printers at this branch. A branch can have several printers of each kind.",
@@ -409,7 +425,7 @@
   },
   "menu": {
     "title": "Menu",
-    "currency": "SAR",
+    "currency": "KWD",
     "brand": "Brand",
     "noBrand": "There is no brand to build a menu for yet.",
     "readOnly": "You can see the menu but you cannot change it.",
@@ -440,7 +456,9 @@
         "deactivated": "Category deactivated. Its items are not on the terminals any more.",
         "activated": "The category is active again.",
         "reordered": "The new order is saved."
-      }
+      },
+      "station": "Kitchen station",
+      "firstStation": "First station"
     },
     "items": {
       "search": "Search",
@@ -638,7 +656,9 @@
       "intro": "Choose the branch this terminal belongs to. You are then signed out, and the staff of the branch sign in here with their staff code and PIN.",
       "branch": "Branch",
       "noBranches": "You cannot see any branch.",
-      "save": "Use this branch"
+      "save": "Use this branch",
+      "station": "Kitchen station",
+      "allStations": "All stations"
     },
     "notSetUp": {
       "title": "This terminal is not set up",
@@ -706,7 +726,8 @@
         "preparing": "Preparing",
         "ready": "Ready",
         "done": "Done"
-      }
+      },
+      "markDone": "Mark done"
     },
     "openOrders": {
       "button": "Open orders",
@@ -780,7 +801,8 @@
       "PAYMENT_AMOUNT_INVALID": "An amount is not valid.",
       "PAYMENT_TENDERS_INVALID": "Choose how the order is paid.",
       "PAYMENT_ID_TAKEN": "This payment was already used. Open the payment again.",
-      "ORDER_EMPTY": "This order has nothing to pay for."
+      "ORDER_EMPTY": "This order has nothing to pay for.",
+      "PAYMENT_METHOD_INVALID": "This way to pay is switched off. The settings were loaded again."
     },
     "pay": {
       "title": "Pay order {{number}}",
@@ -788,7 +810,8 @@
       "modes": {
         "cash": "Cash",
         "card": "Card",
-        "split": "Card + cash"
+        "split": "Card + cash",
+        "mixed": "Mixed"
       },
       "methods": {
         "cash": "Cash",
@@ -800,10 +823,13 @@
       "change": "Change",
       "cardHint": "Take the payment on the card machine, then confirm here.",
       "cardAmount": "Amount by card",
-      "reference": "Card slip number (optional)",
+      "reference": "Reference number (optional)",
       "nothingDue": "Nothing to pay. Confirm to close the order.",
       "confirm": "Confirm payment",
-      "close": "Close the order"
+      "close": "Close the order",
+      "mixedMethod": "Paid by",
+      "methodAmount": "Amount by {{method}}",
+      "otherHint": "Take the payment by {{method}}, then confirm here."
     },
     "receipt": {
       "title": "Receipt",
@@ -840,6 +866,46 @@
       "changed": "This ticket was moved on another screen. The tickets were loaded again.",
       "network": "Cannot reach the server. Check the connection.",
       "unknown": "Something went wrong. Try again."
+    },
+    "station": "Station",
+    "allStations": "All stations"
+  },
+  "settings": {
+    "title": "Settings",
+    "intro": "How the terminals of this brand work. A change reaches every terminal within a few minutes.",
+    "brand": "Brand",
+    "remove": "Remove",
+    "saved": "The settings were saved.",
+    "payment": {
+      "title": "Ways to pay",
+      "intro": "Cash is always there and is the only way that gives change. Add the others: KNET, Link, Talabat, Keeta, Jahez and so on.",
+      "key": "Key",
+      "keyHint": "Small letters, digits and underscores, for example knet. It cannot change later.",
+      "active": "In use",
+      "add": "Add a way to pay"
+    },
+    "discounts": {
+      "title": "Discounts",
+      "presets": "Discount buttons",
+      "presetsHint": "Percentages shown as buttons on the POS, separated by commas: 5, 10, 15.",
+      "limit": "A cashier may give up to (%)",
+      "limitHint": "A percentage discount up to this needs no manager. 0 means every discount needs a manager."
+    },
+    "voids": {
+      "title": "Voids",
+      "rule": "A void needs a manager's staff code and PIN",
+      "never": "Never: the cashier voids with a reason, and it is recorded",
+      "afterSend": "Once the dish or the order was sent to the kitchen",
+      "always": "Always"
+    },
+    "kitchen": {
+      "title": "Kitchen",
+      "doneBy": "Who marks an order done",
+      "doneByKitchen": "The kitchen, on the kitchen screen",
+      "doneByCashier": "The cashier, on the POS, when the food is handed over",
+      "stations": "Kitchen stations",
+      "stationsHint": "One kitchen screen per station, for example Pizza and Drinks. Each menu category goes to a station. Leave empty for one screen.",
+      "addStation": "Add a station"
     }
   }
 }

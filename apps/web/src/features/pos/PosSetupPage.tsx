@@ -2,11 +2,12 @@ import type { Branch } from '@pos/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
-import { primaryButtonClass, secondaryButtonClass } from '../../components/form';
+import { fieldClass, primaryButtonClass, secondaryButtonClass } from '../../components/form';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { localize } from '../../i18n/localize';
 import { useDirectory } from '../admin/use-directory';
 import { useAuth } from '../auth/auth-context';
+import { useBrandSettings } from '../settings/settings-api';
 import { readTerminal, saveTerminal } from './terminal-store';
 
 // A manager picks the branch of this terminal once. Then they are signed out, and the staff of
@@ -21,6 +22,8 @@ export function PosSetupPage() {
   const { brands, branches, isLoading, isError } = useDirectory();
   const [chosen, setChosen] = useState<string | null>(() => readTerminal()?.branchId ?? null);
   const [saving, setSaving] = useState(false);
+  // A kitchen screen may be for one station of the brand ('' means all of them; spec 009, rule 6).
+  const [stationId, setStationId] = useState<string>(() => readTerminal()?.stationId ?? '');
 
   const brandName = (brandId: string) => brands.find((brand) => brand.id === brandId)?.name;
   const label = (branch: Branch) => {
@@ -30,6 +33,9 @@ export function PosSetupPage() {
   };
   const sorted = [...branches].sort((a, b) => label(a).localeCompare(label(b), i18n.language));
   const branch = branches.find((candidate) => candidate.id === chosen);
+  const settings = useBrandSettings(next === '/kds' ? (branch?.brandId ?? null) : null);
+  const stations = settings.data?.kitchenStations ?? [];
+  const station = stations.find((candidate) => candidate.id === stationId);
 
   async function save() {
     if (!branch) return;
@@ -39,6 +45,8 @@ export function PosSetupPage() {
       brandId: branch.brandId,
       branchName: branch.name,
       brandName: brandName(branch.brandId) ?? null,
+      stationId: station?.id ?? null,
+      stationName: station?.name ?? null,
     });
     await logout();
     void navigate(next, { replace: true });
@@ -94,6 +102,24 @@ export function PosSetupPage() {
               ))}
             </div>
           </fieldset>
+        )}
+
+        {stations.length > 0 && (
+          <label className="mt-4 block text-sm font-medium text-slate-700">
+            {t('pos.setup.station')}
+            <select
+              value={station ? stationId : ''}
+              onChange={(event) => setStationId(event.target.value)}
+              className={fieldClass}
+            >
+              <option value="">{t('pos.setup.allStations')}</option>
+              {stations.map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>
+                  {localize(candidate.name, i18n.language)}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
 
         <div className="mt-5 flex flex-wrap justify-end gap-2">

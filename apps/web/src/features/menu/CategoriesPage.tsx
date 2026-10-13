@@ -9,7 +9,12 @@ import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActiveBadge } from '../../components/ActiveBadge';
 import { BilingualNameFields } from '../../components/BilingualNameFields';
-import { primaryButtonClass, secondaryButtonClass } from '../../components/form';
+import {
+  fieldClass,
+  FormField,
+  primaryButtonClass,
+  secondaryButtonClass,
+} from '../../components/form';
 import { localize } from '../../i18n/localize';
 import { fieldsFromIssues, messageFor, problemsFrom } from '../../lib/error-messages';
 import {
@@ -20,6 +25,7 @@ import {
   updateCategory,
 } from './menu-api';
 import { useMenuContext } from './menu-context';
+import { useBrandSettings } from '../settings/settings-api';
 
 type Notice =
   | { kind: 'status'; key: 'created' | 'saved' | 'deactivated' | 'activated' | 'reordered' }
@@ -109,13 +115,16 @@ function CategoryEditor({
   category: MenuCategory;
   onDone: (saved: boolean) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const { brandId } = useMenuContext();
 
   const [name, setName] = useState({ en: category.name.en, ar: category.name.ar });
+  const [stationId, setStationId] = useState(category.stationId);
   const [problems, setProblems] = useState<Record<string, string>>({});
   const [formProblem, setFormProblem] = useState<string | null>(null);
+  // The kitchen stations of the brand, when it has any (spec 009, rule 6).
+  const stations = useBrandSettings(brandId).data?.kitchenStations ?? [];
 
   const save = useMutation({
     mutationFn: (changes: UpdateCategoryRequest) => updateCategory(category.id, changes),
@@ -134,11 +143,15 @@ function CategoryEditor({
     event.preventDefault();
     setFormProblem(null);
 
-    if (name.en.trim() === category.name.en && name.ar.trim() === category.name.ar) {
+    const changes: UpdateCategoryRequest = {};
+    if (name.en.trim() !== category.name.en || name.ar.trim() !== category.name.ar) {
+      changes.name = name;
+    }
+    if (stationId !== category.stationId) changes.stationId = stationId;
+    if (Object.keys(changes).length === 0) {
       onDone(false);
       return;
     }
-    const changes = { name };
     const result = updateCategoryRequestSchema.safeParse(changes);
     const found = result.success ? {} : fieldsFromIssues(result.error.issues);
     setProblems(found);
@@ -157,6 +170,27 @@ function CategoryEditor({
         onChange={setName}
         errors={{ en: error('name.en'), ar: error('name.ar') }}
       />
+      {stations.length > 0 && (
+        <FormField
+          id={`category-${category.id}-station`}
+          label={t('menu.categories.station')}
+          error={error('stationId')}
+        >
+          <select
+            id={`category-${category.id}-station`}
+            value={stationId ?? ''}
+            onChange={(event) => setStationId(event.target.value || null)}
+            className={fieldClass}
+          >
+            <option value="">{t('menu.categories.firstStation')}</option>
+            {stations.map((station) => (
+              <option key={station.id} value={station.id}>
+                {localize(station.name, i18n.language)}
+              </option>
+            ))}
+          </select>
+        </FormField>
+      )}
       {formProblem && (
         <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
           {messageFor(formProblem, t)}

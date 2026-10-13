@@ -33,6 +33,7 @@ export const auditActions = [
   'order.line_voided',
   'order.discount_set',
   'order.discount_removed',
+  'brand.settings_updated',
 ] as const;
 
 export type AuditAction = (typeof auditActions)[number];

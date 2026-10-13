@@ -7,6 +7,8 @@ import { localize } from '../../i18n/localize';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
 import { useNow } from '../menu/use-now';
+import { SETTINGS_REFRESH_MS } from '../pos/OrderScreen';
+import { useBrandSettings } from '../settings/settings-api';
 import type { Terminal } from '../pos/terminal-store';
 import { kitchenKeys, listTickets, moveTicket } from './kitchen-api';
 import { TicketCard } from './TicketCard';
@@ -26,11 +28,15 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<Problem | null>(null);
   const canMove = user?.permissions.includes('kitchen:write') ?? false;
-  const key = kitchenKeys.tickets(terminal.branchId);
+  const stationId = terminal.stationId ?? null;
+  const key = kitchenKeys.tickets(terminal.branchId, stationId);
+  // Who marks a ticket done (spec 009, rule 7).
+  const settings = useBrandSettings(terminal.brandId, SETTINGS_REFRESH_MS);
+  const doneByCashier = settings.data?.ticketDoneBy === 'cashier';
 
   const tickets = useQuery({
     queryKey: key,
-    queryFn: () => listTickets(terminal.branchId),
+    queryFn: () => listTickets(terminal.branchId, stationId),
     refetchInterval: KITCHEN_REFRESH_MS,
   });
 
@@ -65,7 +71,15 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
       <header className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 px-4 py-2 text-white">
         <div className="min-w-0">
           <p className="text-xs text-slate-300">{t('kds.title')}</p>
-          <p className="font-semibold">{localize(terminal.branchName, i18n.language)}</p>
+          <p className="font-semibold">
+            {localize(terminal.branchName, i18n.language)}
+            {terminal.stationName && (
+              <span className="font-normal text-slate-300">
+                {' · '}
+                {localize(terminal.stationName, i18n.language)}
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-sm text-slate-200">{t('kds.waiting', { count: open.length })}</span>
@@ -113,6 +127,7 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
               now={now}
               busy={busy === ticket.id}
               onMove={canMove ? (chosen) => void move(chosen) : null}
+              doneByCashier={doneByCashier}
             />
           ))}
         </section>
@@ -132,6 +147,7 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
                   now={now}
                   busy={busy === ticket.id}
                   onMove={canMove ? (chosen) => void move(chosen) : null}
+                  doneByCashier={doneByCashier}
                 />
               </div>
             ))}

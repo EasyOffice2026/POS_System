@@ -3,6 +3,7 @@ import {
   type CreateCategoryRequest,
   MAX_CATEGORIES,
   type MenuCategory,
+  parseBrandSettings,
   type ReorderCategoriesRequest,
   type UpdateCategoryRequest,
 } from '@pos/shared';
@@ -27,6 +28,21 @@ export function createCategoriesService({ audit, cache }: MenuDeps) {
     const category = await db.menuCategory.findUnique({ where: { id } });
     if (!category) throw errors.notFound('Menu category');
     return category;
+  }
+
+  // A kitchen station must be one of the brand's settings (docs/specs/009-settings.md, rule 6).
+  async function stationOf(
+    { db }: ActorContext,
+    brandId: string,
+    stationId: string | null,
+  ): Promise<string | null> {
+    if (stationId === null) return null;
+    const brand = await db.brand.findUnique({ where: { id: brandId } });
+    const stations = parseBrandSettings(brand?.settings).kitchenStations;
+    if (!stations.some((station) => station.id === stationId)) {
+      throw invalid('stationId', 'STATION_NOT_FOUND');
+    }
+    return stationId;
   }
 
   return {
@@ -69,6 +85,7 @@ export function createCategoriesService({ audit, cache }: MenuDeps) {
           brandId,
           name: input.name,
           isActive: input.isActive,
+          stationId: await stationOf(ctx, brandId, input.stationId),
           sortOrder: (existing._max.sortOrder ?? -1) + 1,
         },
       });
@@ -107,6 +124,10 @@ export function createCategoriesService({ audit, cache }: MenuDeps) {
       if (input.isActive !== undefined && input.isActive !== target.isActive) {
         data.isActive = input.isActive;
         changed.push('isActive');
+      }
+      if (input.stationId !== undefined && input.stationId !== target.stationId) {
+        data.stationId = await stationOf(ctx, target.brandId, input.stationId);
+        changed.push('stationId');
       }
       if (changed.length === 0) return toMenuCategory(target);
 

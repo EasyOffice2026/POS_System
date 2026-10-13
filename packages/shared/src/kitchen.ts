@@ -51,6 +51,8 @@ export const kitchenTicketSchema = z.object({
   orderNumber: z.number().int(),
   orderType: orderTypeSchema,
   orderNote: z.string().nullable(),
+  // The kitchen station it is for, or null when the brand has none (docs/specs/009-settings.md).
+  stationId: z.uuid().nullable(),
   status: ticketStatusSchema,
   sentAt: z.iso.datetime(),
   startedAt: z.iso.datetime().nullable(),
@@ -64,6 +66,8 @@ export const kitchenTicketListSchema = z.object({ data: z.array(kitchenTicketSch
 
 export const kitchenTicketQuerySchema = z.object({
   branchId: z.uuid({ error: 'BRANCH_REQUIRED' }),
+  // One station's tickets only. Left out, every ticket of the branch.
+  stationId: z.uuid().optional(),
 });
 export type KitchenTicketQuery = z.infer<typeof kitchenTicketQuerySchema>;
 

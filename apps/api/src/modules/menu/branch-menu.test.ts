@@ -70,8 +70,8 @@ describe('GET /menu?branchId=', () => {
     expect(menu).toMatchObject({
       branchId: world.mall.id,
       brandId: world.pizza.id,
-      currency: 'SAR',
-      timezone: 'Asia/Riyadh',
+      currency: 'KWD',
+      timezone: 'Asia/Kuwait',
       combos: [],
     });
     expect(itemNames(menu)).toEqual([

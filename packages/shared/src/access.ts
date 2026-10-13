@@ -21,6 +21,7 @@ export const permissions = [
   'orders:void',
   'orders:discount',
   'kitchen:write',
+  'settings:write',
   'audit:read',
 ] as const;
 export const permissionSchema = z.enum(permissions);
@@ -67,6 +68,7 @@ export const systemRoles: readonly RoleDefinition[] = [
       'orders:void',
       'orders:discount',
       'kitchen:write',
+      'settings:write',
       'audit:read',
     ],
   },

@@ -31,7 +31,11 @@ const name = { en: 'Margherita', ar: 'مارجريتا' };
 
 describe('categories', () => {
   it('needs both names, and starts active', () => {
-    expect(createCategoryRequestSchema.parse({ name })).toEqual({ name, isActive: true });
+    expect(createCategoryRequestSchema.parse({ name })).toEqual({
+      name,
+      isActive: true,
+      stationId: null,
+    });
     expect(problems(createCategoryRequestSchema.safeParse({ name: { en: 'Pizzas' } }))).toEqual([
       'name.ar:NAME_REQUIRED',
     ]);
@@ -475,7 +479,7 @@ describe('what the API answers', () => {
     const menu = {
       branchId: id(9),
       brandId: id(2),
-      currency: 'SAR',
+      currency: 'KWD',
       timezone: 'Asia/Riyadh',
       categories: [
         {

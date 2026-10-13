@@ -315,6 +315,7 @@ describe('the main menu', () => {
       'Kitchen screen',
       'Users',
       'Roles',
+      'Settings',
       'Audit log',
     ]);
     expect(menu.getByRole('link', { name: 'Users' })).toHaveAttribute('aria-current', 'page');

@@ -4,7 +4,7 @@ import { z } from 'zod';
 // check against these schemas, so both agree on the shape. A problem is a code (for example
 // HOURS_OVERLAP) that the web app turns into a sentence in the current language.
 
-export const DEFAULT_TIMEZONE = 'Asia/Riyadh';
+export const DEFAULT_TIMEZONE = 'Asia/Kuwait';
 
 // IANA names are spelled like Area/Location, or are one word such as UTC. Intl also accepts
 // offsets such as +03:00 and other spellings, which are not names, so the shape is checked first.
@@ -277,9 +277,16 @@ export const printerInputListSchema = z
 // ---------------------------------------------------------------------------------------------
 // The configuration as a whole
 
+// The hour the business day of a branch ends, on its own clock. Orders before it count for the
+// day before: with "04:00", an order at 01:30 on Tuesday belongs to Monday
+// (docs/specs/009-settings.md, rule 4). "00:00" is midnight.
+export const DEFAULT_DAY_END = '00:00';
+export const dayEndSchema = timeField;
+
 export const branchConfigSchema = z.object({
   openingHours: openingHoursSchema,
   printers: printerListSchema,
+  dayEndsAt: dayEndSchema.default(DEFAULT_DAY_END),
 });
 
 export type BranchConfig = z.infer<typeof branchConfigSchema>;
@@ -288,7 +295,30 @@ export type BranchConfig = z.infer<typeof branchConfigSchema>;
 export const branchConfigChangeSchema = z.strictObject({
   openingHours: openingHoursSchema.optional(),
   printers: printerInputListSchema.optional(),
+  dayEndsAt: dayEndSchema.optional(),
 });
+
+// The day on the clock of a time zone, as YYYY-MM-DD, with the day ending at the hour given.
+export function businessDateOn(at: Date, timeZone: string, dayEndsAt = DEFAULT_DAY_END): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(at);
+  const part = (type: string) => Number(parts.find((item) => item.type === type)?.value ?? 0);
+
+  const minuteOfDay = (part('hour') % 24) * 60 + part('minute');
+  const dayEnd = toMinutes(dayEndsAt) ?? 0;
+  // Before the end of the day: still the day before, counted in UTC to step over month ends.
+  const shift = minuteOfDay < dayEnd ? -1 : 0;
+  return new Date(Date.UTC(part('year'), part('month') - 1, part('day') + shift))
+    .toISOString()
+    .slice(0, 10);
+}
 
 export type BranchConfigChange = z.input<typeof branchConfigChangeSchema>;
 
@@ -303,9 +333,11 @@ export function parseBranchConfig(stored: unknown): BranchConfig {
   const source = isRecord(stored) ? stored : {};
   const hours = openingHoursSchema.safeParse(source.openingHours);
   const printers = printerListSchema.safeParse(source.printers);
+  const dayEnd = dayEndSchema.safeParse(source.dayEndsAt);
 
   return {
     openingHours: hours.success ? hours.data : closedWeek(),
     printers: printers.success ? printers.data : [],
+    dayEndsAt: dayEnd.success ? dayEnd.data : DEFAULT_DAY_END,
   };
 }

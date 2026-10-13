@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  brandSettings,
   fullBrandManager,
   fullCashier,
   groupAdmin,
@@ -23,6 +24,7 @@ const REFRESH = 'POST /api/v1/auth/refresh';
 const LOGIN = 'POST /api/v1/auth/login';
 const LOGOUT = 'POST /api/v1/auth/logout';
 const MENU = 'GET /api/v1/menu';
+const SETTINGS = `GET /api/v1/brands/${ids.pizza}/settings`;
 const CREATE = 'POST /api/v1/orders';
 const OPEN = 'GET /api/v1/orders';
 const LINES = `POST /api/v1/orders/${orderIds.first}/lines`;
@@ -47,6 +49,7 @@ function terminalApi(handlers: Record<string, MockHandler> = {}) {
   return mockApi({
     [REFRESH]: () => json(sessionFor(fullCashier)),
     [MENU]: () => json(branchMenu()),
+    [SETTINGS]: () => json(brandSettings()),
     ...handlers,
   });
 }
@@ -97,7 +100,7 @@ describe('a terminal that is not set up', () => {
     ).toBeVisible();
     expect(screen.getByLabelText('Staff code')).toBeInTheDocument();
     expect(api.count(LOGOUT)).toBe(1);
-    expect(readTerminal()).toEqual(mall);
+    expect(readTerminal()).toEqual({ ...mall, stationId: null, stationName: null });
   });
 });
 

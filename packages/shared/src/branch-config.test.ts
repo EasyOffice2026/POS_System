@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   branchConfigChangeSchema,
+  businessDateOn,
   closedWeek,
   DEFAULT_PRINTER_PORT,
   isOpenAt,
@@ -361,7 +362,7 @@ describe('printers', () => {
 
 describe('parseBranchConfig', () => {
   it('gives a branch that was never set up closed days and no printers', () => {
-    const expected = { openingHours: closedWeek(), printers: [] };
+    const expected = { openingHours: closedWeek(), printers: [], dayEndsAt: '00:00' };
 
     expect(parseBranchConfig({})).toEqual(expected);
     expect(parseBranchConfig(null)).toEqual(expected);
@@ -383,7 +384,7 @@ describe('parseBranchConfig', () => {
       ],
     };
 
-    expect(parseBranchConfig(stored)).toEqual(stored);
+    expect(parseBranchConfig(stored)).toEqual({ ...stored, dayEndsAt: '00:00' });
   });
 
   it('falls back to the default for a part that cannot be read, and keeps the other part', () => {
@@ -400,6 +401,7 @@ describe('parseBranchConfig', () => {
     expect(parseBranchConfig({ openingHours: { monday: 'open' }, printers })).toEqual({
       openingHours: closedWeek(),
       printers,
+      dayEndsAt: '00:00',
     });
   });
 
@@ -407,6 +409,7 @@ describe('parseBranchConfig', () => {
     expect(parseBranchConfig({ receiptFooter: 'Thank you' })).toEqual({
       openingHours: closedWeek(),
       printers: [],
+      dayEndsAt: '00:00',
     });
   });
 });
@@ -517,5 +520,29 @@ describe('isOpenAtInstant', () => {
   it('is still open just after midnight, and closed at one', () => {
     expect(isOpenAtInstant(hours, new Date('2026-10-09T21:30:00Z'), 'Asia/Riyadh')).toBe(true);
     expect(isOpenAtInstant(hours, new Date('2026-10-09T22:00:00Z'), 'Asia/Riyadh')).toBe(false);
+  });
+});
+
+describe('businessDateOn', () => {
+  it('is the day on the clock of the branch, which may be the day before in UTC', () => {
+    // 01:30 on Tuesday 13 October in Kuwait is still Monday in UTC.
+    expect(businessDateOn(new Date('2026-10-12T22:30:00Z'), 'Asia/Kuwait')).toBe('2026-10-13');
+    expect(businessDateOn(new Date('2026-10-12T22:30:00Z'), 'UTC')).toBe('2026-10-12');
+  });
+
+  it('counts an order before the end of the day for the day before', () => {
+    const at = new Date('2026-10-12T22:30:00Z'); // 01:30 on Tuesday in Kuwait
+    expect(businessDateOn(at, 'Asia/Kuwait', '04:00')).toBe('2026-10-12');
+    expect(businessDateOn(at, 'Asia/Kuwait', '01:30')).toBe('2026-10-13');
+    // The first of the month steps back into the month before.
+    expect(businessDateOn(new Date('2026-10-31T23:00:00Z'), 'Asia/Kuwait', '04:00')).toBe(
+      '2026-10-31',
+    );
+  });
+
+  it('reads the end of the day from a stored configuration, or takes midnight', () => {
+    expect(parseBranchConfig({ dayEndsAt: '04:00' }).dayEndsAt).toBe('04:00');
+    expect(parseBranchConfig({ dayEndsAt: '4am' }).dayEndsAt).toBe('00:00');
+    expect(parseBranchConfig(null).dayEndsAt).toBe('00:00');
   });
 });
