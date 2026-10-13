@@ -138,6 +138,8 @@ describe('payments and the shift', () => {
       sales: '25.000',
       discounts: '0.000',
       byMethod: [{ method: 'cash', methodName: { en: 'Cash', ar: 'نقدًا' }, amount: '25.000' }],
+      refunds: '0.000',
+      refundsByMethod: [],
       cashExpected: '75.000',
     });
   });

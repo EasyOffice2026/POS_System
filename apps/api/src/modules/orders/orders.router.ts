@@ -3,6 +3,7 @@ import {
   createOrderRequestSchema,
   orderListQuerySchema,
   payOrderRequestSchema,
+  refundRequestSchema,
   removeDiscountRequestSchema,
   setDiscountRequestSchema,
   updateOrderLineRequestSchema,
@@ -93,6 +94,12 @@ export function createOrdersRouter({ service }: { service: OrdersService }): Rou
     const { id } = parseWith(orderParams, req.params);
     const input = parseWith(removeDiscountRequestSchema, req.body ?? {});
     res.json(await service.removeDiscount(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  router.post('/:id/refunds', write, async (req, res) => {
+    const { id } = parseWith(orderParams, req.params);
+    const input = parseWith(refundRequestSchema, req.body);
+    res.json(await service.refund(requestContext(req), id, input, requestMeta(req)));
   });
 
   router.post('/:id/pay', write, async (req, res) => {

@@ -284,6 +284,8 @@ export function shiftSummary(overrides: Partial<ShiftSummary> = {}): ShiftSummar
       sales: '0.000',
       discounts: '0.000',
       byMethod: [],
+      refunds: '0.000',
+      refundsByMethod: [],
       cashExpected: '50.000',
     },
     ...overrides,

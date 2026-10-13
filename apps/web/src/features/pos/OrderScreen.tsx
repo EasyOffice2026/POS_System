@@ -15,6 +15,7 @@ import { OpenOrdersDialog } from './OpenOrdersDialog';
 import { OrderPanel } from './OrderPanel';
 import { PaymentDialog } from './PaymentDialog';
 import { Receipt, ReceiptDialog } from './Receipt';
+import { RefundDialog } from './RefundDialog';
 import { useBrandSettings } from '../settings/settings-api';
 
 // How often a terminal asks for the brand's settings again (spec 009, rule 8).
@@ -50,6 +51,7 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
   const [choosing, setChoosing] = useState<Choosing | null>(null);
   const [voiding, setVoiding] = useState<Voiding | null>(null);
   const [discounting, setDiscounting] = useState(false);
+  const [refunding, setRefunding] = useState(false);
   const [listing, setListing] = useState(false);
   const [paying, setPaying] = useState(false);
   // The paid order whose receipt is shown, and printed.
@@ -78,6 +80,9 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
 
   const noticeText = () => {
     if (!notice) return '';
+    if (notice.code === 'refunded') {
+      return t('pos.notices.refunded', { number: notice.number ?? 0, amount: notice.amount ?? '' });
+    }
     if (notice.code === 'orderVoided') {
       return t('pos.notices.orderVoided', { number: notice.number ?? 0 });
     }
@@ -162,6 +167,7 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             onVoidLine={(line) => setVoiding({ kind: 'line', line })}
             onSend={terminalOrder.send}
             onDiscount={() => setDiscounting(true)}
+            onRefund={() => setRefunding(true)}
             onVoidOrder={() => setVoiding({ kind: 'order' })}
             onNewOrder={terminalOrder.newOrder}
             onPay={() => setPaying(true)}
@@ -195,6 +201,17 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
               setVoiding(null);
               if (voiding.kind === 'line') terminalOrder.voidLine(voiding.line, reason);
               else terminalOrder.voidOrder(reason);
+            }}
+          />
+        )}
+
+        {refunding && order && (
+          <RefundDialog
+            order={order}
+            onCancel={() => setRefunding(false)}
+            onConfirm={(input) => {
+              setRefunding(false);
+              terminalOrder.refund(input);
             }}
           />
         )}

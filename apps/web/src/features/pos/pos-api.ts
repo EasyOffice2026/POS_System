@@ -7,6 +7,7 @@ import {
   orderSummarySchema,
   pageSchema,
   type payOrderRequestSchema,
+  type refundRequestSchema,
 } from '@pos/shared';
 import type { z } from 'zod';
 import { request } from '../../lib/api';
@@ -14,19 +15,22 @@ import { queryString } from '../../lib/query-string';
 
 // A line as the terminal sends it, before the server fills in the defaults.
 export type AddLineInput = z.input<typeof addOrderLineRequestSchema>;
+export type RefundRequestInput = Omit<z.input<typeof refundRequestSchema>, 'approval'>;
 
 export const orderKeys = {
   all: ['orders'] as const,
-  open: (branchId: string) => ['orders', 'open', branchId] as const,
+  open: (branchId: string, status: 'open' | 'paid' = 'open') =>
+    ['orders', status, branchId] as const,
   order: (id: string) => ['orders', id] as const,
 };
 
 const asOrder = { schema: orderSchema };
 const withApproval = (approval: Approval | undefined) => (approval ? { approval } : {});
 
-// The open orders of today at the branch, newest first.
-export const listOpenOrders = (branchId: string) =>
-  request(`/orders${queryString({ branchId, status: 'open', limit: '50' })}`, {
+// The orders of the branch with a status, newest first: the open ones to pick up again, the paid
+// ones to refund (spec 011).
+export const listOrders = (branchId: string, status: 'open' | 'paid') =>
+  request(`/orders${queryString({ branchId, status, limit: '50' })}`, {
     schema: pageSchema(orderSummarySchema),
   });
 
@@ -94,3 +98,11 @@ export type TenderInput = z.input<typeof payOrderRequestSchema>['tenders'][numbe
 
 export const payOrder = (orderId: string, tenders: TenderInput[]) =>
   request(`/orders/${orderId}/pay`, { method: 'POST', body: { tenders }, ...asOrder });
+
+// Money back for a paid order, with a manager's approval when the person has no right to it.
+export const refundOrder = (orderId: string, body: RefundRequestInput, approval?: Approval) =>
+  request(`/orders/${orderId}/refunds`, {
+    method: 'POST',
+    body: { ...body, ...withApproval(approval) },
+    ...asOrder,
+  });

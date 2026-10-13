@@ -39,9 +39,20 @@ function posApi(handlers: Record<string, MockHandler> = {}) {
     'POST /api/v1/auth/refresh': () => json(sessionFor(fullCashier)),
     'GET /api/v1/menu': () => json(branchMenu()),
     [`GET /api/v1/brands/${ids.pizza}/settings`]: () => json(brandSettings()),
+    [`GET /api/v1/shifts/`]: () =>
+      json({
+        ...shiftSummary(),
+        voids: { orders: 0, ordersValue: '0.000', lines: 0, linesValue: '0.000' },
+      }),
     ...handlers,
   });
 }
+
+// The open shift as the close dialog reads it, with the figures of the moment.
+const liveReport = () => ({
+  ...shiftSummary(),
+  voids: { orders: 0, ordersValue: '0.000', lines: 0, linesValue: '0.000' },
+});
 
 const closedReport = () => ({
   ...shiftSummary({
@@ -60,6 +71,8 @@ const closedReport = () => ({
         { method: 'cash', methodName: { en: 'Cash', ar: 'نقدًا' }, amount: '25.000' },
         { method: 'knet', methodName: { en: 'KNET', ar: 'كي نت' }, amount: '15.000' },
       ],
+      refunds: '0.000',
+      refundsByMethod: [],
       cashExpected: '75.000',
     },
   }),
@@ -146,6 +159,12 @@ describe('the Shifts page', () => {
       'POST /api/v1/auth/refresh': () => json(sessionFor(user)),
       'GET /api/v1/brands': () => json(page([pizzaBrand])),
       [`GET /api/v1/brands/${ids.pizza}/branches`]: () => json(page([pizzaMall, pizzaDowntown])),
+      [`GET /api/v1/shifts/`]: () =>
+        json({
+          ...shiftSummary(),
+          voids: { orders: 0, ordersValue: '0.000', lines: 0, linesValue: '0.000' },
+        }),
+      [`GET /api/v1/shifts/${shiftId}`]: () => json(liveReport()),
       'GET /api/v1/shifts': () =>
         json(
           page([shiftSummary(), { ...closedReport(), id: '01990000-0000-7000-8000-00000000e002' }]),

@@ -1,4 +1,4 @@
-import { MAX_LINE_QUANTITY, type Order, type OrderLine, type OrderType } from '@pos/shared';
+import { MAX_LINE_QUANTITY, type Order, type OrderLine, type OrderType, toMils } from '@pos/shared';
 import { useTranslation } from 'react-i18next';
 import { secondaryButtonClass } from '../../components/form';
 import { Price } from '../../components/Price';
@@ -158,6 +158,8 @@ interface OrderPanelProps {
   onPay: () => void;
   canMarkDone: boolean;
   onMarkDone: (line: OrderLine) => void;
+  // Money back for a paid order (spec 011).
+  onRefund: () => void;
 }
 
 // The order on the screen: its type, its lines, the totals, and what can be done with it.
@@ -255,6 +257,14 @@ export function OrderPanel(props: OrderPanelProps) {
             </dd>
           </div>
         )}
+        {order && Number(order.refunded) > 0 && (
+          <div className="flex justify-between text-red-700">
+            <dt>{t('pos.order.refunds')}</dt>
+            <dd>
+              − <Price value={order.refunded} />
+            </dd>
+          </div>
+        )}
         <div className="flex justify-between text-lg font-semibold">
           <dt>{t('pos.order.total')}</dt>
           <dd data-testid="order-total">
@@ -281,14 +291,25 @@ export function OrderPanel(props: OrderPanelProps) {
           {pending > 0 ? t('pos.order.sendCount', { count: pending }) : t('pos.order.send')}
         </button>
         <div className="grid grid-cols-3 gap-2">
-          <button
-            type="button"
-            disabled={busy || !open || live === 0}
-            onClick={props.onDiscount}
-            className={secondaryButtonClass}
-          >
-            {t('pos.order.discountButton')}
-          </button>
+          {order?.status === 'paid' ? (
+            <button
+              type="button"
+              disabled={busy || toMils(order.refunded) >= toMils(order.total)}
+              onClick={props.onRefund}
+              className={secondaryButtonClass}
+            >
+              {t('pos.order.refund')}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={busy || !open || live === 0}
+              onClick={props.onDiscount}
+              className={secondaryButtonClass}
+            >
+              {t('pos.order.discountButton')}
+            </button>
+          )}
           <button
             type="button"
             disabled={busy || !order || !open}

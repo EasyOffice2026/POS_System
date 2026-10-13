@@ -396,6 +396,8 @@ model Order {
   discountById         String?       @map("discount_by_id") @db.Uuid
   discountApprovedById String?       @map("discount_approved_by_id") @db.Uuid
   total                Decimal       @default(0) @db.Decimal(15, 3)
+  // What was given back so far (docs/specs/011-refunds.md).
+  refunded             Decimal       @default(0) @db.Decimal(15, 3)
   // Goes up with every change. Raising it first locks the row, so changes to one order happen one
   // after the other.
   version              Int           @default(0)
@@ -413,6 +415,7 @@ model Order {
   lines    OrderLine[]
   payments Payment[]
   tickets  KitchenTicket[]
+  refunds  Refund[]
 
   @@unique([branchId, businessDate, number])
   // Lets a line point at "this order of this branch of this brand".
@@ -576,8 +579,37 @@ model Shift {
 
   branch   Branch    @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
   payments Payment[]
+  refunds  Refund[]
 
   @@index([branchId, status, openedAt])
   @@index([openedById, status])
   @@map("shifts")
+}
+
+// ---- Refunds. See docs/specs/011-refunds.md.
+
+// Money given back for a paid order, in cash or by the way it was paid, with a manager's approval.
+model Refund {
+  // Made on the terminal, so a refund sent twice is given once.
+  id           String   @id @db.Uuid
+  orderId      String   @map("order_id") @db.Uuid
+  brandId      String   @map("brand_id") @db.Uuid
+  branchId     String   @map("branch_id") @db.Uuid
+  shiftId      String   @map("shift_id") @db.Uuid
+  amount       Decimal  @db.Decimal(15, 3)
+  // Cash, or the key of the way the order was paid with, with its name at the time.
+  method       String
+  methodName   Json     @default("{}") @map("method_name")
+  reason       String
+  refundedById String   @map("refunded_by_id") @db.Uuid
+  approvedById String?  @map("approved_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  order Order @relation(fields: [orderId, branchId, brandId], references: [id, branchId, brandId], onDelete: Restrict)
+  shift Shift @relation(fields: [shiftId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([shiftId])
+  @@index([branchId, createdAt])
+  @@map("refunds")
 }
