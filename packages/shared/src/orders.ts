@@ -122,6 +122,19 @@ export const orderPaymentSchema = z.object({
 });
 export type OrderPayment = z.infer<typeof orderPaymentSchema>;
 
+// Money given back for the order, in cash or by the way it was paid (spec 011).
+export const orderRefundSchema = z.object({
+  id: z.uuid(),
+  amount: z.string(),
+  method: paymentMethodSchema,
+  methodName: localizedTextSchema,
+  reason: z.string(),
+  refundedById: z.uuid(),
+  approvedById: z.uuid().nullable(),
+  createdAt: z.iso.datetime(),
+});
+export type OrderRefund = z.infer<typeof orderRefundSchema>;
+
 const orderFields = {
   id: z.uuid(),
   brandId: z.uuid(),
@@ -142,6 +155,8 @@ const orderFields = {
   voidReason: z.string().nullable(),
   paidAt: z.iso.datetime().nullable(),
   paidById: z.uuid().nullable(),
+  // The amount given back so far (spec 011).
+  refunded: z.string(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 };
@@ -152,6 +167,8 @@ export const orderSchema = z.object({
   payments: z.array(orderPaymentSchema),
   // The change given back in all ("0.000" when none, or before payment).
   change: z.string(),
+  // Money given back after payment (docs/specs/011-refunds.md).
+  refunds: z.array(orderRefundSchema),
 });
 export type Order = z.infer<typeof orderSchema>;
 

@@ -56,7 +56,12 @@ export const shiftFiguresSchema = z.object({
   byMethod: z.array(
     z.object({ method: z.string(), methodName: localizedTextSchema, amount: z.string() }),
   ),
-  // The opening cash plus the cash taken, as the drawer should hold now.
+  // Money given back during the shift (spec 011), in all and by way of payment.
+  refunds: z.string(),
+  refundsByMethod: z.array(
+    z.object({ method: z.string(), methodName: localizedTextSchema, amount: z.string() }),
+  ),
+  // The opening cash plus the cash taken minus the cash given back, as the drawer should hold now.
   cashExpected: z.string(),
 });
 export type ShiftFigures = z.infer<typeof shiftFiguresSchema>;
