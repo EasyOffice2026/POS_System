@@ -43,6 +43,9 @@ export const auditActions = [
   'inventory.transfer.sent',
   'inventory.transfer.received',
   'inventory.transfer.cancelled',
+  'inventory.count.started',
+  'inventory.count.finished',
+  'inventory.count.cancelled',
 ] as const;
 
 export type AuditAction = (typeof auditActions)[number];

@@ -1,4 +1,8 @@
 import {
+  cancelCountRequestSchema,
+  countListQuerySchema,
+  saveCountLinesRequestSchema,
+  startCountRequestSchema,
   createIngredientRequestSchema,
   createMovementRequestSchema,
   cancelTransferRequestSchema,
@@ -17,6 +21,7 @@ import { requestMeta } from '../../lib/request-meta';
 import { parseWith } from '../../lib/validate';
 import { requestContext } from '../../middleware/authenticate';
 import { requirePermission } from '../../middleware/authorize';
+import type { CountsService } from './counts.service';
 import type { InventoryService } from './inventory.service';
 import type { TransfersService } from './transfers.service';
 
@@ -28,9 +33,11 @@ const stockParams = z.object({ branchId: z.uuid(), ingredientId: z.uuid() });
 export function createInventoryRouter({
   service,
   transfers,
+  counts,
 }: {
   service: InventoryService;
   transfers: TransfersService;
+  counts: CountsService;
 }): Router {
   const router = Router();
   const read = requirePermission('inventory:read');
@@ -105,6 +112,39 @@ export function createInventoryRouter({
     const { id } = parseWith(idParams, req.params);
     const input = parseWith(cancelTransferRequestSchema, req.body);
     res.json(await transfers.cancel(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  // Stock counts (docs/specs/015-stock-counts.md).
+  router.get('/counts', read, async (req, res) => {
+    const query = parseWith(countListQuerySchema, req.query);
+    res.json(await counts.list(requestContext(req), query));
+  });
+
+  router.get('/counts/:id', read, async (req, res) => {
+    const { id } = parseWith(idParams, req.params);
+    res.json(await counts.get(requestContext(req), id));
+  });
+
+  router.post('/counts', write, async (req, res) => {
+    const input = parseWith(startCountRequestSchema, req.body);
+    res.status(201).json(await counts.start(requestContext(req), input, requestMeta(req)));
+  });
+
+  router.put('/counts/:id/lines', write, async (req, res) => {
+    const { id } = parseWith(idParams, req.params);
+    const input = parseWith(saveCountLinesRequestSchema, req.body);
+    res.json(await counts.saveLines(requestContext(req), id, input));
+  });
+
+  router.post('/counts/:id/finish', write, async (req, res) => {
+    const { id } = parseWith(idParams, req.params);
+    res.json(await counts.finish(requestContext(req), id, requestMeta(req)));
+  });
+
+  router.post('/counts/:id/cancel', write, async (req, res) => {
+    const { id } = parseWith(idParams, req.params);
+    const input = parseWith(cancelCountRequestSchema, req.body);
+    res.json(await counts.cancel(requestContext(req), id, input, requestMeta(req)));
   });
 
   return router;

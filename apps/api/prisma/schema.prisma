@@ -66,6 +66,7 @@ model Branch {
   movements     StockMovement[]
   transfersOut  StockTransfer[]  @relation("transfersOut")
   transfersIn   StockTransfer[]  @relation("transfersIn")
+  stockCounts   StockCount[]
 
   // Lets tables that carry a brand id point at "this branch of this brand".
   @@unique([id, brandId])
@@ -666,6 +667,7 @@ model Ingredient {
   movements     StockMovement[]
   recipeLines   RecipeLine[]
   transferLines StockTransferLine[]
+  countLines    StockCountLine[]
 
   @@unique([id, brandId])
   @@index([brandId, isActive])
@@ -793,4 +795,62 @@ model StockTransferLine {
 
   @@unique([transferId, ingredientId])
   @@map("stock_transfer_lines")
+}
+
+// ---- Stock counts. See docs/specs/015-stock-counts.md.
+
+enum CountStatus {
+  open
+  finished
+  cancelled
+
+  @@map("count_status")
+}
+
+// A check of a branch's stock against what is on the shelves.
+model StockCount {
+  id              String      @id @default(uuid(7)) @db.Uuid
+  number          Int         @default(autoincrement())
+  brandId         String      @map("brand_id") @db.Uuid
+  branchId        String      @map("branch_id") @db.Uuid
+  status          CountStatus @default(open)
+  // The branch while the count is open, null after: one open count per branch (rule 1).
+  openKey         String?     @unique @map("open_key") @db.Uuid
+  note            String?
+  startedById     String?     @map("started_by_id") @db.Uuid
+  startedByName   String?     @map("started_by_name")
+  startedAt       DateTime    @map("started_at") @db.Timestamptz(3)
+  finishedById    String?     @map("finished_by_id") @db.Uuid
+  finishedByName  String?     @map("finished_by_name")
+  finishedAt      DateTime?   @map("finished_at") @db.Timestamptz(3)
+  cancelledById   String?     @map("cancelled_by_id") @db.Uuid
+  cancelledByName String?     @map("cancelled_by_name")
+  cancelledAt     DateTime?   @map("cancelled_at") @db.Timestamptz(3)
+  cancelReason    String?     @map("cancel_reason")
+
+  branch Branch           @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
+  lines  StockCountLine[]
+
+  @@unique([id, brandId])
+  @@index([branchId, startedAt])
+  @@map("stock_counts")
+}
+
+// One ingredient of a count: what the system expected and what was counted.
+model StockCountLine {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  countId      String   @map("count_id") @db.Uuid
+  brandId      String   @map("brand_id") @db.Uuid
+  branchId     String   @map("branch_id") @db.Uuid
+  ingredientId String   @map("ingredient_id") @db.Uuid
+  expected     Decimal  @db.Decimal(15, 3)
+  counted      Decimal? @db.Decimal(15, 3)
+  // The cost of a unit when the count was finished, so the value of the difference stays.
+  unitCost     Decimal? @map("unit_cost") @db.Decimal(12, 3)
+
+  count      StockCount @relation(fields: [countId, brandId], references: [id, brandId], onDelete: Restrict)
+  ingredient Ingredient @relation(fields: [ingredientId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@unique([countId, ingredientId])
+  @@map("stock_count_lines")
 }
