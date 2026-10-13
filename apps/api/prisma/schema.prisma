@@ -343,6 +343,7 @@ enum OrderType {
 
 enum OrderStatus {
   open
+  paid
   voided
 
   @@map("order_status")
@@ -400,11 +401,14 @@ model Order {
   voidedById           String?       @map("voided_by_id") @db.Uuid
   voidReason           String?       @map("void_reason")
   voidApprovedById     String?       @map("void_approved_by_id") @db.Uuid
+  paidAt               DateTime?     @map("paid_at") @db.Timestamptz(3)
+  paidById             String?       @map("paid_by_id") @db.Uuid
   createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  branch Branch      @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
-  lines  OrderLine[]
+  branch   Branch      @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
+  lines    OrderLine[]
+  payments Payment[]
 
   @@unique([branchId, businessDate, number])
   // Lets a line point at "this order of this branch of this brand".
@@ -459,4 +463,38 @@ model OrderCounter {
 
   @@id([branchId, businessDate])
   @@map("order_counters")
+}
+
+// ---- Payments. See docs/specs/007-payments.md.
+
+enum PaymentMethod {
+  cash
+  card
+
+  @@map("payment_method")
+}
+
+// One way an order was paid. The parts of one payment together pay the order's total exactly.
+model Payment {
+  // Made on the terminal, so a payment sent twice is taken once.
+  id        String        @id @db.Uuid
+  orderId   String        @map("order_id") @db.Uuid
+  brandId   String        @map("brand_id") @db.Uuid
+  branchId  String        @map("branch_id") @db.Uuid
+  method    PaymentMethod
+  // The part of the order it pays.
+  amount    Decimal       @db.Decimal(15, 3)
+  // Cash only: what the customer handed over, and the change given back.
+  tendered  Decimal?      @db.Decimal(15, 3)
+  change    Decimal       @default(0) @db.Decimal(15, 3)
+  // Card only: the slip number, when the cashier typed it.
+  reference String?
+  takenById String        @map("taken_by_id") @db.Uuid
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  order Order @relation(fields: [orderId, branchId, brandId], references: [id, branchId, brandId], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([branchId, createdAt])
+  @@map("payments")
 }
