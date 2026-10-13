@@ -1,7 +1,7 @@
 import type { Branch } from '@pos/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { primaryButtonClass, secondaryButtonClass } from '../../components/form';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { localize } from '../../i18n/localize';
@@ -15,6 +15,9 @@ export function PosSetupPage() {
   const { t, i18n } = useTranslation();
   const { logout } = useAuth();
   const navigate = useNavigate();
+  // The screen to go back to: the POS, or the kitchen display.
+  const [searchParams] = useSearchParams();
+  const next = searchParams.get('next') === '/kds' ? '/kds' : '/pos';
   const { brands, branches, isLoading, isError } = useDirectory();
   const [chosen, setChosen] = useState<string | null>(() => readTerminal()?.branchId ?? null);
   const [saving, setSaving] = useState(false);
@@ -38,7 +41,7 @@ export function PosSetupPage() {
       brandName: brandName(branch.brandId) ?? null,
     });
     await logout();
-    void navigate('/pos', { replace: true });
+    void navigate(next, { replace: true });
   }
 
   return (

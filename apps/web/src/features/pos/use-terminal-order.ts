@@ -50,6 +50,9 @@ export function useTerminalOrder(branchId: string) {
     queryKey: orderKeys.order(orderId ?? ''),
     queryFn: () => getOrder(orderId ?? ''),
     enabled: Boolean(orderId),
+    // An open order is asked for again now and then, to show what the kitchen has made (spec 008,
+    // rule 8).
+    refetchInterval: (current) => (current.state.data?.status === 'open' ? 10_000 : false),
   });
   const order = orderId ? (query.data ?? null) : null;
 

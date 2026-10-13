@@ -312,6 +312,7 @@ describe('the main menu', () => {
       'Branches',
       'Menu',
       'POS terminal',
+      'Kitchen screen',
       'Users',
       'Roles',
       'Audit log',

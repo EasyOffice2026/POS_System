@@ -6,6 +6,7 @@ import { LoginPage } from '../features/auth/LoginPage';
 import { RequireAuth } from '../features/auth/RequireAuth';
 import { RequirePermission } from '../features/auth/RequirePermission';
 import { BranchesPage } from '../features/branches/BranchesPage';
+import { KdsPage } from '../features/kitchen/KdsPage';
 import { BranchFormPage } from '../features/branches/BranchFormPage';
 import { BranchPage } from '../features/branches/BranchPage';
 import { BrandFormPage } from '../features/brands/BrandFormPage';
@@ -28,6 +29,7 @@ export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
   // The terminal shows its own PIN screen to people who are not signed in.
   { path: '/pos', element: <PosPage /> },
+  { path: '/kds', element: <KdsPage /> },
   {
     element: <RequireAuth />,
     children: [

@@ -31,7 +31,8 @@
     "brands": "العلامات التجارية",
     "branches": "الفروع",
     "menu": "قائمة الطعام",
-    "pos": "نقطة البيع"
+    "pos": "نقطة البيع",
+    "kds": "شاشة المطبخ"
   },
   "language": {
     "switchTo": "تغيير اللغة",
@@ -708,7 +709,12 @@
       "voidLine": "إلغاء {{name}}",
       "voidedBecause": "أُلغي: {{reason}}",
       "pay": "دفع",
-      "paid": "مدفوع"
+      "paid": "مدفوع",
+      "kitchen": {
+        "preparing": "قيد التحضير",
+        "ready": "جاهز",
+        "done": "تم"
+      }
     },
     "openOrders": {
       "button": "الطلبات المفتوحة",
@@ -817,6 +823,43 @@
       "slip": "إيصال",
       "thanks": "شكرًا لزيارتكم",
       "print": "طباعة"
+    }
+  },
+  "kds": {
+    "title": "المطبخ",
+    "notAllowed": "لا يمكن لـ {{name}} رؤية طلبات المطبخ.",
+    "waiting_zero": "لا توجد طلبات بالانتظار",
+    "waiting_one": "طلب واحد بالانتظار",
+    "waiting_two": "طلبان بالانتظار",
+    "waiting_few": "{{count}} طلبات بالانتظار",
+    "waiting_many": "{{count}} طلبًا بالانتظار",
+    "waiting_other": "{{count}} طلب بالانتظار",
+    "minutes_zero": "{{count}} د",
+    "minutes_one": "{{count}} د",
+    "minutes_two": "{{count}} د",
+    "minutes_few": "{{count}} د",
+    "minutes_many": "{{count}} د",
+    "minutes_other": "{{count}} د",
+    "empty": "لا يوجد ما يُحضّر. تظهر الطلبات الجديدة هنا.",
+    "openTickets": "الطلبات المطلوب تحضيرها",
+    "doneTickets": "المنتهية",
+    "void": "ملغى",
+    "status": {
+      "new": "جديد",
+      "preparing": "قيد التحضير",
+      "ready": "جاهز",
+      "done": "تم"
+    },
+    "actions": {
+      "start": "ابدأ",
+      "ready": "جاهز",
+      "done": "تم",
+      "recall": "استرجاع"
+    },
+    "problems": {
+      "changed": "تم تحريك هذا الطلب على شاشة أخرى. تم تحميل الطلبات من جديد.",
+      "network": "لا يمكن الوصول إلى الخادم. تحقق من الاتصال.",
+      "unknown": "حدث خطأ ما. حاول مرة أخرى."
     }
   }
 }

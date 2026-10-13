@@ -45,7 +45,7 @@ export function Receipt({ order, terminal, cashier }: ReceiptProps) {
             <li key={line.id}>
               <div className={row}>
                 <span>
-                  <bdi dir="ltr">{line.quantity} ×</bdi> {localize(line.name, i18n.language)}
+                  {line.quantity} × {localize(line.name, i18n.language)}
                 </span>
                 <Price value={line.lineTotal} />
               </div>

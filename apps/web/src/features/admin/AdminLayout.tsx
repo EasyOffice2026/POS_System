@@ -67,6 +67,11 @@ export function AdminLayout() {
             {t('nav.pos')}
           </NavLink>
         )}
+        {can('kitchen:write') && (
+          <NavLink to="/kds" className={linkClass}>
+            {t('nav.kds')}
+          </NavLink>
+        )}
         {can('users:read') && (
           <NavLink to="/admin/users" className={linkClass}>
             {t('nav.users')}

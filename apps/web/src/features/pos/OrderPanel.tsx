@@ -94,7 +94,15 @@ function LineRow({ line, busy, closed, onQuantity, onVoid }: LineRowProps) {
                 voided ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-900'
               }`}
             >
-              {voided ? t('pos.order.voided') : t('pos.order.sent')}
+              {voided
+                ? t('pos.order.voided')
+                : line.kitchenStatus === 'preparing'
+                  ? t('pos.order.kitchen.preparing')
+                  : line.kitchenStatus === 'ready'
+                    ? t('pos.order.kitchen.ready')
+                    : line.kitchenStatus === 'done'
+                      ? t('pos.order.kitchen.done')
+                      : t('pos.order.sent')}
             </span>
           </p>
         )}

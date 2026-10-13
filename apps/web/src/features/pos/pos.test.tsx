@@ -75,7 +75,7 @@ describe('a terminal that is not set up', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Set up this terminal' })).toHaveAttribute(
       'href',
-      '/pos/setup',
+      '/pos/setup?next=/pos',
     );
   });
 

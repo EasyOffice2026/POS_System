@@ -31,7 +31,8 @@
     "brands": "Brands",
     "branches": "Branches",
     "menu": "Menu",
-    "pos": "POS terminal"
+    "pos": "POS terminal",
+    "kds": "Kitchen screen"
   },
   "language": {
     "switchTo": "Switch language",
@@ -700,7 +701,12 @@
       "voidLine": "Void {{name}}",
       "voidedBecause": "Voided: {{reason}}",
       "pay": "Pay",
-      "paid": "Paid"
+      "paid": "Paid",
+      "kitchen": {
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "done": "Done"
+      }
     },
     "openOrders": {
       "button": "Open orders",
@@ -805,6 +811,35 @@
       "slip": "slip",
       "thanks": "Thank you for your visit",
       "print": "Print"
+    }
+  },
+  "kds": {
+    "title": "Kitchen",
+    "notAllowed": "{{name}} cannot see the kitchen tickets.",
+    "waiting_one": "{{count}} ticket waiting",
+    "waiting_other": "{{count}} tickets waiting",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "empty": "Nothing to make. New orders appear here.",
+    "openTickets": "Tickets to make",
+    "doneTickets": "Done",
+    "void": "VOID",
+    "status": {
+      "new": "New",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "done": "Done"
+    },
+    "actions": {
+      "start": "Start",
+      "ready": "Ready",
+      "done": "Done",
+      "recall": "Recall"
+    },
+    "problems": {
+      "changed": "This ticket was moved on another screen. The tickets were loaded again.",
+      "network": "Cannot reach the server. Check the connection.",
+      "unknown": "Something went wrong. Try again."
     }
   }
 }

@@ -8,6 +8,7 @@ import { localize } from '../../i18n/localize';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
 import { emptyStaffPin, type StaffPin, StaffPinFields } from './StaffPinFields';
+import type { TerminalScreen } from './TerminalGate';
 import type { Terminal } from './terminal-store';
 
 const lockedDetailsSchema = z.object({ retryAfterSeconds: z.number() });
@@ -43,7 +44,7 @@ function toSignInError(error: unknown): SignInError {
 
 // The first screen of a terminal: the branch, and a staff code and PIN to sign in with.
 // See docs/specs/006-pos-terminal.md, rule 2.
-export function PinSignIn({ terminal }: { terminal: Terminal }) {
+export function PinSignIn({ terminal, screen }: { terminal: Terminal; screen: TerminalScreen }) {
   const { t, i18n } = useTranslation();
   const { login } = useAuth();
   const [value, setValue] = useState<StaffPin>(emptyStaffPin);
@@ -114,10 +115,10 @@ export function PinSignIn({ terminal }: { terminal: Terminal }) {
         </form>
 
         <div className="mt-5 flex flex-wrap justify-between gap-2 text-sm">
-          <Link to="/login" state={{ from: '/pos' }} className="text-slate-600 underline">
+          <Link to="/login" state={{ from: screen }} className="text-slate-600 underline">
             {t('pos.signIn.withEmail')}
           </Link>
-          <Link to="/pos/setup" className="text-slate-600 underline">
+          <Link to={`/pos/setup?next=${screen}`} className="text-slate-600 underline">
             {t('pos.signIn.changeBranch')}
           </Link>
         </div>
