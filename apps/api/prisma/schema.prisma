@@ -64,6 +64,8 @@ model Branch {
   shifts        Shift[]
   stock         BranchStock[]
   movements     StockMovement[]
+  transfersOut  StockTransfer[]  @relation("transfersOut")
+  transfersIn   StockTransfer[]  @relation("transfersIn")
 
   // Lets tables that carry a brand id point at "this branch of this brand".
   @@unique([id, brandId])
@@ -659,10 +661,11 @@ model Ingredient {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  brand       Brand           @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  stock       BranchStock[]
-  movements   StockMovement[]
-  recipeLines RecipeLine[]
+  brand         Brand               @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  stock         BranchStock[]
+  movements     StockMovement[]
+  recipeLines   RecipeLine[]
+  transferLines StockTransferLine[]
 
   @@unique([id, brandId])
   @@index([brandId, isActive])
@@ -731,4 +734,63 @@ model RecipeLine {
   @@unique([modifierId, ingredientId])
   @@index([brandId])
   @@map("recipe_lines")
+}
+
+// ---- Stock transfers. See docs/specs/014-stock-transfers.md.
+
+enum TransferStatus {
+  sent
+  received
+  cancelled
+
+  @@map("transfer_status")
+}
+
+// Stock sent from one branch of a brand to another: off the sender when sent, onto the receiver
+// when received, back to the sender when cancelled.
+model StockTransfer {
+  id              String         @id @default(uuid(7)) @db.Uuid
+  number          Int            @default(autoincrement())
+  brandId         String         @map("brand_id") @db.Uuid
+  fromBranchId    String         @map("from_branch_id") @db.Uuid
+  toBranchId      String         @map("to_branch_id") @db.Uuid
+  status          TransferStatus @default(sent)
+  note            String?
+  sentById        String?        @map("sent_by_id") @db.Uuid
+  sentByName      String?        @map("sent_by_name")
+  sentAt          DateTime       @map("sent_at") @db.Timestamptz(3)
+  receivedById    String?        @map("received_by_id") @db.Uuid
+  receivedByName  String?        @map("received_by_name")
+  receivedAt      DateTime?      @map("received_at") @db.Timestamptz(3)
+  cancelledById   String?        @map("cancelled_by_id") @db.Uuid
+  cancelledByName String?        @map("cancelled_by_name")
+  cancelledAt     DateTime?      @map("cancelled_at") @db.Timestamptz(3)
+  cancelReason    String?        @map("cancel_reason")
+
+  fromBranch Branch              @relation("transfersOut", fields: [fromBranchId, brandId], references: [id, brandId], onDelete: Restrict)
+  toBranch   Branch              @relation("transfersIn", fields: [toBranchId, brandId], references: [id, brandId], onDelete: Restrict)
+  lines      StockTransferLine[]
+
+  @@unique([id, brandId])
+  @@index([fromBranchId, sentAt])
+  @@index([toBranchId, sentAt])
+  @@map("stock_transfers")
+}
+
+// One ingredient of a transfer, in the ingredient's unit.
+model StockTransferLine {
+  id           String  @id @default(uuid(7)) @db.Uuid
+  transferId   String  @map("transfer_id") @db.Uuid
+  brandId      String  @map("brand_id") @db.Uuid
+  // Copied from the transfer, so each branch reaches its own lines.
+  fromBranchId String  @map("from_branch_id") @db.Uuid
+  toBranchId   String  @map("to_branch_id") @db.Uuid
+  ingredientId String  @map("ingredient_id") @db.Uuid
+  quantity     Decimal @db.Decimal(15, 3)
+
+  transfer   StockTransfer @relation(fields: [transferId, brandId], references: [id, brandId], onDelete: Restrict)
+  ingredient Ingredient    @relation(fields: [ingredientId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@unique([transferId, ingredientId])
+  @@map("stock_transfer_lines")
 }

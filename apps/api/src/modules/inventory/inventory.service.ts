@@ -54,7 +54,7 @@ const lineDetailsSchema = z.object({
 });
 const mils = (value: Prisma.Decimal): number => toMils(value.toFixed(3));
 
-function toIngredient(row: IngredientRow): Ingredient {
+export function toIngredient(row: IngredientRow): Ingredient {
   return {
     id: row.id,
     brandId: row.brandId,

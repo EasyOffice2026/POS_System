@@ -272,7 +272,11 @@
     "INGREDIENT_REQUIRED": "اختر مكوّنًا.",
     "MOVEMENT_KIND_INVALID": "اختر ما حدث.",
     "INGREDIENT_DUPLICATE": "يمكن إدراج كل مكوّن مرة واحدة في الوصفة.",
-    "RECIPE_TOO_LONG": "يمكن أن تضم الوصفة حتى 50 مكوّنًا."
+    "RECIPE_TOO_LONG": "يمكن أن تضم الوصفة حتى 50 مكوّنًا.",
+    "TRANSFER_SAME_BRANCH": "اختر فرعًا آخر للإرسال إليه.",
+    "TRANSFER_EMPTY": "أضف مكوّنًا واحدًا على الأقل.",
+    "TRANSFER_TOO_LONG": "يمكن أن يضم التحويل حتى 50 مكوّنًا.",
+    "TRANSFER_NOT_SENT": "تم استلام هذا التحويل أو إلغاؤه من قبل."
   },
   "rolesPage": {
     "title": "الأدوار",
@@ -336,7 +340,10 @@
       "order_refunded": "استرداد مبلغ",
       "ingredient_created": "إضافة مكوّن",
       "ingredient_updated": "تغيير مكوّن",
-      "menu_recipe_updated": "تغيير وصفة"
+      "menu_recipe_updated": "تغيير وصفة",
+      "stock_transfer_sent": "إرسال تحويل",
+      "stock_transfer_received": "استلام تحويل",
+      "stock_transfer_cancelled": "إلغاء تحويل"
     }
   },
   "notFound": {
@@ -1067,7 +1074,8 @@
       "label": "أقسام المخزون",
       "ingredients": "المكونات",
       "stock": "المخزون",
-      "movements": "الحركات"
+      "movements": "الحركات",
+      "transfers": "التحويلات"
     },
     "units": {
       "g": "غ",
@@ -1126,6 +1134,54 @@
       "after": "بعده",
       "who": "من",
       "empty": "لا توجد حركة بعد."
+    },
+    "transfers": {
+      "intro": "مخزون مُرسل بين فروع العلامة التجارية. الإرسال يخصمه من الفرع المرسل، والاستلام يضيفه إلى الفرع المستلم.",
+      "new": "تحويل جديد",
+      "number": "الرقم",
+      "direction": "الاتجاه",
+      "out": "إلى {{branch}}",
+      "in": "من {{branch}}",
+      "status": "الحالة",
+      "lines": "المكوّنات",
+      "sent": "الإرسال",
+      "open": "فتح",
+      "openFor": "فتح التحويل {{number}}",
+      "title": "التحويل {{number}}",
+      "titleLoading": "تحويل",
+      "route": "{{from}} ← {{to}}",
+      "empty": "لا يوجد تحويل بعد.",
+      "statuses": {
+        "sent": "مُرسل",
+        "received": "مُستلم",
+        "cancelled": "ملغى"
+      },
+      "toBranch": "الإرسال إلى",
+      "chooseBranch": "اختر فرعًا",
+      "noDestinations": "لا يوجد فرع نشط آخر في العلامة التجارية.",
+      "note": "ملاحظة (اختياري)",
+      "ingredient": "المكوّن",
+      "quantity": "الكمية",
+      "inStock": "في المخزون: {{quantity}} {{unit}}",
+      "add": "إضافة مكوّن",
+      "addButton": "إضافة",
+      "choose": "اختر مكوّنًا",
+      "remove": "إزالة",
+      "removeFor": "إزالة {{name}} من التحويل",
+      "send": "إرسال",
+      "receive": "استلام",
+      "cancel": "إلغاء التحويل",
+      "cancelReason": "لماذا يُلغى؟",
+      "confirmCancel": "تأكيد الإلغاء",
+      "close": "إغلاق",
+      "sentBy": "أرسله {{name}}، {{when}}",
+      "receivedBy": "استلمه {{name}}، {{when}}",
+      "cancelledBy": "ألغاه {{name}}، {{when}}: {{reason}}",
+      "messages": {
+        "sent": "تم إرسال التحويل. خرج المخزون من هذا الفرع.",
+        "received": "تم استلام التحويل. دخل المخزون.",
+        "cancelled": "تم إلغاء التحويل. عاد المخزون."
+      }
     }
   }
 }

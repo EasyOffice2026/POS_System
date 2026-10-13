@@ -808,3 +808,46 @@ describe('applyScope', () => {
     expect(() => applyScope('Branch', 'findRaw', {}, brandCtx)).toThrow(/not supported/);
   });
 });
+
+describe('applyScope for rows between two branches (a transfer)', () => {
+  const branchCtx = { scope: 'BRANCH', brandId: 'brand-1', branchIds: ['mall'] } as const;
+
+  it('shows a branch-scoped person the rows where either branch is theirs', () => {
+    const args = applyScope('StockTransfer', 'findMany', {}, branchCtx);
+
+    expect(args.where).toEqual({
+      AND: [
+        {
+          AND: [
+            { brandId: 'brand-1' },
+            { OR: [{ fromBranchId: { in: ['mall'] } }, { toBranchId: { in: ['mall'] } }] },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('lets them create a row from or to their branch, never between others', () => {
+    const data = { fromBranchId: 'mall', toBranchId: 'downtown', sentAt: new Date() };
+    expect(applyScope('StockTransfer', 'create', { data }, branchCtx).data).toMatchObject({
+      brandId: 'brand-1',
+      fromBranchId: 'mall',
+    });
+    expect(() =>
+      applyScope(
+        'StockTransfer',
+        'create',
+        { data: { ...data, fromBranchId: 'downtown', toBranchId: 'airport' } },
+        branchCtx,
+      ),
+    ).toThrow(TenantViolationError);
+    expect(() =>
+      applyScope(
+        'StockTransfer',
+        'update',
+        { where: { id: 't1' }, data: { toBranchId: 'mall' } },
+        branchCtx,
+      ),
+    ).toThrow(TenantViolationError);
+  });
+});

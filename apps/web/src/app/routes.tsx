@@ -26,6 +26,7 @@ import { IngredientsPage } from '../features/inventory/IngredientsPage';
 import { InventoryIndexRedirect, InventoryLayout } from '../features/inventory/InventoryLayout';
 import { MovementsPage } from '../features/inventory/MovementsPage';
 import { StockPage } from '../features/inventory/StockPage';
+import { TransfersPage } from '../features/inventory/TransfersPage';
 import { ShiftsPage } from '../features/shifts/ShiftsPage';
 import { UserFormPage } from '../features/users/UserFormPage';
 import { UsersPage } from '../features/users/UsersPage';
@@ -191,6 +192,7 @@ export const routes: RouteObject[] = [
               { path: 'ingredients', element: <IngredientsPage /> },
               { path: 'stock', element: <StockPage /> },
               { path: 'movements', element: <MovementsPage /> },
+              { path: 'transfers', element: <TransfersPage /> },
             ],
           },
           {

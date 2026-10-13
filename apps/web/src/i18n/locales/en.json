@@ -268,7 +268,11 @@
     "INGREDIENT_REQUIRED": "Choose an ingredient.",
     "MOVEMENT_KIND_INVALID": "Choose what happened.",
     "INGREDIENT_DUPLICATE": "Each ingredient can be on the recipe once.",
-    "RECIPE_TOO_LONG": "A recipe can have up to 50 ingredients."
+    "RECIPE_TOO_LONG": "A recipe can have up to 50 ingredients.",
+    "TRANSFER_SAME_BRANCH": "Choose another branch to send to.",
+    "TRANSFER_EMPTY": "Add at least one ingredient.",
+    "TRANSFER_TOO_LONG": "A transfer can have up to 50 ingredients.",
+    "TRANSFER_NOT_SENT": "This transfer was received or cancelled already."
   },
   "rolesPage": {
     "title": "Roles",
@@ -332,7 +336,10 @@
       "order_refunded": "Refund given",
       "ingredient_created": "Ingredient added",
       "ingredient_updated": "Ingredient changed",
-      "menu_recipe_updated": "Recipe changed"
+      "menu_recipe_updated": "Recipe changed",
+      "stock_transfer_sent": "Transfer sent",
+      "stock_transfer_received": "Transfer received",
+      "stock_transfer_cancelled": "Transfer cancelled"
     }
   },
   "notFound": {
@@ -1039,7 +1046,8 @@
       "label": "Inventory sections",
       "ingredients": "Ingredients",
       "stock": "Stock",
-      "movements": "Movements"
+      "movements": "Movements",
+      "transfers": "Transfers"
     },
     "units": {
       "g": "g",
@@ -1098,6 +1106,54 @@
       "after": "After",
       "who": "Who",
       "empty": "No movement yet."
+    },
+    "transfers": {
+      "intro": "Stock sent between the branches of the brand. Sending takes it off the sender; receiving adds it at the receiver.",
+      "new": "New transfer",
+      "number": "Number",
+      "direction": "Direction",
+      "out": "To {{branch}}",
+      "in": "From {{branch}}",
+      "status": "Status",
+      "lines": "Ingredients",
+      "sent": "Sent",
+      "open": "Open",
+      "openFor": "Open transfer {{number}}",
+      "title": "Transfer {{number}}",
+      "titleLoading": "Transfer",
+      "route": "{{from}} → {{to}}",
+      "empty": "No transfer yet.",
+      "statuses": {
+        "sent": "Sent",
+        "received": "Received",
+        "cancelled": "Cancelled"
+      },
+      "toBranch": "Send to",
+      "chooseBranch": "Choose a branch",
+      "noDestinations": "The brand has no other active branch.",
+      "note": "Note (optional)",
+      "ingredient": "Ingredient",
+      "quantity": "Quantity",
+      "inStock": "In stock: {{quantity}} {{unit}}",
+      "add": "Add an ingredient",
+      "addButton": "Add",
+      "choose": "Choose an ingredient",
+      "remove": "Remove",
+      "removeFor": "Remove {{name}} from the transfer",
+      "send": "Send",
+      "receive": "Receive",
+      "cancel": "Cancel transfer",
+      "cancelReason": "Why is it cancelled?",
+      "confirmCancel": "Confirm the cancellation",
+      "close": "Close",
+      "sentBy": "Sent by {{name}}, {{when}}",
+      "receivedBy": "Received by {{name}}, {{when}}",
+      "cancelledBy": "Cancelled by {{name}}, {{when}}: {{reason}}",
+      "messages": {
+        "sent": "Transfer sent. The stock has left this branch.",
+        "received": "Transfer received. The stock is in.",
+        "cancelled": "Transfer cancelled. The stock is back."
+      }
     }
   }
 }

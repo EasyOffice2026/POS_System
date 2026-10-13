@@ -2,14 +2,20 @@ import {
   branchStockSchema,
   type CreateIngredientRequest,
   type CreateMovementRequest,
+  type createTransferRequestSchema,
   ingredientSchema,
+  localizedTextSchema,
   pageSchema,
   stockMovementSchema,
+  stockTransferSchema,
   type UpdateIngredientRequest,
 } from '@pos/shared';
 import { z } from 'zod';
 import { request } from '../../lib/api';
 import { queryString } from '../../lib/query-string';
+
+// The request before the server applies defaults.
+export type CreateTransferInput = z.input<typeof createTransferRequestSchema>;
 
 export const inventoryKeys = {
   all: ['inventory'] as const,
@@ -56,3 +62,48 @@ export async function listMovements(branchId: string, ingredientId = '') {
   );
   return data;
 }
+
+// ---- transfers between branches (docs/specs/014-stock-transfers.md)
+
+export const transferKeys = {
+  list: (branchId: string) => ['inventory', 'transfers', branchId] as const,
+  one: (id: string) => ['inventory', 'transfer', id] as const,
+  destinations: (branchId: string) => ['inventory', 'transfer-destinations', branchId] as const,
+};
+
+export async function listTransfers(branchId: string) {
+  const { data } = await request(`/inventory/transfers${queryString({ branchId, limit: 100 })}`, {
+    schema: pageSchema(stockTransferSchema),
+  });
+  return data;
+}
+
+export const getTransfer = (id: string) =>
+  request(`/inventory/transfers/${id}`, { schema: stockTransferSchema });
+
+const destinationSchema = z.object({ id: z.uuid(), name: localizedTextSchema });
+export type TransferDestination = z.infer<typeof destinationSchema>;
+
+export async function listDestinations(branchId: string) {
+  const { data } = await request(`/inventory/transfers/destinations${queryString({ branchId })}`, {
+    schema: z.object({ data: z.array(destinationSchema) }),
+  });
+  return data;
+}
+
+export const sendTransfer = (body: CreateTransferInput) =>
+  request('/inventory/transfers', { method: 'POST', body, schema: stockTransferSchema });
+
+export const receiveTransfer = (id: string) =>
+  request(`/inventory/transfers/${id}/receive`, {
+    method: 'POST',
+    body: {},
+    schema: stockTransferSchema,
+  });
+
+export const cancelTransfer = (id: string, reason: string) =>
+  request(`/inventory/transfers/${id}/cancel`, {
+    method: 'POST',
+    body: { reason },
+    schema: stockTransferSchema,
+  });

@@ -92,6 +92,10 @@ const messageKeys = {
   MOVEMENT_KIND_INVALID: 'validation.MOVEMENT_KIND_INVALID',
   INGREDIENT_DUPLICATE: 'validation.INGREDIENT_DUPLICATE',
   RECIPE_TOO_LONG: 'validation.RECIPE_TOO_LONG',
+  TRANSFER_SAME_BRANCH: 'validation.TRANSFER_SAME_BRANCH',
+  TRANSFER_EMPTY: 'validation.TRANSFER_EMPTY',
+  TRANSFER_TOO_LONG: 'validation.TRANSFER_TOO_LONG',
+  TRANSFER_NOT_SENT: 'validation.TRANSFER_NOT_SENT',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;
@@ -144,6 +148,7 @@ export function problemsFrom(error: unknown, options: { notFound?: string } = {}
     case 'SHIFT_ALREADY_OPEN':
     case 'SHIFT_NOT_OPEN':
     case 'SHIFT_REQUIRED':
+    case 'TRANSFER_NOT_SENT':
     case 'FORBIDDEN':
       return { fields: {}, form: error.code };
     case 'NOT_FOUND':

@@ -16,6 +16,7 @@ import { createBrandsService } from './modules/brands/brands.service';
 import { healthRouter } from './modules/health/health.router';
 import { createInventoryRouter } from './modules/inventory/inventory.router';
 import { createInventoryService } from './modules/inventory/inventory.service';
+import { createTransfersService } from './modules/inventory/transfers.service';
 import { createKitchenRouter } from './modules/kitchen/kitchen.router';
 import { createKitchenService } from './modules/kitchen/kitchen.service';
 import { createMenuRouter } from './modules/menu/menu.router';
@@ -60,6 +61,7 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
     cache: menuCache ?? createMemoryMenuCache({ ttlMs: config.menuCacheTtlSeconds * 1000 }),
   });
   const inventoryService = createInventoryService({ prisma, now: now ?? (() => new Date()) });
+  const transfersService = createTransfersService({ prisma, now: now ?? (() => new Date()) });
   const ordersService = createOrdersService({
     prisma,
     hasher: passwordHasher,
@@ -88,7 +90,11 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
   v1.use('/orders', ...protectedRoutes, createOrdersRouter({ service: ordersService }));
   v1.use('/kitchen', ...protectedRoutes, createKitchenRouter({ service: kitchenService }));
   v1.use('/shifts', ...protectedRoutes, createShiftsRouter({ service: shiftsService }));
-  v1.use('/inventory', ...protectedRoutes, createInventoryRouter({ service: inventoryService }));
+  v1.use(
+    '/inventory',
+    ...protectedRoutes,
+    createInventoryRouter({ service: inventoryService, transfers: transfersService }),
+  );
   v1.use('/users', ...protectedRoutes, createUsersRouter({ service: usersService }));
   v1.use('/roles', ...protectedRoutes, createRolesRouter());
   v1.use('/audit-logs', ...protectedRoutes, createAuditRouter());
