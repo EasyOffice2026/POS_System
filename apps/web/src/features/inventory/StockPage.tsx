@@ -148,7 +148,8 @@ export function StockPage() {
   const branchId =
     branches.find((branch) => branch.id === requested)?.id ?? branches[0]?.id ?? null;
   const [moving, setMoving] = useState<{ stock: BranchStock; kind: ManualKind } | null>(null);
-  const [onlyLow, setOnlyLow] = useState(false);
+  // A link can ask for only what is low (?low=1), as the dashboard's alerts do (spec 016).
+  const [onlyLow, setOnlyLow] = useState(searchParams.get('low') === '1');
 
   const stock = useQuery({
     queryKey: inventoryKeys.stock(branchId ?? ''),

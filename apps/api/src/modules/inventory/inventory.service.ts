@@ -1,4 +1,5 @@
 import {
+  type BranchStockAlerts,
   type BranchStock,
   type CreateIngredientRequest,
   type CreateMovementRequest,
@@ -11,6 +12,7 @@ import {
   type Page,
   searchTextOf,
   type SetLowLevelRequest,
+  type StockAlertsQuery,
   type StockListQuery,
   type StockMovement,
   toMils,
@@ -239,6 +241,58 @@ export function createInventoryService({ prisma, now }: InventoryDeps) {
       );
       const shown = query.low ? rows.filter((row) => row.isLow) : rows;
       return shown.sort((a, b) => Number(b.isLow) - Number(a.isLow));
+    },
+
+    // The ingredients that are out or low at each branch the person sees, worked out from the
+    // stock each time (spec 016). A level of 0 means the ingredient is not watched (rule 1).
+    async alerts({ db }: ActorContext, query: StockAlertsQuery): Promise<BranchStockAlerts[]> {
+      const branches = await db.branch.findMany({
+        where: { isActive: true, ...(query.brandId ? { brandId: query.brandId } : {}) },
+      });
+      if (branches.length === 0) return [];
+      const ingredients = await db.ingredient.findMany({
+        where: {
+          brandId: { in: [...new Set(branches.map((row) => row.brandId))] },
+          isActive: true,
+        },
+      });
+      const stocks = await db.branchStock.findMany({
+        where: { branchId: { in: branches.map((row) => row.id) } },
+      });
+      const stockOf = new Map(stocks.map((row) => [`${row.branchId}:${row.ingredientId}`, row]));
+
+      const result = branches.flatMap((branch) => {
+        const items = ingredients
+          .filter((ingredient) => ingredient.brandId === branch.brandId)
+          .flatMap((ingredient) => {
+            const stock = stockOf.get(`${branch.id}:${ingredient.id}`);
+            const level = stock?.lowLevel ? mils(stock.lowLevel) : mils(ingredient.lowLevel);
+            const quantity = stock ? mils(stock.quantity) : 0;
+            if (level <= 0 || quantity > level) return [];
+            return [{ ingredient, quantity, level }];
+          })
+          // Out first, then furthest below the level, then by name (rule 3).
+          .sort(
+            (a, b) =>
+              Number(b.quantity <= 0) - Number(a.quantity <= 0) ||
+              a.quantity / a.level - b.quantity / b.level ||
+              a.ingredient.searchText.localeCompare(b.ingredient.searchText),
+          )
+          .map(({ ingredient, quantity, level }) => ({
+            ingredient: toIngredient(ingredient),
+            quantity: fromMils(quantity),
+            level: fromMils(level),
+            status: quantity <= 0 ? ('out' as const) : ('low' as const),
+          }));
+        if (items.length === 0) return [];
+        const name = localizedTextSchema.parse(branch.name);
+        return [{ branch: { id: branch.id, brandId: branch.brandId, name }, items }];
+      });
+      const outs = (alerts: BranchStockAlerts) =>
+        alerts.items.filter((item) => item.status === 'out').length;
+      return result.sort(
+        (a, b) => outs(b) - outs(a) || a.branch.name.en.localeCompare(b.branch.name.en),
+      );
     },
 
     async setLowLevel(

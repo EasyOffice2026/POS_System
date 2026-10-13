@@ -10,6 +10,7 @@ import {
   ingredientListQuerySchema,
   movementListQuerySchema,
   setLowLevelRequestSchema,
+  stockAlertsQuerySchema,
   stockListQuerySchema,
   transferDestinationsQuerySchema,
   transferListQuerySchema,
@@ -64,6 +65,12 @@ export function createInventoryRouter({
   router.get('/stock', read, async (req, res) => {
     const query = parseWith(stockListQuerySchema, req.query);
     res.json({ data: await service.listStock(requestContext(req), query) });
+  });
+
+  // What is out or low at each branch the person sees (docs/specs/016-stock-alerts.md).
+  router.get('/alerts', read, async (req, res) => {
+    const query = parseWith(stockAlertsQuerySchema, req.query);
+    res.json({ data: await service.alerts(requestContext(req), query) });
   });
 
   router.put('/stock/:branchId/:ingredientId/level', write, async (req, res) => {

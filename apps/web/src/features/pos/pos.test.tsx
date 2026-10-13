@@ -414,6 +414,7 @@ describe('the admin menu', () => {
       [REFRESH]: () => json(sessionFor(groupAdmin)),
       'GET /api/v1/brands': () => json(page([pizzaBrand])),
       [`GET /api/v1/brands/${ids.pizza}/branches`]: () => json(page([pizzaMall])),
+      'GET /api/v1/inventory/alerts': () => json({ data: [] }),
     });
     renderApp('/admin');
 

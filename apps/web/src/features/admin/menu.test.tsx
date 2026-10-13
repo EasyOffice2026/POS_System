@@ -23,6 +23,7 @@ async function menuOf(session: Parameters<typeof sessionFor>[0]) {
     [REFRESH]: () => json(sessionFor(session)),
     [BRANDS]: () => json(page([pizzaBrand])),
     [branchesOf]: () => json(page([pizzaMall])),
+    'GET /api/v1/inventory/alerts': () => json({ data: [] }),
   });
   renderApp('/admin');
   await screen.findByText(`Welcome, ${session.name}`);

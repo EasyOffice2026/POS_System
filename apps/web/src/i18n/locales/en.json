@@ -1213,5 +1213,18 @@
         "cancelled": "Count cancelled. The stock did not change."
       }
     }
+  },
+  "alerts": {
+    "title": "Stock alerts",
+    "none": "All ingredients are above their level.",
+    "counts": "{{out}} out, {{low}} low",
+    "status": {
+      "out": "Out",
+      "low": "Low"
+    },
+    "level": "{{quantity}} of {{level}} {{unit}}",
+    "seeAll": "See all",
+    "seeMore": "See {{count}} more",
+    "seeAllFor": "See all the low stock of {{name}}"
   }
 }

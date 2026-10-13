@@ -19,12 +19,14 @@ import { renderApp } from '../../test/render-app';
 
 const REFRESH = 'POST /api/v1/auth/refresh';
 const BRANDS = 'GET /api/v1/brands';
+const ALERTS = 'GET /api/v1/inventory/alerts';
 const branchesOf = (brandId: string) => `GET /api/v1/brands/${brandId}/branches`;
 
 describe('dashboard for a group admin', () => {
   function openDashboard() {
     return mockApi({
       [REFRESH]: () => json(sessionFor(groupAdmin)),
+      [ALERTS]: () => json({ data: [] }),
       [BRANDS]: () => json(page([pizzaBrand, burgerBrand])),
       [branchesOf(pizzaBrand.id)]: () => json(page([pizzaMall, pizzaDowntown])),
       [branchesOf(burgerBrand.id)]: () => json(page([burgerAirport])),
@@ -45,6 +47,7 @@ describe('dashboard for a group admin', () => {
   it('marks a brand and a branch that are not active', async () => {
     mockApi({
       [REFRESH]: () => json(sessionFor(groupAdmin)),
+      [ALERTS]: () => json({ data: [] }),
       [BRANDS]: () => json(page([pizzaBrand, { ...burgerBrand, isActive: false }])),
       [branchesOf(pizzaBrand.id)]: () =>
         json(page([pizzaMall, { ...pizzaDowntown, isActive: false }])),
@@ -90,7 +93,11 @@ describe('dashboard for a group admin', () => {
   });
 
   it('shows a message when there are no brands', async () => {
-    mockApi({ [REFRESH]: () => json(sessionFor(groupAdmin)), [BRANDS]: () => json(page([])) });
+    mockApi({
+      [REFRESH]: () => json(sessionFor(groupAdmin)),
+      [ALERTS]: () => json({ data: [] }),
+      [BRANDS]: () => json(page([])),
+    });
     renderApp('/admin');
 
     expect(await screen.findByText('There are no brands to show.')).toBeInTheDocument();
@@ -99,6 +106,7 @@ describe('dashboard for a group admin', () => {
   it('shows a message for a brand without branches', async () => {
     mockApi({
       [REFRESH]: () => json(sessionFor(groupAdmin)),
+      [ALERTS]: () => json({ data: [] }),
       [BRANDS]: () => json(page([pizzaBrand])),
       [branchesOf(pizzaBrand.id)]: () => json(page([])),
     });
@@ -110,6 +118,7 @@ describe('dashboard for a group admin', () => {
   it('says so when the data cannot be loaded', async () => {
     mockApi({
       [REFRESH]: () => json(sessionFor(groupAdmin)),
+      [ALERTS]: () => json({ data: [] }),
       [BRANDS]: () => errorResponse(500, 'INTERNAL_ERROR'),
     });
     renderApp('/admin');
@@ -120,6 +129,7 @@ describe('dashboard for a group admin', () => {
   it('reads every page when there are more brands than fit in one', async () => {
     const api = mockApi({
       [REFRESH]: () => json(sessionFor(groupAdmin)),
+      [ALERTS]: () => json({ data: [] }),
       [BRANDS]: ({ url }) =>
         url.searchParams.get('cursor')
           ? json(page([burgerBrand]))
@@ -139,6 +149,7 @@ describe('dashboard for a group admin', () => {
   it('refreshes an expired token and carries on', async () => {
     const api = mockApi({
       [REFRESH]: () => json(sessionFor(groupAdmin, 'second-token')),
+      [ALERTS]: () => json({ data: [] }),
       [BRANDS]: ({ authorization }) =>
         authorization === 'Bearer second-token'
           ? json(page([pizzaBrand]))

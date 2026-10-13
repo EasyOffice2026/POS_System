@@ -158,3 +158,29 @@ export const movementListQuerySchema = cursorQuerySchema.extend({
   ingredientId: z.uuid().optional(),
 });
 export type MovementListQuery = z.infer<typeof movementListQuerySchema>;
+
+// ---------------------------------------------------------------------------------------------
+// Low-stock alerts. See docs/specs/016-stock-alerts.md.
+
+export const stockAlertStatusSchema = z.enum(['out', 'low']);
+export type StockAlertStatus = z.infer<typeof stockAlertStatusSchema>;
+
+export const stockAlertItemSchema = z.object({
+  ingredient: ingredientSchema,
+  quantity: z.string(),
+  // The level that applied: the branch's own, or the brand's default.
+  level: z.string(),
+  status: stockAlertStatusSchema,
+});
+export type StockAlertItem = z.infer<typeof stockAlertItemSchema>;
+
+export const branchStockAlertsSchema = z.object({
+  branch: z.object({ id: z.uuid(), brandId: z.uuid(), name: localizedTextSchema }),
+  items: z.array(stockAlertItemSchema),
+});
+export type BranchStockAlerts = z.infer<typeof branchStockAlertsSchema>;
+
+export const stockAlertsQuerySchema = z.object({
+  brandId: z.uuid().optional(),
+});
+export type StockAlertsQuery = z.infer<typeof stockAlertsQuerySchema>;

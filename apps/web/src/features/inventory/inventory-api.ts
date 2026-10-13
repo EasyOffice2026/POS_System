@@ -1,4 +1,5 @@
 import {
+  branchStockAlertsSchema,
   branchStockSchema,
   type CreateIngredientRequest,
   type CreateMovementRequest,
@@ -155,3 +156,14 @@ export const cancelCount = (id: string, reason: string) =>
     body: { reason },
     schema: stockCountSchema,
   });
+
+// ---- low-stock alerts (docs/specs/016-stock-alerts.md)
+
+export const alertKeys = { all: ['inventory', 'alerts'] as const };
+
+export async function listAlerts() {
+  const { data } = await request('/inventory/alerts', {
+    schema: z.object({ data: z.array(branchStockAlertsSchema) }),
+  });
+  return data;
+}
