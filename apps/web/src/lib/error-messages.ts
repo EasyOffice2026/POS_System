@@ -75,6 +75,10 @@ const messageKeys = {
   VOID_RULE_INVALID: 'validation.VOID_RULE_INVALID',
   TICKET_DONE_BY_INVALID: 'validation.TICKET_DONE_BY_INVALID',
   KITCHEN_STATIONS_TOO_MANY: 'validation.KITCHEN_STATIONS_TOO_MANY',
+  CASH_INVALID: 'validation.CASH_INVALID',
+  SHIFT_ALREADY_OPEN: 'validation.SHIFT_ALREADY_OPEN',
+  SHIFT_NOT_OPEN: 'validation.SHIFT_NOT_OPEN',
+  SHIFT_REQUIRED: 'validation.SHIFT_REQUIRED',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;
@@ -124,6 +128,9 @@ export function problemsFrom(error: unknown, options: { notFound?: string } = {}
     // A limit of the menu is reached: the answer says which one.
     case 'CATEGORY_LIMIT':
     case 'MODIFIER_LIMIT':
+    case 'SHIFT_ALREADY_OPEN':
+    case 'SHIFT_NOT_OPEN':
+    case 'SHIFT_REQUIRED':
     case 'FORBIDDEN':
       return { fields: {}, form: error.code };
     case 'NOT_FOUND':

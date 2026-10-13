@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   brandSettings,
+  shiftSummary,
   fullBrandManager,
   fullCashier,
   ids,
@@ -57,6 +58,7 @@ function terminalApi(settings = brandSettings(), handlers: Record<string, MockHa
     'POST /api/v1/auth/refresh': () => json(sessionFor(fullCashier)),
     'GET /api/v1/menu': () => json(branchMenu()),
     [SETTINGS]: () => json(settings),
+    'GET /api/v1/shifts/current': () => json(shiftSummary()),
     'GET /api/v1/orders': () => json(page([orderSummary(readyOrder)])),
     [`GET /api/v1/orders/${orderIds.first}`]: () => json(readyOrder),
     ...handlers,

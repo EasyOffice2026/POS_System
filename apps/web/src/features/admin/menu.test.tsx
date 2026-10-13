@@ -43,6 +43,7 @@ describe('the main menu shows each person only what they may open', () => {
       'Kitchen screen',
       'Users',
       'Roles',
+      'Shifts',
       'Settings',
       'Audit log',
     ]);
@@ -58,6 +59,7 @@ describe('the main menu shows each person only what they may open', () => {
       'Kitchen screen',
       'Users',
       'Roles',
+      'Shifts',
       'Settings',
       'Audit log',
     ]);

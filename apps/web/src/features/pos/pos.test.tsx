@@ -3,6 +3,7 @@ import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   brandSettings,
+  shiftSummary,
   fullBrandManager,
   fullCashier,
   groupAdmin,
@@ -50,6 +51,7 @@ function terminalApi(handlers: Record<string, MockHandler> = {}) {
     [REFRESH]: () => json(sessionFor(fullCashier)),
     [MENU]: () => json(branchMenu()),
     [SETTINGS]: () => json(brandSettings()),
+    'GET /api/v1/shifts/current': () => json(shiftSummary()),
     ...handlers,
   });
 }

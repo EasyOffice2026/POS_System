@@ -8,7 +8,7 @@ import {
 import type request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../../app';
-import { createUser } from '../../../test/factories';
+import { createUser, openShift } from '../../../test/factories';
 import { createTestPrisma, resetDatabase, testConfig } from '../../../test/helpers';
 import { createMenuWorld, type MenuWorld } from '../../../test/menu-world';
 import { as, errorOf, signIn } from '../../../test/users-world';
@@ -32,6 +32,7 @@ beforeEach(async () => {
   clock = new Date('2026-10-13T09:00:00Z');
   await resetDatabase(prisma);
   world = await createMenuWorld(prisma, hasher);
+  await openShift(prisma, world.users.cashier, world.mall);
   await createUser(prisma, hasher, {
     roleKey: 'kitchen',
     name: 'Karim Kitchen',

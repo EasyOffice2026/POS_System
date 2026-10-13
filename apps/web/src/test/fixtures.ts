@@ -12,6 +12,7 @@ import {
   type Printer,
   type RoleInfo,
   type SessionResponse,
+  type ShiftSummary,
   systemRoles,
 } from '@pos/shared';
 
@@ -258,4 +259,33 @@ export function printer(n: number, overrides: Partial<Printer> = {}): Printer {
 // The settings of a brand, as the API answers them with the defaults filled in.
 export function brandSettings(overrides: Partial<BrandSettings> = {}): BrandSettings {
   return { ...defaultBrandSettings, ...overrides };
+}
+
+// A cashier's open shift at Pizza Mall, as the POS reads it.
+export function shiftSummary(overrides: Partial<ShiftSummary> = {}): ShiftSummary {
+  return {
+    id: '01990000-0000-7000-8000-00000000e001',
+    brandId: ids.pizza,
+    branchId: ids.pizzaMall,
+    status: 'open',
+    openedById: cashier.id,
+    openedByName: cashier.name,
+    openedAt: '2026-10-13T06:00:00.000Z',
+    openingCash: '50.000',
+    closedById: null,
+    closedByName: null,
+    closedAt: null,
+    countedCash: null,
+    expectedCash: null,
+    difference: null,
+    note: null,
+    figures: {
+      ordersPaid: 0,
+      sales: '0.000',
+      discounts: '0.000',
+      byMethod: [],
+      cashExpected: '50.000',
+    },
+    ...overrides,
+  };
 }

@@ -315,6 +315,7 @@ describe('the main menu', () => {
       'Kitchen screen',
       'Users',
       'Roles',
+      'Shifts',
       'Settings',
       'Audit log',
     ]);
