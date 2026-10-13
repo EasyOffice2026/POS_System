@@ -35,6 +35,7 @@ const knownCodes = [
   'PAYMENT_TENDERS_INVALID',
   'PAYMENT_ID_TAKEN',
   'PAYMENT_METHOD_INVALID',
+  'SHIFT_REQUIRED',
   'ORDER_EMPTY',
   'network',
 ] as const;

@@ -21,6 +21,8 @@ import { createMenuService } from './modules/menu/menu.service';
 import { createOrdersRouter } from './modules/orders/orders.router';
 import { createOrdersService } from './modules/orders/orders.service';
 import { createRolesRouter } from './modules/roles/roles.router';
+import { createShiftsRouter } from './modules/shifts/shifts.router';
+import { createShiftsService } from './modules/shifts/shifts.service';
 import { createUsersRouter } from './modules/users/users.router';
 import { createUsersService } from './modules/users/users.service';
 
@@ -64,6 +66,7 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
     now: now ?? (() => new Date()),
   });
   const kitchenService = createKitchenService({ now: now ?? (() => new Date()) });
+  const shiftsService = createShiftsService({ prisma, now: now ?? (() => new Date()) });
 
   const v1 = express.Router();
   v1.use('/health', healthRouter);
@@ -79,6 +82,7 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
   v1.use('/menu', ...protectedRoutes, createMenuRouter({ service: menuService }));
   v1.use('/orders', ...protectedRoutes, createOrdersRouter({ service: ordersService }));
   v1.use('/kitchen', ...protectedRoutes, createKitchenRouter({ service: kitchenService }));
+  v1.use('/shifts', ...protectedRoutes, createShiftsRouter({ service: shiftsService }));
   v1.use('/users', ...protectedRoutes, createUsersRouter({ service: usersService }));
   v1.use('/roles', ...protectedRoutes, createRolesRouter());
   v1.use('/audit-logs', ...protectedRoutes, createAuditRouter());

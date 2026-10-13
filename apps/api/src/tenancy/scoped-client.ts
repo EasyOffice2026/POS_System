@@ -54,6 +54,7 @@ const tenantModels: Record<string, ModelRule> = {
   OrderCounter: { brand: 'brandId', branch: 'branchId' },
   Payment: { brand: 'brandId', branch: 'branchId' },
   KitchenTicket: { brand: 'brandId', branch: 'branchId' },
+  Shift: { brand: 'brandId', branch: 'branchId' },
 };
 
 // Reference data every signed-in person may read. Never writable through this client.

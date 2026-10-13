@@ -22,6 +22,7 @@ import { PosPage } from '../features/pos/PosPage';
 import { PosSetupPage } from '../features/pos/PosSetupPage';
 import { RolesPage } from '../features/roles/RolesPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
+import { ShiftsPage } from '../features/shifts/ShiftsPage';
 import { UserFormPage } from '../features/users/UserFormPage';
 import { UsersPage } from '../features/users/UsersPage';
 import { NotFoundPage } from './NotFoundPage';
@@ -171,6 +172,14 @@ export const routes: RouteObject[] = [
             element: (
               <RequirePermission permission="roles:read">
                 <RolesPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'shifts',
+            element: (
+              <RequirePermission permission="shifts:read">
+                <ShiftsPage />
               </RequirePermission>
             ),
           },

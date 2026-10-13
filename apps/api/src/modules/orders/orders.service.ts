@@ -750,6 +750,14 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
             throw errors.validation([{ path: 'tenders', message: 'PAYMENT_TOTAL_MISMATCH' }]);
           }
 
+          // The payment goes into the open shift of the person taking it (spec 010, rule 2).
+          const shift = await tx.shift.findFirst({
+            where: { branchId: order.branchId, openedById: auth.sub, status: 'open' },
+            select: { id: true },
+          });
+          if (!shift)
+            throw errors.conflict('SHIFT_REQUIRED', 'Open a shift before taking payments');
+
           // What was not sent yet goes to the kitchen now (rule 5).
           const at = now();
           await sendPending(tx, order, at);
@@ -769,6 +777,7 @@ export function createOrdersService({ prisma, hasher, loadMenu, now }: OrdersDep
                   : '0',
               reference: tender.method === CASH ? null : (tender.reference ?? null),
               takenById: auth.sub,
+              shiftId: shift.id,
               createdAt: at,
             })),
           });

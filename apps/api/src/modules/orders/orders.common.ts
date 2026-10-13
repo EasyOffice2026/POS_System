@@ -32,6 +32,7 @@ export type OrderTx = Pick<
   | 'brand'
   | 'menuItem'
   | 'menuCategory'
+  | 'shift'
 >;
 
 export const mils = (value: Prisma.Decimal): number => toMils(value.toFixed(3));

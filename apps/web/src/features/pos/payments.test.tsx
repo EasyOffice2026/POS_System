@@ -4,6 +4,7 @@ import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   brandSettings,
+  shiftSummary,
   fullCashier,
   ids,
   page,
@@ -62,6 +63,7 @@ function payApi(pay: MockHandler, current: () => Order = () => due72) {
   return mockApi({
     'POST /api/v1/auth/refresh': () => json(sessionFor(fullCashier)),
     'GET /api/v1/menu': () => json(branchMenu()),
+    'GET /api/v1/shifts/current': () => json(shiftSummary()),
     [`GET /api/v1/brands/${ids.pizza}/settings`]: () =>
       json(
         brandSettings({

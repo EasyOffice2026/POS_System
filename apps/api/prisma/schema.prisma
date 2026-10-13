@@ -60,6 +60,7 @@ model Branch {
   menuOverrides BranchMenuItem[]
   orders        Order[]
   orderCounters OrderCounter[]
+  shifts        Shift[]
 
   // Lets tables that carry a brand id point at "this branch of this brand".
   @@unique([id, brandId])
@@ -493,13 +494,18 @@ model Payment {
   change     Decimal  @default(0) @db.Decimal(15, 3)
   // Card only: the slip number, when the cashier typed it.
   reference  String?
+  // The shift of the person who took it (docs/specs/010-shifts.md). Null for payments taken
+  // before shifts existed.
+  shiftId    String?  @map("shift_id") @db.Uuid
   takenById  String   @map("taken_by_id") @db.Uuid
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  order Order @relation(fields: [orderId, branchId, brandId], references: [id, branchId, brandId], onDelete: Restrict)
+  order Order  @relation(fields: [orderId, branchId, brandId], references: [id, branchId, brandId], onDelete: Restrict)
+  shift Shift? @relation(fields: [shiftId], references: [id], onDelete: Restrict)
 
   @@index([orderId])
   @@index([branchId, createdAt])
+  @@index([shiftId])
   @@map("payments")
 }
 
@@ -536,4 +542,42 @@ model KitchenTicket {
   @@index([branchId, status, sentAt])
   @@index([orderId])
   @@map("kitchen_tickets")
+}
+
+// ---- Shifts. See docs/specs/010-shifts.md.
+
+enum ShiftStatus {
+  open
+  closed
+
+  @@map("shift_status")
+}
+
+// A cashier's shift at a branch: the cash in the drawer when it opened, and the count at closing.
+// The names are kept as they were, so a report reads the same after a person is renamed.
+model Shift {
+  id           String      @id @default(uuid(7)) @db.Uuid
+  brandId      String      @map("brand_id") @db.Uuid
+  branchId     String      @map("branch_id") @db.Uuid
+  status       ShiftStatus @default(open)
+  openedById   String      @map("opened_by_id") @db.Uuid
+  openedByName String      @map("opened_by_name")
+  openedAt     DateTime    @map("opened_at") @db.Timestamptz(3)
+  openingCash  Decimal     @map("opening_cash") @db.Decimal(15, 3)
+  closedById   String?     @map("closed_by_id") @db.Uuid
+  closedByName String?     @map("closed_by_name")
+  closedAt     DateTime?   @map("closed_at") @db.Timestamptz(3)
+  countedCash  Decimal?    @map("counted_cash") @db.Decimal(15, 3)
+  expectedCash Decimal?    @map("expected_cash") @db.Decimal(15, 3)
+  difference   Decimal?    @db.Decimal(15, 3)
+  note         String?
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  branch   Branch    @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
+  payments Payment[]
+
+  @@index([branchId, status, openedAt])
+  @@index([openedById, status])
+  @@map("shifts")
 }

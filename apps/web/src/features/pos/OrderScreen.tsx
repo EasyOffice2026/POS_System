@@ -1,4 +1,4 @@
-import { defaultBrandSettings, type Order, type OrderLine } from '@pos/shared';
+import { defaultBrandSettings, type Order, type OrderLine, type ShiftSummary } from '@pos/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,7 +30,14 @@ const headerButtonClass =
 
 // The screen a cashier takes orders on: the menu of the branch, and the order being taken.
 // See docs/specs/006-pos-terminal.md.
-export function OrderScreen({ terminal }: { terminal: Terminal }) {
+interface OrderScreenProps {
+  terminal: Terminal;
+  // The cashier's open shift, which every payment goes into (spec 010).
+  shift: ShiftSummary;
+  onCloseShift: () => void;
+}
+
+export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps) {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const now = useNow();
@@ -53,10 +60,12 @@ export function OrderScreen({ terminal }: { terminal: Terminal }) {
     queryFn: () => getBranchMenu(terminal.branchId),
   });
 
-  const clock = new Intl.DateTimeFormat(i18n.language === 'ar' ? 'ar-u-nu-latn' : 'en-GB', {
+  const timeFormat = new Intl.DateTimeFormat(i18n.language === 'ar' ? 'ar-u-nu-latn' : 'en-GB', {
     timeStyle: 'short',
     hourCycle: 'h23',
-  }).format(now);
+  });
+  const clock = timeFormat.format(now);
+  const timeOf = (iso: string) => timeFormat.format(new Date(iso));
 
   function pick(next: Choosing) {
     // A dish without choices goes straight onto the order.
@@ -94,6 +103,14 @@ export function OrderScreen({ terminal }: { terminal: Terminal }) {
             <span className="text-sm text-slate-600">{user?.name}</span>
             <button type="button" onClick={() => setListing(true)} className={headerButtonClass}>
               {t('pos.openOrders.button')}
+            </button>
+            <button
+              type="button"
+              onClick={onCloseShift}
+              className={headerButtonClass}
+              title={t('pos.shift.since', { time: timeOf(shift.openedAt) })}
+            >
+              {t('pos.shift.close')}
             </button>
             <LanguageSwitcher />
             <button

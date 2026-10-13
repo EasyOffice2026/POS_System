@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   brandSettings,
+  shiftSummary,
   fullBrandManager,
   fullCashier,
   ids,
@@ -86,6 +87,7 @@ function kitchenApi(handlers: Record<string, MockHandler> = {}, user = kitchenSt
     'POST /api/v1/auth/refresh': () => json(sessionFor(user)),
     [TICKETS]: () => json({ data: [ticket()] }),
     [`GET /api/v1/brands/${ids.pizza}/settings`]: () => json(brandSettings()),
+    'GET /api/v1/shifts/current': () => json(shiftSummary()),
     ...handlers,
   });
 }

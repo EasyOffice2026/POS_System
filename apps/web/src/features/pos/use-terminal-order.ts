@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { moveTicket } from '../kitchen/kitchen-api';
 import { menuKeys } from '../menu/menu-api';
 import { settingsKeys } from '../settings/settings-api';
+import { shiftKeys } from '../shifts/shifts-api';
 import {
   type AddLineInput,
   addLine,
@@ -74,6 +75,10 @@ export function useTerminalOrder(branchId: string, brandId: string) {
     // A way to pay was switched off in the settings since the terminal loaded them.
     if (code === 'PAYMENT_METHOD_INVALID') {
       void queryClient.invalidateQueries({ queryKey: settingsKeys.brand(brandId) });
+    }
+    // The shift was closed elsewhere: the gate asks for a new one.
+    if (code === 'SHIFT_REQUIRED') {
+      void queryClient.invalidateQueries({ queryKey: shiftKeys.current(branchId) });
     }
     const changedElsewhere = ['ORDER_NOT_OPEN', 'LINE_VOIDED', 'PAYMENT_TOTAL_MISMATCH'];
     if (changedElsewhere.includes(code) && orderId) {

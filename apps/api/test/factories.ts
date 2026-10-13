@@ -70,3 +70,22 @@ export async function createUser(prisma: PrismaClient, hasher: PasswordHasher, i
     },
   });
 }
+
+// An open shift for a person at a branch, as the POS opens one before taking payments.
+export function openShift(
+  prisma: PrismaClient,
+  user: { id: string; name: string },
+  branch: { id: string; brandId: string },
+  openingCash = '50.000',
+) {
+  return prisma.shift.create({
+    data: {
+      brandId: branch.brandId,
+      branchId: branch.id,
+      openedById: user.id,
+      openedByName: user.name,
+      openedAt: new Date(),
+      openingCash,
+    },
+  });
+}

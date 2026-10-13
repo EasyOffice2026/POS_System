@@ -3,7 +3,7 @@ import { type Order, orderSchema } from '@pos/shared';
 import type request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../../app';
-import { createItem } from '../../../test/factories';
+import { createItem, openShift } from '../../../test/factories';
 import { createTestPrisma, resetDatabase, testConfig } from '../../../test/helpers';
 import { createMenuWorld, type MenuWorld } from '../../../test/menu-world';
 import { as, errorOf, signIn } from '../../../test/users-world';
@@ -26,6 +26,7 @@ afterAll(() => prisma.$disconnect());
 beforeEach(async () => {
   await resetDatabase(prisma);
   world = await createMenuWorld(prisma, hasher);
+  await openShift(prisma, world.users.cashier, world.mall);
 });
 
 type Api = ReturnType<typeof as>;
@@ -225,6 +226,7 @@ describe('POST /orders/:id/pay', () => {
     await pay(api, order.id, [cash('72', '72', id)]);
 
     const burger = await asBurgerManager();
+    await openShift(prisma, world.users.burgerManager, world.airport);
     expect((await pay(burger, order.id, [cash('72', '72')])).status).toBe(404);
 
     const cheese = orderOf(
