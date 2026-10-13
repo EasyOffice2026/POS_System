@@ -30,6 +30,10 @@ interface ModelRule {
   // Rows that belong to the whole brand, such as the menu. A branch-scoped person may read them
   // and can never change them.
   brandWide?: boolean;
+  // Rows that belong to two branches at once (a transfer from one to another): a branch-scoped
+  // person sees those where any of these columns is one of their branches, and creates only
+  // those where at least one is.
+  anyBranch?: string[];
 }
 
 // Every table that holds tenant data needs an entry here. A model without one is refused.
@@ -56,6 +60,12 @@ const tenantModels: Record<string, ModelRule> = {
   KitchenTicket: { brand: 'brandId', branch: 'branchId' },
   Shift: { brand: 'brandId', branch: 'branchId' },
   Refund: { brand: 'brandId', branch: 'branchId' },
+  Ingredient: { brand: 'brandId', brandWide: true },
+  RecipeLine: { brand: 'brandId', brandWide: true },
+  BranchStock: { brand: 'brandId', branch: 'branchId' },
+  StockMovement: { brand: 'brandId', branch: 'branchId' },
+  StockTransfer: { brand: 'brandId', anyBranch: ['fromBranchId', 'toBranchId'] },
+  StockTransferLine: { brand: 'brandId', anyBranch: ['fromBranchId', 'toBranchId'] },
 };
 
 // Reference data every signed-in person may read. Never writable through this client.
@@ -128,6 +138,11 @@ function tenantFilter(rule: ModelRule, ctx: TenantContext): Args | null {
     const { relation, field } = rule.branchesThrough;
     conditions.push({ [relation]: { some: { [field]: { in: ctx.branchIds } } } });
   }
+  if (ctx.scope === 'BRANCH' && rule.anyBranch) {
+    conditions.push({
+      OR: rule.anyBranch.map((column) => ({ [column]: { in: ctx.branchIds } })),
+    });
+  }
   return { AND: conditions };
 }
 
@@ -182,6 +197,16 @@ function scopeCreateData(model: string, rule: ModelRule, data: unknown, ctx: Ten
     throw new TenantViolationError(`A branch-scoped user cannot create ${model} rows.`);
   }
 
+  if (rule.anyBranch && ctx.scope === 'BRANCH') {
+    const own = rule.anyBranch.some((column) => {
+      const given = result[column];
+      return typeof given === 'string' && ctx.branchIds.includes(given);
+    });
+    if (!own) {
+      throw new TenantViolationError(`Cannot create ${model} rows between other branches.`);
+    }
+  }
+
   return result;
 }
 
@@ -198,6 +223,13 @@ function scopeUpdateData(model: string, rule: ModelRule, data: unknown, ctx: Ten
     const value = plainValue(data[rule.branch]);
     if (typeof value !== 'string' || !ctx.branchIds.includes(value)) {
       throw new TenantViolationError(`Cannot move ${model} rows to another branch.`);
+    }
+  }
+  if (rule.anyBranch && ctx.scope === 'BRANCH') {
+    for (const column of rule.anyBranch) {
+      if (data[column] !== undefined) {
+        throw new TenantViolationError(`Cannot move ${model} rows to other branches.`);
+      }
     }
   }
   return data;

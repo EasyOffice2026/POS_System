@@ -20,7 +20,9 @@
     "statusInactive": "غير نشط",
     "inactiveSuffix": "(غير نشط)",
     "nameEnglish": "الاسم (بالإنجليزية)",
-    "nameArabic": "الاسم (بالعربية)"
+    "nameArabic": "الاسم (بالعربية)",
+    "activate": "تفعيل",
+    "deactivate": "إيقاف"
   },
   "nav": {
     "label": "القائمة الرئيسية",
@@ -34,7 +36,8 @@
     "pos": "نقطة البيع",
     "kds": "شاشة المطبخ",
     "settings": "الإعدادات",
-    "shifts": "الورديات"
+    "shifts": "الورديات",
+    "inventory": "المخزون"
   },
   "language": {
     "switchTo": "تغيير اللغة",
@@ -105,7 +108,10 @@
     "kitchen_write": "العمل على شاشة المطبخ",
     "settings_write": "تغيير الإعدادات",
     "shifts_read": "رؤية الورديات",
-    "orders_refund": "منح الاسترداد"
+    "orders_refund": "منح الاسترداد",
+    "inventory_read": "رؤية المخزون",
+    "inventory_write": "تغيير المخزون",
+    "ingredients_write": "تغيير المكونات"
   },
   "users": {
     "title": "المستخدمون",
@@ -256,7 +262,21 @@
     "SHIFT_REQUIRED": "افتح وردية قبل استلام المدفوعات.",
     "REFUND_AMOUNT_INVALID": "اكتب مبلغًا أكبر من 0، بثلاث خانات عشرية على الأكثر.",
     "REFUND_TOO_MUCH": "هذا أكثر مما تبقّى من الطلب.",
-    "REFUND_METHOD_INVALID": "يعود المال نقدًا، أو بالطريقة التي دُفع بها الطلب."
+    "REFUND_METHOD_INVALID": "يعود المال نقدًا، أو بالطريقة التي دُفع بها الطلب.",
+    "UNIT_INVALID": "اختر وحدة.",
+    "UNIT_LOCKED": "لا يمكن تغيير الوحدة بعد وجود حركات على المكوّن.",
+    "QUANTITY_INVALID": "اكتب كمية 0 أو أكثر، بثلاث خانات عشرية على الأكثر.",
+    "NOTE_REQUIRED": "اذكر السبب.",
+    "STOCK_NEGATIVE": "لا توجد هذه الكمية في المخزون.",
+    "INGREDIENT_NOT_FOUND": "هذا المكوّن غير متاح.",
+    "INGREDIENT_REQUIRED": "اختر مكوّنًا.",
+    "MOVEMENT_KIND_INVALID": "اختر ما حدث.",
+    "INGREDIENT_DUPLICATE": "يمكن إدراج كل مكوّن مرة واحدة في الوصفة.",
+    "RECIPE_TOO_LONG": "يمكن أن تضم الوصفة حتى 50 مكوّنًا.",
+    "TRANSFER_SAME_BRANCH": "اختر فرعًا آخر للإرسال إليه.",
+    "TRANSFER_EMPTY": "أضف مكوّنًا واحدًا على الأقل.",
+    "TRANSFER_TOO_LONG": "يمكن أن يضم التحويل حتى 50 مكوّنًا.",
+    "TRANSFER_NOT_SENT": "تم استلام هذا التحويل أو إلغاؤه من قبل."
   },
   "rolesPage": {
     "title": "الأدوار",
@@ -317,7 +337,13 @@
       "brand_settings_updated": "تغيير الإعدادات",
       "shift_opened": "فتح وردية",
       "shift_closed": "إغلاق وردية",
-      "order_refunded": "استرداد مبلغ"
+      "order_refunded": "استرداد مبلغ",
+      "ingredient_created": "إضافة مكوّن",
+      "ingredient_updated": "تغيير مكوّن",
+      "menu_recipe_updated": "تغيير وصفة",
+      "stock_transfer_sent": "إرسال تحويل",
+      "stock_transfer_received": "استلام تحويل",
+      "stock_transfer_cancelled": "إلغاء تحويل"
     }
   },
   "notFound": {
@@ -525,7 +551,8 @@
         "label": "إعدادات الصنف",
         "details": "التفاصيل",
         "pricing": "أسعار الفروع",
-        "modifiers": "الخيارات"
+        "modifiers": "الخيارات",
+        "recipe": "الوصفة"
       }
     },
     "schedule": {
@@ -656,6 +683,27 @@
       "empty": "لا شيء يمكن بيعه في هذا الفرع بعد.",
       "combos": "الوجبات المركبة",
       "notNow": "غير متاح الآن"
+    },
+    "recipe": {
+      "intro": "ما يستهلكه طبق واحد. عند دفع طلب ينقص مخزون الفرع بهذا المقدار.",
+      "modifierIntro": "ما يضيفه هذا الخيار إلى الطبق. عند دفع طلب ينقص مخزون الفرع بهذا المقدار.",
+      "button": "الوصفة",
+      "forName": "وصفة {{name}}",
+      "ingredient": "المكوّن",
+      "quantity": "الكمية",
+      "cost": "التكلفة",
+      "total": "تكلفة المكوّنات",
+      "ofPrice": "{{percent}}٪ من السعر",
+      "empty": "لا توجد وصفة بعد. لا يتغير المخزون عند بيع هذا الصنف.",
+      "add": "إضافة مكوّن",
+      "addButton": "إضافة",
+      "choose": "اختر مكوّنًا",
+      "noIngredients": "لا يوجد مكوّن للإضافة. أضف المكوّنات في المخزون أولًا.",
+      "remove": "إزالة",
+      "removeFor": "إزالة {{name}} من الوصفة",
+      "quantityInvalid": "اكتب كمية أكبر من 0 بثلاث منازل عشرية كحد أقصى.",
+      "saved": "تم حفظ الوصفة.",
+      "close": "إغلاق"
     }
   },
   "weekdaysShort": {
@@ -1017,6 +1065,123 @@
       "done": "تم",
       "refunds": "الاستردادات",
       "refundsTotal": "المبالغ المرجعة"
+    }
+  },
+  "inventory": {
+    "title": "المخزون",
+    "brand": "العلامة التجارية",
+    "tabs": {
+      "label": "أقسام المخزون",
+      "ingredients": "المكونات",
+      "stock": "المخزون",
+      "movements": "الحركات",
+      "transfers": "التحويلات"
+    },
+    "units": {
+      "g": "غ",
+      "kg": "كغ",
+      "ml": "مل",
+      "l": "ل",
+      "piece": "قطعة"
+    },
+    "ingredients": {
+      "intro": "ما تشتريه العلامة التجارية، كل مكوّن بوحدة واحدة. مخزون الفرع في تبويب المخزون.",
+      "search": "بحث",
+      "add": "إضافة مكوّن",
+      "edit": "تغيير",
+      "empty": "لا يوجد مكوّن بعد.",
+      "unit": "الوحدة",
+      "cost": "تكلفة الوحدة",
+      "perUnit": "للوحدة",
+      "lowLevel": "منخفض تحت",
+      "lowLevelHint": "القيمة الافتراضية للعلامة التجارية. يمكن للفرع تحديد قيمته في تبويب المخزون.",
+      "lowAt": "منخفض عند {{level}}"
+    },
+    "stock": {
+      "intro": "مخزون الفرع. المكونات المنخفضة أولًا.",
+      "branch": "الفرع",
+      "ingredient": "المكوّن",
+      "quantity": "في المخزون",
+      "lowLevel": "منخفض تحت",
+      "value": "القيمة",
+      "total": "قيمة المخزون",
+      "low": "منخفض",
+      "onlyLow": "المنخفض فقط",
+      "noBranches": "لا يوجد فرع لعرضه.",
+      "empty": "لا يوجد ما يُعرض.",
+      "now": "في المخزون الآن: {{quantity}} {{unit}}.",
+      "setLevel": "تحديد الحد",
+      "levelPrompt": "حد الانخفاض لـ {{name}} في هذا الفرع (اتركه فارغًا للقيمة الافتراضية):"
+    },
+    "movements": {
+      "intro": "كل تغيير في المخزون، الأحدث أولًا.",
+      "kinds": {
+        "received": "استلام",
+        "adjustment": "تصحيح",
+        "waste": "هدر",
+        "sold": "مبيع",
+        "transfer_in": "تحويل وارد",
+        "transfer_out": "تحويل صادر",
+        "count": "جرد"
+      },
+      "quantity": "الكمية ({{unit}})",
+      "counted": "الكمية المعدودة ({{unit}})",
+      "note": "السبب",
+      "noteOptional": "ملاحظة (اختياري)",
+      "when": "متى",
+      "kind": "ماذا",
+      "change": "التغيير",
+      "after": "بعده",
+      "who": "من",
+      "empty": "لا توجد حركة بعد."
+    },
+    "transfers": {
+      "intro": "مخزون مُرسل بين فروع العلامة التجارية. الإرسال يخصمه من الفرع المرسل، والاستلام يضيفه إلى الفرع المستلم.",
+      "new": "تحويل جديد",
+      "number": "الرقم",
+      "direction": "الاتجاه",
+      "out": "إلى {{branch}}",
+      "in": "من {{branch}}",
+      "status": "الحالة",
+      "lines": "المكوّنات",
+      "sent": "الإرسال",
+      "open": "فتح",
+      "openFor": "فتح التحويل {{number}}",
+      "title": "التحويل {{number}}",
+      "titleLoading": "تحويل",
+      "route": "{{from}} ← {{to}}",
+      "empty": "لا يوجد تحويل بعد.",
+      "statuses": {
+        "sent": "مُرسل",
+        "received": "مُستلم",
+        "cancelled": "ملغى"
+      },
+      "toBranch": "الإرسال إلى",
+      "chooseBranch": "اختر فرعًا",
+      "noDestinations": "لا يوجد فرع نشط آخر في العلامة التجارية.",
+      "note": "ملاحظة (اختياري)",
+      "ingredient": "المكوّن",
+      "quantity": "الكمية",
+      "inStock": "في المخزون: {{quantity}} {{unit}}",
+      "add": "إضافة مكوّن",
+      "addButton": "إضافة",
+      "choose": "اختر مكوّنًا",
+      "remove": "إزالة",
+      "removeFor": "إزالة {{name}} من التحويل",
+      "send": "إرسال",
+      "receive": "استلام",
+      "cancel": "إلغاء التحويل",
+      "cancelReason": "لماذا يُلغى؟",
+      "confirmCancel": "تأكيد الإلغاء",
+      "close": "إغلاق",
+      "sentBy": "أرسله {{name}}، {{when}}",
+      "receivedBy": "استلمه {{name}}، {{when}}",
+      "cancelledBy": "ألغاه {{name}}، {{when}}: {{reason}}",
+      "messages": {
+        "sent": "تم إرسال التحويل. خرج المخزون من هذا الفرع.",
+        "received": "تم استلام التحويل. دخل المخزون.",
+        "cancelled": "تم إلغاء التحويل. عاد المخزون."
+      }
     }
   }
 }

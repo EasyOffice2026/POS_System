@@ -82,6 +82,11 @@ export function AdminLayout() {
             {t('nav.roles')}
           </NavLink>
         )}
+        {can('inventory:read') && (
+          <NavLink to="/admin/inventory" className={linkClass}>
+            {t('nav.inventory')}
+          </NavLink>
+        )}
         {can('shifts:read') && (
           <NavLink to="/admin/shifts" className={linkClass}>
             {t('nav.shifts')}

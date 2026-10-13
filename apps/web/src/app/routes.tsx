@@ -22,6 +22,11 @@ import { PosPage } from '../features/pos/PosPage';
 import { PosSetupPage } from '../features/pos/PosSetupPage';
 import { RolesPage } from '../features/roles/RolesPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
+import { IngredientsPage } from '../features/inventory/IngredientsPage';
+import { InventoryIndexRedirect, InventoryLayout } from '../features/inventory/InventoryLayout';
+import { MovementsPage } from '../features/inventory/MovementsPage';
+import { StockPage } from '../features/inventory/StockPage';
+import { TransfersPage } from '../features/inventory/TransfersPage';
 import { ShiftsPage } from '../features/shifts/ShiftsPage';
 import { UserFormPage } from '../features/users/UserFormPage';
 import { UsersPage } from '../features/users/UsersPage';
@@ -174,6 +179,21 @@ export const routes: RouteObject[] = [
                 <RolesPage />
               </RequirePermission>
             ),
+          },
+          {
+            path: 'inventory',
+            element: (
+              <RequirePermission permission="inventory:read">
+                <InventoryLayout />
+              </RequirePermission>
+            ),
+            children: [
+              { index: true, element: <InventoryIndexRedirect /> },
+              { path: 'ingredients', element: <IngredientsPage /> },
+              { path: 'stock', element: <StockPage /> },
+              { path: 'movements', element: <MovementsPage /> },
+              { path: 'transfers', element: <TransfersPage /> },
+            ],
           },
           {
             path: 'shifts',

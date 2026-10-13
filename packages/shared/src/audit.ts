@@ -37,6 +37,12 @@ export const auditActions = [
   'shift.opened',
   'shift.closed',
   'order.refunded',
+  'ingredient.created',
+  'ingredient.updated',
+  'menu.recipe.updated',
+  'stock_transfer.sent',
+  'stock_transfer.received',
+  'stock_transfer.cancelled',
 ] as const;
 
 export type AuditAction = (typeof auditActions)[number];

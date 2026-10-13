@@ -24,6 +24,9 @@ export const permissions = [
   'kitchen:write',
   'settings:write',
   'shifts:read',
+  'inventory:read',
+  'inventory:write',
+  'ingredients:write',
   'audit:read',
 ] as const;
 export const permissionSchema = z.enum(permissions);
@@ -73,6 +76,9 @@ export const systemRoles: readonly RoleDefinition[] = [
       'kitchen:write',
       'settings:write',
       'shifts:read',
+      'inventory:read',
+      'inventory:write',
+      'ingredients:write',
       'audit:read',
     ],
   },
@@ -97,6 +103,8 @@ export const systemRoles: readonly RoleDefinition[] = [
       'orders:refund',
       'kitchen:write',
       'shifts:read',
+      'inventory:read',
+      'inventory:write',
     ],
   },
   {
@@ -115,6 +123,6 @@ export const systemRoles: readonly RoleDefinition[] = [
     key: 'purchaser',
     name: 'Purchaser',
     scope: 'BRANCH',
-    permissions: ['branches:read', 'menu:read'],
+    permissions: ['branches:read', 'menu:read', 'inventory:read', 'inventory:write'],
   },
 ];

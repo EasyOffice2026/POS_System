@@ -20,7 +20,9 @@
     "statusInactive": "Inactive",
     "inactiveSuffix": "(inactive)",
     "nameEnglish": "Name (English)",
-    "nameArabic": "Name (Arabic)"
+    "nameArabic": "Name (Arabic)",
+    "activate": "Activate",
+    "deactivate": "Deactivate"
   },
   "nav": {
     "label": "Main menu",
@@ -34,7 +36,8 @@
     "pos": "POS terminal",
     "kds": "Kitchen screen",
     "settings": "Settings",
-    "shifts": "Shifts"
+    "shifts": "Shifts",
+    "inventory": "Inventory"
   },
   "language": {
     "switchTo": "Switch language",
@@ -101,7 +104,10 @@
     "kitchen_write": "Work the kitchen screen",
     "settings_write": "Change the settings",
     "shifts_read": "See the shifts",
-    "orders_refund": "Give refunds"
+    "orders_refund": "Give refunds",
+    "inventory_read": "See the stock",
+    "inventory_write": "Change the stock",
+    "ingredients_write": "Change the ingredients"
   },
   "users": {
     "title": "Users",
@@ -252,7 +258,21 @@
     "SHIFT_REQUIRED": "Open a shift before taking payments.",
     "REFUND_AMOUNT_INVALID": "Type an amount above 0, with up to 3 decimals.",
     "REFUND_TOO_MUCH": "That is more than what is left of the order.",
-    "REFUND_METHOD_INVALID": "Money goes back in cash, or the way the order was paid."
+    "REFUND_METHOD_INVALID": "Money goes back in cash, or the way the order was paid.",
+    "UNIT_INVALID": "Choose a unit.",
+    "UNIT_LOCKED": "The unit cannot change once the ingredient has movements.",
+    "QUANTITY_INVALID": "Type a quantity of 0 or more, with up to 3 decimals.",
+    "NOTE_REQUIRED": "Say why.",
+    "STOCK_NEGATIVE": "There is not that much in stock.",
+    "INGREDIENT_NOT_FOUND": "This ingredient is not available.",
+    "INGREDIENT_REQUIRED": "Choose an ingredient.",
+    "MOVEMENT_KIND_INVALID": "Choose what happened.",
+    "INGREDIENT_DUPLICATE": "Each ingredient can be on the recipe once.",
+    "RECIPE_TOO_LONG": "A recipe can have up to 50 ingredients.",
+    "TRANSFER_SAME_BRANCH": "Choose another branch to send to.",
+    "TRANSFER_EMPTY": "Add at least one ingredient.",
+    "TRANSFER_TOO_LONG": "A transfer can have up to 50 ingredients.",
+    "TRANSFER_NOT_SENT": "This transfer was received or cancelled already."
   },
   "rolesPage": {
     "title": "Roles",
@@ -313,7 +333,13 @@
       "brand_settings_updated": "Settings changed",
       "shift_opened": "Shift opened",
       "shift_closed": "Shift closed",
-      "order_refunded": "Refund given"
+      "order_refunded": "Refund given",
+      "ingredient_created": "Ingredient added",
+      "ingredient_updated": "Ingredient changed",
+      "menu_recipe_updated": "Recipe changed",
+      "stock_transfer_sent": "Transfer sent",
+      "stock_transfer_received": "Transfer received",
+      "stock_transfer_cancelled": "Transfer cancelled"
     }
   },
   "notFound": {
@@ -521,7 +547,8 @@
         "label": "Item settings",
         "details": "Details",
         "pricing": "Branch prices",
-        "modifiers": "Modifiers"
+        "modifiers": "Modifiers",
+        "recipe": "Recipe"
       }
     },
     "schedule": {
@@ -652,6 +679,27 @@
       "empty": "Nothing can be sold at this branch yet.",
       "combos": "Combos",
       "notNow": "Not available right now"
+    },
+    "recipe": {
+      "intro": "What one of this dish uses. When an order is paid, the branch's stock goes down by it.",
+      "modifierIntro": "What this choice adds to the dish. When an order is paid, the branch's stock goes down by it.",
+      "button": "Recipe",
+      "forName": "Recipe of {{name}}",
+      "ingredient": "Ingredient",
+      "quantity": "Quantity",
+      "cost": "Cost",
+      "total": "Cost of the ingredients",
+      "ofPrice": "{{percent}}% of the price",
+      "empty": "No recipe yet. The stock does not change when this is sold.",
+      "add": "Add an ingredient",
+      "addButton": "Add",
+      "choose": "Choose an ingredient",
+      "noIngredients": "No ingredient to add. Add some under Inventory first.",
+      "remove": "Remove",
+      "removeFor": "Remove {{name}} from the recipe",
+      "quantityInvalid": "Type a quantity above 0, with up to 3 decimals.",
+      "saved": "Recipe saved.",
+      "close": "Close"
     }
   },
   "weekdaysShort": {
@@ -989,6 +1037,123 @@
       "done": "Done",
       "refunds": "Refunds",
       "refundsTotal": "Given back"
+    }
+  },
+  "inventory": {
+    "title": "Inventory",
+    "brand": "Brand",
+    "tabs": {
+      "label": "Inventory sections",
+      "ingredients": "Ingredients",
+      "stock": "Stock",
+      "movements": "Movements",
+      "transfers": "Transfers"
+    },
+    "units": {
+      "g": "g",
+      "kg": "kg",
+      "ml": "ml",
+      "l": "l",
+      "piece": "piece"
+    },
+    "ingredients": {
+      "intro": "What the brand buys, counted in one unit each. A branch's stock is in the Stock tab.",
+      "search": "Search",
+      "add": "Add an ingredient",
+      "edit": "Change",
+      "empty": "No ingredient yet.",
+      "unit": "Unit",
+      "cost": "Cost of one unit",
+      "perUnit": "per unit",
+      "lowLevel": "Low below",
+      "lowLevelHint": "The brand's default. A branch can set its own in the Stock tab.",
+      "lowAt": "low at {{level}}"
+    },
+    "stock": {
+      "intro": "The stock of a branch. Low ingredients come first.",
+      "branch": "Branch",
+      "ingredient": "Ingredient",
+      "quantity": "In stock",
+      "lowLevel": "Low below",
+      "value": "Value",
+      "total": "Value of the stock",
+      "low": "Low",
+      "onlyLow": "Only what is low",
+      "noBranches": "No branch to show.",
+      "empty": "Nothing to show.",
+      "now": "In stock now: {{quantity}} {{unit}}.",
+      "setLevel": "Set level",
+      "levelPrompt": "Low level for {{name}} at this branch (leave empty for the brand's default):"
+    },
+    "movements": {
+      "intro": "Every change of the stock, newest first.",
+      "kinds": {
+        "received": "Received",
+        "adjustment": "Correction",
+        "waste": "Waste",
+        "sold": "Sold",
+        "transfer_in": "Transfer in",
+        "transfer_out": "Transfer out",
+        "count": "Count"
+      },
+      "quantity": "Quantity ({{unit}})",
+      "counted": "Counted in stock ({{unit}})",
+      "note": "Reason",
+      "noteOptional": "Note (optional)",
+      "when": "When",
+      "kind": "What",
+      "change": "Change",
+      "after": "After",
+      "who": "Who",
+      "empty": "No movement yet."
+    },
+    "transfers": {
+      "intro": "Stock sent between the branches of the brand. Sending takes it off the sender; receiving adds it at the receiver.",
+      "new": "New transfer",
+      "number": "Number",
+      "direction": "Direction",
+      "out": "To {{branch}}",
+      "in": "From {{branch}}",
+      "status": "Status",
+      "lines": "Ingredients",
+      "sent": "Sent",
+      "open": "Open",
+      "openFor": "Open transfer {{number}}",
+      "title": "Transfer {{number}}",
+      "titleLoading": "Transfer",
+      "route": "{{from}} → {{to}}",
+      "empty": "No transfer yet.",
+      "statuses": {
+        "sent": "Sent",
+        "received": "Received",
+        "cancelled": "Cancelled"
+      },
+      "toBranch": "Send to",
+      "chooseBranch": "Choose a branch",
+      "noDestinations": "The brand has no other active branch.",
+      "note": "Note (optional)",
+      "ingredient": "Ingredient",
+      "quantity": "Quantity",
+      "inStock": "In stock: {{quantity}} {{unit}}",
+      "add": "Add an ingredient",
+      "addButton": "Add",
+      "choose": "Choose an ingredient",
+      "remove": "Remove",
+      "removeFor": "Remove {{name}} from the transfer",
+      "send": "Send",
+      "receive": "Receive",
+      "cancel": "Cancel transfer",
+      "cancelReason": "Why is it cancelled?",
+      "confirmCancel": "Confirm the cancellation",
+      "close": "Close",
+      "sentBy": "Sent by {{name}}, {{when}}",
+      "receivedBy": "Received by {{name}}, {{when}}",
+      "cancelledBy": "Cancelled by {{name}}, {{when}}: {{reason}}",
+      "messages": {
+        "sent": "Transfer sent. The stock has left this branch.",
+        "received": "Transfer received. The stock is in.",
+        "cancelled": "Transfer cancelled. The stock is back."
+      }
     }
   }
 }
