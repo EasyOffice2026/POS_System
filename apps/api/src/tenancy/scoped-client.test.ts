@@ -1,0 +1,810 @@
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  createBranch,
+  createBrand,
+  createCategory,
+  createItem,
+  createUser,
+} from '../../test/factories';
+import { createTestPrisma, resetDatabase } from '../../test/helpers';
+import { createPasswordHasher, hashProfiles } from '../lib/password';
+import { syncSystemRoles } from '../lib/roles';
+import { applyScope, createScopedClient, TenantViolationError } from './scoped-client';
+
+const prisma = createTestPrisma();
+const hasher = createPasswordHasher(hashProfiles.fast);
+
+// Brand A has two branches and Brand B has one. Each brand has a user.
+interface World {
+  brandA: { id: string };
+  brandB: { id: string };
+  branchA1: { id: string };
+  branchA2: { id: string };
+  branchB1: { id: string };
+}
+
+let world: World;
+
+beforeAll(() => syncSystemRoles(prisma));
+afterAll(() => prisma.$disconnect());
+
+beforeEach(async () => {
+  await resetDatabase(prisma);
+  const brandA = await createBrand(prisma, 'Brand A');
+  const brandB = await createBrand(prisma, 'Brand B');
+  const branchA1 = await createBranch(prisma, brandA.id, 'A1');
+  const branchA2 = await createBranch(prisma, brandA.id, 'A2');
+  const branchB1 = await createBranch(prisma, brandB.id, 'B1');
+  await createUser(prisma, hasher, {
+    roleKey: 'brand_manager',
+    brandId: brandA.id,
+    email: 'a@x.io',
+  });
+  await createUser(prisma, hasher, {
+    roleKey: 'brand_manager',
+    brandId: brandB.id,
+    email: 'b@x.io',
+  });
+  world = { brandA, brandB, branchA1, branchA2, branchB1 };
+});
+
+function brandScope(brandId: string) {
+  return createScopedClient(prisma, { scope: 'BRAND', brandId, branchIds: [] });
+}
+
+function branchScope(brandId: string, branchIds: string[]) {
+  return createScopedClient(prisma, { scope: 'BRANCH', brandId, branchIds });
+}
+
+const groupScope = () =>
+  createScopedClient(prisma, { scope: 'GROUP', brandId: null, branchIds: [] });
+
+describe('reading as a brand-scoped user', () => {
+  it('only sees their own brand', async () => {
+    const db = brandScope(world.brandA.id);
+
+    expect((await db.brand.findMany()).map((b) => b.id)).toEqual([world.brandA.id]);
+    expect(await db.brand.count()).toBe(1);
+    expect(await db.brand.findUnique({ where: { id: world.brandB.id } })).toBeNull();
+    expect(await db.brand.findFirst({ where: { id: world.brandB.id } })).toBeNull();
+  });
+
+  it('only sees the branches and users of their own brand', async () => {
+    const db = brandScope(world.brandA.id);
+
+    const branches = await db.branch.findMany({ orderBy: { id: 'asc' } });
+    expect(branches.map((b) => b.id)).toEqual([world.branchA1.id, world.branchA2.id]);
+    expect(await db.branch.findUnique({ where: { id: world.branchB1.id } })).toBeNull();
+
+    const users = await db.user.findMany();
+    expect(users.map((u) => u.email)).toEqual(['a@x.io']);
+  });
+
+  it('cannot widen the filter by asking for another brand', async () => {
+    const db = brandScope(world.brandA.id);
+
+    expect(await db.branch.findMany({ where: { brandId: world.brandB.id } })).toEqual([]);
+
+    const both = await db.branch.findMany({
+      where: { OR: [{ brandId: world.brandA.id }, { brandId: world.brandB.id }] },
+    });
+    expect(both.every((b) => b.brandId === world.brandA.id)).toBe(true);
+    expect(both).toHaveLength(2);
+  });
+
+  it('keeps the filter when the query already uses AND', async () => {
+    const db = brandScope(world.brandA.id);
+
+    const result = await db.branch.findMany({
+      where: { AND: [{ brandId: world.brandB.id }] },
+    });
+
+    expect(result).toEqual([]);
+  });
+
+  it('applies to counts, aggregates and groups too', async () => {
+    const db = brandScope(world.brandA.id);
+
+    expect(await db.branch.count()).toBe(2);
+    expect((await db.branch.aggregate({ _count: true }))._count).toBe(2);
+
+    const groups = await db.branch.groupBy({ by: ['brandId'], _count: true });
+    expect(groups).toEqual([{ brandId: world.brandA.id, _count: 2 }]);
+  });
+});
+
+describe('reading as a branch-scoped user', () => {
+  it('only sees their assigned branches', async () => {
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    expect((await db.branch.findMany()).map((b) => b.id)).toEqual([world.branchA1.id]);
+    expect(await db.branch.findUnique({ where: { id: world.branchA2.id } })).toBeNull();
+    expect(await db.branch.findUnique({ where: { id: world.branchB1.id } })).toBeNull();
+  });
+
+  it('does not see brand-level audit rows, only rows of their branches', async () => {
+    await prisma.auditLog.createMany({
+      data: [
+        { brandId: world.brandA.id, branchId: null, action: 'brand.event' },
+        { brandId: world.brandA.id, branchId: world.branchA1.id, action: 'a1.event' },
+        { brandId: world.brandA.id, branchId: world.branchA2.id, action: 'a2.event' },
+        { brandId: world.brandB.id, branchId: world.branchB1.id, action: 'b1.event' },
+      ],
+    });
+
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    expect((await db.auditLog.findMany()).map((row) => row.action)).toEqual(['a1.event']);
+  });
+
+  it('sees nothing when no branch is assigned', async () => {
+    const db = branchScope(world.brandA.id, []);
+
+    expect(await db.branch.findMany()).toEqual([]);
+  });
+});
+
+describe('branch assignments', () => {
+  async function assign(email: string, branchId: string, brandId: string) {
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+    await prisma.userBranch.create({ data: { userId: user.id, branchId, brandId } });
+  }
+
+  beforeEach(async () => {
+    await assign('a@x.io', world.branchA1.id, world.brandA.id);
+    await assign('b@x.io', world.branchB1.id, world.brandB.id);
+  });
+
+  it('are only visible inside the brand', async () => {
+    const rows = await brandScope(world.brandA.id).userBranch.findMany();
+
+    expect(rows.map((row) => row.branchId)).toEqual([world.branchA1.id]);
+  });
+
+  it('are only visible for the assigned branches to a branch user', async () => {
+    await assign('a@x.io', world.branchA2.id, world.brandA.id);
+
+    const rows = await branchScope(world.brandA.id, [world.branchA2.id]).userBranch.findMany();
+
+    expect(rows.map((row) => row.branchId)).toEqual([world.branchA2.id]);
+  });
+
+  it('cannot be created for another brand', async () => {
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: 'a@x.io' } });
+
+    await expect(
+      brandScope(world.brandA.id).userBranch.create({
+        data: { userId: user.id, branchId: world.branchB1.id, brandId: world.brandB.id },
+      }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+  });
+
+  it('cannot name a branch of another brand, because the database refuses the pair', async () => {
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: 'a@x.io' } });
+
+    await expect(
+      prisma.userBranch.create({
+        data: { userId: user.id, branchId: world.branchB1.id, brandId: world.brandA.id },
+      }),
+    ).rejects.toMatchObject({ code: 'P2003' });
+  });
+
+  it('cannot be removed by another brand', async () => {
+    const removed = await brandScope(world.brandB.id).userBranch.deleteMany({
+      where: { branchId: world.branchA1.id },
+    });
+
+    expect(removed.count).toBe(0);
+    expect(await prisma.userBranch.count()).toBe(2);
+  });
+});
+
+describe('people, as a branch-scoped user', () => {
+  async function addCashier(email: string, branchIds: string[]) {
+    const user = await prisma.user.create({
+      data: {
+        brandId: world.brandA.id,
+        roleId: (await prisma.role.findUniqueOrThrow({ where: { key: 'cashier' } })).id,
+        name: email,
+        email,
+      },
+    });
+    for (const branchId of branchIds) {
+      await prisma.userBranch.create({
+        data: { userId: user.id, branchId, brandId: world.brandA.id },
+      });
+    }
+    return user;
+  }
+
+  beforeEach(async () => {
+    await addCashier('at-a1@x.io', [world.branchA1.id]);
+    await addCashier('at-a2@x.io', [world.branchA2.id]);
+    await addCashier('at-both@x.io', [world.branchA1.id, world.branchA2.id]);
+  });
+
+  it('only sees people who work at one of their branches', async () => {
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    const emails = (await db.user.findMany({ orderBy: { email: 'asc' } })).map((u) => u.email);
+
+    // The brand manager has no branch, and at-a2 works elsewhere.
+    expect(emails).toEqual(['at-a1@x.io', 'at-both@x.io']);
+  });
+
+  it('sees a person who works at several branches when one of them is theirs', async () => {
+    const db = branchScope(world.brandA.id, [world.branchA2.id]);
+
+    const emails = (await db.user.findMany({ orderBy: { email: 'asc' } })).map((u) => u.email);
+
+    expect(emails).toEqual(['at-a2@x.io', 'at-both@x.io']);
+  });
+
+  it('cannot reach a person at another branch by id', async () => {
+    const other = await prisma.user.findUniqueOrThrow({ where: { email: 'at-a2@x.io' } });
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    expect(await db.user.findUnique({ where: { id: other.id } })).toBeNull();
+    await expect(
+      db.user.update({ where: { id: other.id }, data: { name: 'Hacked' } }),
+    ).rejects.toMatchObject({ code: 'P2025' });
+  });
+
+  it('cannot create people', async () => {
+    const role = await prisma.role.findUniqueOrThrow({ where: { key: 'cashier' } });
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    await expect(
+      db.user.create({ data: { brandId: world.brandA.id, roleId: role.id, name: 'New' } }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+  });
+
+  it('a brand-scoped person still sees everybody in the brand', async () => {
+    const emails = (await brandScope(world.brandA.id).user.findMany()).map((u) => u.email);
+
+    expect(emails).toEqual(
+      expect.arrayContaining(['a@x.io', 'at-a1@x.io', 'at-a2@x.io', 'at-both@x.io']),
+    );
+  });
+});
+
+describe('reading as a group user', () => {
+  it('sees every brand, branch and user', async () => {
+    const db = groupScope();
+
+    expect(await db.brand.count()).toBe(2);
+    expect(await db.branch.count()).toBe(3);
+    expect(await db.user.count()).toBe(2);
+  });
+});
+
+describe('writing as a brand-scoped user', () => {
+  it('cannot update another brand, and nothing changes', async () => {
+    const db = brandScope(world.brandA.id);
+
+    await expect(
+      db.branch.update({ where: { id: world.branchB1.id }, data: { isActive: false } }),
+    ).rejects.toMatchObject({ code: 'P2025' });
+
+    const untouched = await prisma.branch.findUniqueOrThrow({ where: { id: world.branchB1.id } });
+    expect(untouched.isActive).toBe(true);
+  });
+
+  it('only changes their own rows with updateMany', async () => {
+    const db = brandScope(world.brandA.id);
+
+    const result = await db.branch.updateMany({ data: { isActive: false } });
+
+    expect(result.count).toBe(2);
+    expect(await prisma.branch.count({ where: { isActive: false } })).toBe(2);
+    const other = await prisma.branch.findUniqueOrThrow({ where: { id: world.branchB1.id } });
+    expect(other.isActive).toBe(true);
+  });
+
+  it('cannot delete another brand, and only deletes their own rows with deleteMany', async () => {
+    const db = brandScope(world.brandA.id);
+
+    await expect(db.branch.delete({ where: { id: world.branchB1.id } })).rejects.toMatchObject({
+      code: 'P2025',
+    });
+
+    const result = await db.branch.deleteMany();
+    expect(result.count).toBe(2);
+    expect(await prisma.branch.count()).toBe(1);
+  });
+
+  it('cannot move a row to another brand', async () => {
+    const db = brandScope(world.brandA.id);
+
+    await expect(
+      db.branch.update({ where: { id: world.branchA1.id }, data: { brandId: world.brandB.id } }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+    await expect(
+      db.branch.update({
+        where: { id: world.branchA1.id },
+        data: { brandId: { set: world.brandB.id } },
+      }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+  });
+
+  it('cannot create rows for another brand', async () => {
+    const db = brandScope(world.brandA.id);
+
+    await expect(
+      db.branch.create({
+        data: { brandId: world.brandB.id, name: { en: 'Sneaky', ar: 'خفي' } },
+      }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+    await expect(
+      db.branch.createMany({
+        data: [{ brandId: world.brandB.id, name: { en: 'Sneaky', ar: 'خفي' } }],
+      }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+
+    expect(await prisma.branch.count({ where: { brandId: world.brandB.id } })).toBe(1);
+  });
+
+  it('creates rows in their own brand, filling in the brand when it is left out', async () => {
+    const db = brandScope(world.brandA.id);
+
+    const created = await db.branch.create({
+      data: { name: { en: 'New', ar: 'جديد' } } as never,
+    });
+
+    expect(created.brandId).toBe(world.brandA.id);
+  });
+
+  it('cannot create brands', async () => {
+    const db = brandScope(world.brandA.id);
+
+    await expect(
+      db.brand.create({ data: { name: { en: 'New brand', ar: 'علامة جديدة' } } }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+  });
+
+  it('cannot reach another brand through upsert', async () => {
+    const db = brandScope(world.brandA.id);
+
+    await expect(
+      db.branch.upsert({
+        where: { id: world.branchB1.id },
+        update: { isActive: false },
+        create: { brandId: world.brandB.id, name: { en: 'x', ar: 'x' } },
+      }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+  });
+});
+
+describe('writing as a branch-scoped user', () => {
+  it('cannot create or move rows into a branch that is not assigned', async () => {
+    await prisma.auditLog.create({
+      data: { brandId: world.brandA.id, branchId: world.branchA1.id, action: 'x' },
+    });
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    await expect(
+      db.auditLog.create({
+        data: { brandId: world.brandA.id, branchId: world.branchA2.id, action: 'y' },
+      }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+    await expect(
+      db.auditLog.updateMany({ data: { branchId: world.branchA2.id } }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+  });
+
+  it('cannot create branches', async () => {
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    await expect(
+      db.branch.create({ data: { brandId: world.brandA.id, name: { en: 'x', ar: 'x' } } }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+  });
+});
+
+describe('writing as a group user', () => {
+  it('can create brands and write to any brand', async () => {
+    const db = groupScope();
+
+    const brand = await db.brand.create({ data: { name: { en: 'New', ar: 'جديد' } } });
+    const branch = await db.branch.create({
+      data: { brandId: brand.id, name: { en: 'New branch', ar: 'فرع جديد' } },
+    });
+
+    expect(branch.brandId).toBe(brand.id);
+    await db.branch.update({ where: { id: world.branchB1.id }, data: { isActive: false } });
+  });
+});
+
+describe('what the scoped client refuses', () => {
+  const db = () => brandScope(world.brandA.id);
+
+  it('loading related rows with include or a nested select', async () => {
+    await expect(db().brand.findMany({ include: { branches: true } } as never)).rejects.toThrow(
+      /include/,
+    );
+    await expect(
+      db().brand.findMany({ select: { id: true, branches: { select: { id: true } } } } as never),
+    ).rejects.toThrow(/related rows/);
+  });
+
+  it('plain column selects are fine', async () => {
+    const rows = await db().brand.findMany({ select: { id: true } });
+
+    expect(rows).toEqual([{ id: world.brandA.id }]);
+  });
+
+  it('nested writes', async () => {
+    await expect(
+      db().user.create({
+        data: {
+          roleId: '00000000-0000-7000-8000-000000000000',
+          name: 'x',
+          branches: { create: [{ branchId: world.branchA1.id, brandId: world.brandA.id }] },
+        },
+      }),
+    ).rejects.toThrow(/Nested writes/);
+    await expect(
+      db().branch.update({
+        where: { id: world.branchA1.id },
+        data: { brand: { connect: { id: world.brandB.id } } },
+      }),
+    ).rejects.toThrow(/Nested writes/);
+  });
+
+  it('raw SQL', async () => {
+    await expect(db().$queryRaw`select 1`).rejects.toThrow(/Raw queries/);
+    await expect(db().$executeRawUnsafe('delete from branches')).rejects.toThrow(/Raw queries/);
+    expect(await prisma.branch.count()).toBe(3);
+  });
+
+  it('models without tenant rules', async () => {
+    await expect(db().refreshToken.findMany()).rejects.toThrow(/no tenant rules/);
+  });
+
+  it('writes to the built-in roles, which are read-only', async () => {
+    expect(await db().role.count()).toBe(7);
+    await expect(db().role.deleteMany()).rejects.toThrow(/read-only/);
+  });
+});
+
+describe('the menu', () => {
+  let categoryA: { id: string };
+  let categoryB: { id: string };
+  let itemA: { id: string };
+  let itemB: { id: string };
+
+  beforeEach(async () => {
+    categoryA = await createCategory(prisma, world.brandA.id, 'Pizzas');
+    categoryB = await createCategory(prisma, world.brandB.id, 'Burgers');
+    itemA = await createItem(prisma, world.brandA.id, categoryA.id, 'Margherita');
+    itemB = await createItem(prisma, world.brandB.id, categoryB.id, 'Cheeseburger');
+  });
+
+  it('is only seen inside the brand by a brand-scoped person', async () => {
+    const db = brandScope(world.brandA.id);
+
+    expect((await db.menuCategory.findMany()).map((row) => row.id)).toEqual([categoryA.id]);
+    expect((await db.menuItem.findMany()).map((row) => row.id)).toEqual([itemA.id]);
+    expect(await db.menuItem.findUnique({ where: { id: itemB.id } })).toBeNull();
+    expect(await db.menuItem.count()).toBe(1);
+  });
+
+  it('is seen in every brand by a group user', async () => {
+    const items = await groupScope().menuItem.findMany();
+
+    expect(items.map((row) => row.id).sort()).toEqual([itemA.id, itemB.id].sort());
+  });
+
+  it('is read in full by a branch-scoped person, because the menu belongs to the brand', async () => {
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    expect((await db.menuItem.findMany()).map((row) => row.id)).toEqual([itemA.id]);
+    expect((await db.menuCategory.findMany()).map((row) => row.id)).toEqual([categoryA.id]);
+  });
+
+  it('cannot be changed by a branch-scoped person', async () => {
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    await expect(
+      db.menuCategory.create({
+        data: { brandId: world.brandA.id, name: { en: 'Sides', ar: 'جانبية' } },
+      }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+    await expect(
+      db.menuItem.update({ where: { id: itemA.id }, data: { isActive: false } }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+    await expect(db.menuItem.deleteMany()).rejects.toBeInstanceOf(TenantViolationError);
+
+    expect((await prisma.menuItem.findUniqueOrThrow({ where: { id: itemA.id } })).isActive).toBe(
+      true,
+    );
+  });
+
+  it('cannot be created for another brand by a brand-scoped person', async () => {
+    const db = brandScope(world.brandA.id);
+
+    await expect(
+      db.menuCategory.create({
+        data: { brandId: world.brandB.id, name: { en: 'Sides', ar: 'جانبية' } },
+      }),
+    ).rejects.toBeInstanceOf(TenantViolationError);
+  });
+
+  it('cannot be reached in another brand by id', async () => {
+    const db = brandScope(world.brandA.id);
+
+    await expect(
+      db.menuItem.update({ where: { id: itemB.id }, data: { isActive: false } }),
+    ).rejects.toThrow();
+    expect(
+      await db.menuItem.updateMany({ where: { id: itemB.id }, data: { isActive: false } }),
+    ).toEqual({
+      count: 0,
+    });
+    expect((await prisma.menuItem.findUniqueOrThrow({ where: { id: itemB.id } })).isActive).toBe(
+      true,
+    );
+  });
+
+  it('keeps the limit inside a transaction', async () => {
+    const db = brandScope(world.brandA.id);
+
+    const seen = await db.$transaction(async (tx) => tx.menuItem.findMany());
+
+    expect(seen.map((row) => row.id)).toEqual([itemA.id]);
+  });
+});
+
+describe('what a branch changes about the menu', () => {
+  let itemA: { id: string };
+
+  beforeEach(async () => {
+    const category = await createCategory(prisma, world.brandA.id, 'Pizzas');
+    itemA = await createItem(prisma, world.brandA.id, category.id, 'Margherita');
+    for (const branch of [world.branchA1, world.branchA2]) {
+      await prisma.branchMenuItem.create({
+        data: {
+          branchId: branch.id,
+          itemId: itemA.id,
+          brandId: world.brandA.id,
+          priceOverride: '22.500',
+        },
+      });
+    }
+  });
+
+  it('is seen for every branch of the brand by a brand-scoped person', async () => {
+    const rows = await brandScope(world.brandA.id).branchMenuItem.findMany();
+
+    expect(rows.map((row) => row.branchId).sort()).toEqual(
+      [world.branchA1.id, world.branchA2.id].sort(),
+    );
+  });
+
+  it('is seen only for their own branches by a branch-scoped person', async () => {
+    const rows = await branchScope(world.brandA.id, [world.branchA1.id]).branchMenuItem.findMany();
+
+    expect(rows.map((row) => row.branchId)).toEqual([world.branchA1.id]);
+  });
+
+  it('is not seen by another brand', async () => {
+    expect(await brandScope(world.brandB.id).branchMenuItem.findMany()).toEqual([]);
+  });
+
+  it('can be written for their own branch, and not for another, by a branch-scoped person', async () => {
+    const db = branchScope(world.brandA.id, [world.branchA1.id]);
+
+    await expect(
+      db.branchMenuItem.update({
+        where: { branchId_itemId: { branchId: world.branchA1.id, itemId: itemA.id } },
+        data: { isAvailable: false },
+      }),
+    ).resolves.toMatchObject({ isAvailable: false });
+    await expect(
+      db.branchMenuItem.update({
+        where: { branchId_itemId: { branchId: world.branchA2.id, itemId: itemA.id } },
+        data: { isAvailable: false },
+      }),
+    ).rejects.toThrow();
+  });
+});
+
+describe('what the database refuses in the menu', () => {
+  let categoryA: { id: string };
+  let categoryB: { id: string };
+  let itemA: { id: string };
+  let itemB: { id: string };
+
+  beforeEach(async () => {
+    categoryA = await createCategory(prisma, world.brandA.id, 'Pizzas');
+    categoryB = await createCategory(prisma, world.brandB.id, 'Burgers');
+    itemA = await createItem(prisma, world.brandA.id, categoryA.id, 'Margherita');
+    itemB = await createItem(prisma, world.brandB.id, categoryB.id, 'Cheeseburger');
+  });
+
+  const names = { en: 'X', ar: 'س' };
+
+  it('an item whose category belongs to another brand', async () => {
+    await expect(
+      prisma.menuItem.create({
+        data: {
+          brandId: world.brandB.id,
+          categoryId: categoryA.id,
+          name: names,
+          basePrice: '1.000',
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('a branch override that pairs a branch with an item of another brand', async () => {
+    await expect(
+      prisma.branchMenuItem.create({
+        data: { branchId: world.branchA1.id, itemId: itemB.id, brandId: world.brandA.id },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.branchMenuItem.create({
+        data: { branchId: world.branchB1.id, itemId: itemA.id, brandId: world.brandA.id },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('a modifier group on an item of another brand, and a modifier in a group of another brand', async () => {
+    await expect(
+      prisma.modifierGroup.create({
+        data: { brandId: world.brandB.id, itemId: itemA.id, name: names },
+      }),
+    ).rejects.toThrow();
+
+    const group = await prisma.modifierGroup.create({
+      data: { brandId: world.brandA.id, itemId: itemA.id, name: names },
+    });
+    await expect(
+      prisma.modifier.create({
+        data: { brandId: world.brandB.id, groupId: group.id, name: names },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('a combo option for an item of another brand', async () => {
+    const combo = await prisma.combo.create({
+      data: { brandId: world.brandA.id, name: names, price: '30.000' },
+    });
+    const slot = await prisma.comboSlot.create({
+      data: { brandId: world.brandA.id, comboId: combo.id, name: names },
+    });
+
+    await expect(
+      prisma.comboSlotOption.create({
+        data: { slotId: slot.id, itemId: itemB.id, brandId: world.brandA.id },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.comboSlotOption.create({
+        data: { slotId: slot.id, itemId: itemA.id, brandId: world.brandA.id },
+      }),
+    ).resolves.toBeTruthy();
+  });
+
+  it('a price below zero, for an item, a combo and a branch price', async () => {
+    await expect(
+      prisma.menuItem.create({
+        data: {
+          brandId: world.brandA.id,
+          categoryId: categoryA.id,
+          name: names,
+          basePrice: '-0.001',
+        },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.combo.create({ data: { brandId: world.brandA.id, name: names, price: '-1.000' } }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.branchMenuItem.create({
+        data: {
+          branchId: world.branchA1.id,
+          itemId: itemA.id,
+          brandId: world.brandA.id,
+          priceOverride: '-5.000',
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('a modifier with a price change below zero is fine', async () => {
+    const group = await prisma.modifierGroup.create({
+      data: { brandId: world.brandA.id, itemId: itemA.id, name: names },
+    });
+
+    await expect(
+      prisma.modifier.create({
+        data: { brandId: world.brandA.id, groupId: group.id, name: names, priceDelta: '-3.000' },
+      }),
+    ).resolves.toBeTruthy();
+  });
+
+  it('a smallest choice above the largest, or a largest below 1', async () => {
+    const group = (minSelect: number, maxSelect: number) =>
+      prisma.modifierGroup.create({
+        data: { brandId: world.brandA.id, itemId: itemA.id, name: names, minSelect, maxSelect },
+      });
+
+    await expect(group(3, 2)).rejects.toThrow();
+    await expect(group(0, 0)).rejects.toThrow();
+    await expect(group(-1, 2)).rejects.toThrow();
+    await expect(group(1, 1)).resolves.toBeTruthy();
+  });
+
+  it('the deletion of an item that has options, overrides or groups', async () => {
+    await prisma.modifierGroup.create({
+      data: { brandId: world.brandA.id, itemId: itemA.id, name: names },
+    });
+
+    await expect(prisma.menuItem.delete({ where: { id: itemA.id } })).rejects.toThrow();
+    await expect(prisma.menuCategory.delete({ where: { id: categoryA.id } })).rejects.toThrow();
+  });
+});
+
+describe('transactions', () => {
+  it('keep the limit inside an interactive transaction', async () => {
+    const db = brandScope(world.brandA.id);
+
+    const branches = await db.$transaction(async (tx) => tx.branch.findMany());
+
+    expect(branches).toHaveLength(2);
+  });
+});
+
+describe('createScopedClient', () => {
+  it('needs a brand id for brand and branch scope', () => {
+    expect(() =>
+      createScopedClient(prisma, { scope: 'BRAND', brandId: null, branchIds: [] }),
+    ).toThrow(/brand id/);
+    expect(() =>
+      createScopedClient(prisma, { scope: 'BRANCH', brandId: null, branchIds: [] }),
+    ).toThrow(/brand id/);
+  });
+});
+
+describe('applyScope', () => {
+  const brandCtx = { scope: 'BRAND', brandId: 'brand-1', branchIds: [] } as const;
+
+  it('keeps unique fields at the top level so findUnique still works', () => {
+    const args = applyScope('Branch', 'findUnique', { where: { id: 'b1' } }, brandCtx);
+
+    expect(args.where).toEqual({ id: 'b1', AND: [{ AND: [{ brandId: 'brand-1' }] }] });
+  });
+
+  it('merges with an AND the caller already wrote', () => {
+    const args = applyScope('Branch', 'findMany', { where: { AND: { isActive: true } } }, brandCtx);
+
+    expect(args.where).toEqual({
+      AND: [{ isActive: true }, { AND: [{ brandId: 'brand-1' }] }],
+    });
+  });
+
+  it('does not change the arguments it was given', () => {
+    const original = { where: { isActive: true } };
+
+    applyScope('Branch', 'findMany', original, brandCtx);
+
+    expect(original).toEqual({ where: { isActive: true } });
+  });
+
+  it('leaves queries unfiltered for a group user', () => {
+    const args = applyScope(
+      'Branch',
+      'findMany',
+      { where: { isActive: true } },
+      { scope: 'GROUP', brandId: null, branchIds: [] },
+    );
+
+    expect(args.where).toEqual({ isActive: true });
+  });
+
+  it('refuses an operation it does not know', () => {
+    expect(() => applyScope('Branch', 'findRaw', {}, brandCtx)).toThrow(/not supported/);
+  });
+});

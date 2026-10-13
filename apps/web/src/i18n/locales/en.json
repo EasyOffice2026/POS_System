@@ -1,0 +1,911 @@
+{
+  "app": {
+    "name": "POS System"
+  },
+  "common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "back": "Back",
+    "loadMore": "Load more",
+    "all": "All",
+    "optional": "Optional",
+    "copy": "Copy",
+    "copied": "Copied",
+    "noPermission": "You do not have permission to open this page.",
+    "loadError": "Could not load the data.",
+    "saveError": "Could not save. Try again.",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "inactiveSuffix": "(inactive)",
+    "nameEnglish": "Name (English)",
+    "nameArabic": "Name (Arabic)"
+  },
+  "nav": {
+    "label": "Main menu",
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "roles": "Roles",
+    "audit": "Audit log",
+    "brands": "Brands",
+    "branches": "Branches",
+    "menu": "Menu",
+    "pos": "POS terminal",
+    "kds": "Kitchen screen",
+    "settings": "Settings"
+  },
+  "language": {
+    "switchTo": "Switch language",
+    "english": "English",
+    "arabic": "العربية"
+  },
+  "auth": {
+    "signInTitle": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "signOut": "Sign out",
+    "errors": {
+      "INVALID_CREDENTIALS": "The email or password is not correct.",
+      "ACCOUNT_LOCKED": "This account is locked after too many failed attempts.",
+      "retryIn_one": "Try again in {{count}} minute.",
+      "retryIn_other": "Try again in {{count}} minutes.",
+      "RATE_LIMITED": "Too many attempts. Wait a few minutes and try again.",
+      "network": "Cannot reach the server. Check your connection and try again.",
+      "unknown": "Something went wrong. Try again."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {{name}}",
+    "role": "Role: {{role}}",
+    "brands": "Brands",
+    "branches": "Branches",
+    "noBrands": "There are no brands to show.",
+    "noBranches": "This brand has no branches yet.",
+    "loadError": "Could not load the data.",
+    "noAccess": "Your role has no dashboard sections yet."
+  },
+  "roles": {
+    "group_admin": "Group Admin",
+    "brand_manager": "Brand Manager",
+    "marketing": "Marketing",
+    "branch_manager": "Branch Manager",
+    "cashier": "Cashier",
+    "kitchen": "Kitchen",
+    "purchaser": "Purchaser"
+  },
+  "scopes": {
+    "GROUP": "Group",
+    "BRAND": "Brand",
+    "BRANCH": "Branch"
+  },
+  "permissions": {
+    "brands_read": "See brands",
+    "brands_write": "Change brands",
+    "branches_read": "See branches",
+    "branches_write": "Change branches",
+    "users_read": "See users",
+    "users_write": "Change users",
+    "roles_read": "See roles",
+    "menu_read": "See the menu",
+    "menu_write": "Change the menu",
+    "audit_read": "See the audit log",
+    "orders_read": "See orders",
+    "orders_write": "Take orders",
+    "orders_void": "Void orders",
+    "orders_discount": "Give discounts",
+    "kitchen_write": "Work the kitchen screen",
+    "settings_write": "Change the settings"
+  },
+  "users": {
+    "title": "Users",
+    "newUser": "New user",
+    "editUser": "Edit user",
+    "empty": "No users match these filters.",
+    "search": "Search",
+    "searchPlaceholder": "Name, email or staff code",
+    "filterRole": "Role",
+    "filterStatus": "Status",
+    "never": "Never",
+    "lockedUntil": "Locked until {{time}}",
+    "columns": {
+      "name": "Name",
+      "role": "Role",
+      "signIn": "Sign-in",
+      "branches": "Branches",
+      "status": "Status",
+      "lastSignIn": "Last sign-in"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "locked": "Locked"
+    },
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "staffCode": "Staff code",
+      "role": "Role",
+      "brand": "Brand",
+      "branches": "Branches",
+      "language": "Language",
+      "password": "Password",
+      "pin": "PIN",
+      "chooseRole": "Choose a role",
+      "chooseBrand": "Choose a brand",
+      "noBranches": "There are no branches in this brand yet.",
+      "signInHint": "Give an email, a staff code, or both.",
+      "staffCodeHint": "A staff code and a PIN let this person sign in at a branch terminal.",
+      "initialPasswordHint": "Optional. It can be set later.",
+      "initialPinHint": "Optional. It can be set later.",
+      "yourOwnRole": "You cannot change your own role."
+    },
+    "messages": {
+      "created": "User created.",
+      "saved": "Changes saved.",
+      "deactivated": "The account is deactivated and signed out everywhere.",
+      "activated": "The account is active again.",
+      "unlocked": "The account is unlocked."
+    },
+    "actions": {
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "unlock": "Unlock",
+      "viewActivity": "View activity"
+    },
+    "credentials": {
+      "title": "Password and PIN",
+      "type": "What to set",
+      "typePassword": "Password",
+      "typePin": "PIN",
+      "value": "New value",
+      "valueHint": "Leave empty to make one for you.",
+      "set": "Set",
+      "generatedPin": "The new PIN is shown only now. Copy it and give it to the person.",
+      "generatedPassword": "The new password is shown only now. Copy it and give it to the person.",
+      "needsEmail": "A password needs an email.",
+      "needsStaffCode": "A PIN needs a staff code.",
+      "pinOnlyBranch": "Only branch roles sign in with a PIN.",
+      "done": "Saved. The person's sessions were ended."
+    }
+  },
+  "validation": {
+    "invalid": "Check the highlighted fields.",
+    "required": "This field is required.",
+    "emailInvalid": "Enter a valid email.",
+    "PIN_FORMAT": "A PIN has 4 to 6 digits.",
+    "PIN_REPEATED": "A PIN cannot be one digit repeated.",
+    "PIN_SEQUENCE": "A PIN cannot be a straight run such as 1234.",
+    "PASSWORD_TOO_SHORT": "A password needs at least 10 characters.",
+    "PASSWORD_TOO_LONG": "A password can have at most 128 characters.",
+    "EMAIL_OR_STAFF_CODE_REQUIRED": "Give an email or a staff code.",
+    "PASSWORD_NEEDS_EMAIL": "A password needs an email.",
+    "PIN_NEEDS_STAFF_CODE": "A PIN needs a staff code.",
+    "PIN_ONLY_FOR_BRANCH_ROLES": "Only branch roles sign in with a PIN.",
+    "STAFF_CODE_NEEDS_BRAND": "A group admin has no staff code.",
+    "BRAND_REQUIRED": "Choose a brand.",
+    "BRAND_NOT_FOUND": "This brand does not exist.",
+    "BRAND_NOT_ALLOWED_FOR_GROUP_ROLE": "A group admin belongs to no brand.",
+    "BRANCH_REQUIRED": "Pick at least one branch.",
+    "BRANCH_NOT_FOUND": "A chosen branch does not exist in this brand.",
+    "BRANCHES_NOT_ALLOWED_FOR_ROLE": "This role has no branches.",
+    "ROLE_NOT_FOUND": "This role does not exist.",
+    "EMAIL_TAKEN": "This email is already used.",
+    "STAFF_CODE_TAKEN": "This staff code is already used.",
+    "FORBIDDEN": "You are not allowed to do this.",
+    "NOT_FOUND": "This person does not exist or you cannot see them.",
+    "NAME_REQUIRED": "Enter the name in this language.",
+    "NAME_TOO_LONG": "A name can have at most 100 characters.",
+    "LOGO_URL_INVALID": "Enter a web link that starts with http:// or https://.",
+    "ADDRESS_TOO_LONG": "An address can have at most 300 characters.",
+    "TIMEZONE_INVALID": "Choose a real time zone, for example Asia/Riyadh.",
+    "HOURS_TIME_FORMAT": "Enter a time.",
+    "HOURS_RANGE_EMPTY": "The closing time must differ from the opening time.",
+    "HOURS_RANGES_REQUIRED": "Add at least one range, or choose Closed.",
+    "HOURS_TOO_MANY_RANGES": "A day can have at most 6 ranges.",
+    "HOURS_OVERLAP": "These hours overlap with other hours.",
+    "PRINTER_NAME_REQUIRED": "Enter a name for the printer.",
+    "PRINTER_NAME_TOO_LONG": "A printer name can have at most 60 characters.",
+    "PRINTER_NAME_TAKEN": "Another printer at this branch has this name.",
+    "PRINTER_HOST_INVALID": "Enter an IP address or a host name, without http:// and without a port.",
+    "PRINTER_PORT_INVALID": "The port is a number from 1 to 65535.",
+    "PRINTERS_TOO_MANY": "A branch can have at most 20 printers.",
+    "ITEM_NOT_FOUND": "This item does not exist, or you cannot see it.",
+    "PRICE_INVALID": "Enter a number with at most 3 decimals, for example 12.500.",
+    "IMAGE_URL_INVALID": "Enter a web link that starts with http:// or https://.",
+    "DESCRIPTION_REQUIRED": "Write the description in both languages, or leave both empty.",
+    "DESCRIPTION_TOO_LONG": "A description can have at most 500 characters.",
+    "CATEGORY_NOT_FOUND": "This category does not exist in this brand.",
+    "CATEGORY_LIMIT": "A brand can have at most 500 categories.",
+    "ORDER_MISMATCH": "The categories changed in the meantime. Reload the page and try again.",
+    "MODIFIER_LIMIT": "A group can have at most 50 modifiers.",
+    "MIN_SELECT_INVALID": "Enter a whole number from 0 to 20.",
+    "MAX_SELECT_INVALID": "Enter a whole number from 1 to 20.",
+    "SELECT_RANGE_INVALID": "The most choices cannot be fewer than the least choices.",
+    "SLOT_NEEDS_OPTION": "Add at least one item to this choice.",
+    "COMBO_NEEDS_SLOT": "A combo needs at least one choice.",
+    "TOO_MANY_SLOTS": "A combo can have at most 10 choices.",
+    "TOO_MANY_OPTIONS": "A choice can have at most 30 items.",
+    "OPTION_DUPLICATE": "This item is already in this choice.",
+    "CATEGORY_REQUIRED": "Choose a category.",
+    "ITEM_REQUIRED": "Choose an item.",
+    "STATION_NOT_FOUND": "Choose a kitchen station of this brand.",
+    "PAYMENT_METHOD_INVALID": "This way to pay is not available.",
+    "PAYMENT_METHOD_KEY_INVALID": "A key has only small letters, digits and underscores, and is not \"cash\".",
+    "PAYMENT_METHOD_KEY_TAKEN": "Two ways to pay have the same key.",
+    "PAYMENT_METHODS_TOO_MANY": "At most 20 ways to pay.",
+    "DISCOUNT_PRESET_INVALID": "Each button is a percentage above 0, listed once.",
+    "DISCOUNT_PRESETS_TOO_MANY": "At most 10 buttons.",
+    "PERCENT_INVALID": "Type a percentage from 0 to 100.",
+    "VOID_RULE_INVALID": "Choose one of the options.",
+    "TICKET_DONE_BY_INVALID": "Choose one of the options.",
+    "KITCHEN_STATIONS_TOO_MANY": "At most 10 stations."
+  },
+  "rolesPage": {
+    "title": "Roles",
+    "intro": "These are the built-in roles and what each one may do. The server checks permissions on every request.",
+    "permission": "Permission",
+    "scope": "Scope",
+    "allowed": "Allowed",
+    "notAllowed": "Not allowed"
+  },
+  "audit": {
+    "title": "Audit log",
+    "filterAction": "Action",
+    "filterFrom": "From",
+    "filterTo": "To",
+    "onePerson": "Showing the activity of one person.",
+    "clear": "Clear filters",
+    "empty": "No events match these filters.",
+    "unknownPerson": "—",
+    "showDetails": "Show",
+    "columns": {
+      "when": "When",
+      "action": "Action",
+      "person": "Person",
+      "details": "Details",
+      "address": "IP address"
+    },
+    "actions": {
+      "auth_login_success": "Signed in",
+      "auth_login_failed": "Failed sign-in",
+      "auth_login_locked": "Account locked",
+      "auth_login_blocked": "Sign-in blocked (account locked)",
+      "auth_logout": "Signed out",
+      "auth_refresh_reuse_detected": "Session token reused",
+      "user_created": "User created",
+      "user_updated": "User changed",
+      "user_credentials_reset": "Password or PIN set",
+      "user_unlocked": "User unlocked",
+      "brand_created": "Brand created",
+      "brand_updated": "Brand changed",
+      "branch_created": "Branch created",
+      "branch_updated": "Branch changed",
+      "menu_category_created": "Menu category created",
+      "menu_category_updated": "Menu category changed",
+      "menu_category_reordered": "Menu categories re-ordered",
+      "menu_item_created": "Menu item created",
+      "menu_item_updated": "Menu item changed",
+      "menu_item_branch_override_set": "Branch price or availability set",
+      "menu_modifier_group_created": "Modifier group created",
+      "menu_modifier_group_updated": "Modifier group changed",
+      "menu_modifier_created": "Modifier created",
+      "menu_modifier_updated": "Modifier changed",
+      "menu_combo_created": "Combo created",
+      "menu_combo_updated": "Combo changed",
+      "order_voided": "Order voided",
+      "order_line_voided": "Order line voided",
+      "order_discount_set": "Discount given",
+      "order_discount_removed": "Discount removed",
+      "brand_settings_updated": "Settings changed"
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "back": "Back to the dashboard"
+  },
+  "weekdays": {
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday"
+  },
+  "brands": {
+    "title": "Brands",
+    "newBrand": "New brand",
+    "editBrand": "Edit brand",
+    "empty": "There are no brands yet.",
+    "created": "Brand created.",
+    "saved": "Changes saved.",
+    "columns": {
+      "name": "Name",
+      "status": "Status",
+      "branches": "Branches"
+    },
+    "form": {
+      "logoUrl": "Logo link",
+      "logoUrlHint": "A link to a picture. Uploading a file comes later.",
+      "active": "Active",
+      "activeHint": "Leave this off to set the brand up before it opens."
+    },
+    "actions": {
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "viewBranches": "View branches"
+    },
+    "messages": {
+      "deactivated": "The brand is deactivated.",
+      "activated": "The brand is active again."
+    },
+    "deactivateHint": "A deactivated brand keeps its branches, people and history. Staff cannot sign in at its branches with a PIN."
+  },
+  "branches": {
+    "title": "Branches",
+    "newBranch": "New branch",
+    "editBranch": "Branch settings",
+    "empty": "There are no branches to show.",
+    "created": "Branch created. Next, set its opening hours and printers.",
+    "saved": "Changes saved.",
+    "filterBrand": "Brand",
+    "columns": {
+      "name": "Name",
+      "brand": "Brand",
+      "address": "Address",
+      "timezone": "Time zone",
+      "status": "Status"
+    },
+    "tabs": {
+      "label": "Branch settings",
+      "details": "Details",
+      "hours": "Opening hours",
+      "printers": "Printers"
+    },
+    "form": {
+      "address": "Address",
+      "timezone": "Time zone",
+      "brand": "Brand",
+      "chooseBrand": "Choose a brand",
+      "active": "Active",
+      "activeHint": "Leave this off to set the branch up before it opens."
+    },
+    "actions": {
+      "deactivate": "Deactivate",
+      "activate": "Activate"
+    },
+    "messages": {
+      "deactivated": "The branch is deactivated.",
+      "activated": "The branch is active again."
+    },
+    "deactivateHint": "A deactivated branch keeps its people and history. Staff cannot sign in at its terminals with a PIN.",
+    "readOnly": "You can see this branch but you cannot change it."
+  },
+  "hours": {
+    "intro": "Set the opening hours for each day. A range may end after midnight, and then it belongs to the day it started on.",
+    "modeLabel": "Hours on {{day}}",
+    "modes": {
+      "closed": "Closed",
+      "all_day": "Open 24 hours",
+      "ranges": "Specific hours"
+    },
+    "opensLabel": "{{day}}: opens (range {{n}})",
+    "closesLabel": "{{day}}: closes (range {{n}})",
+    "from": "From",
+    "to": "To",
+    "nextDay": "The next day",
+    "addRange": "Add hours",
+    "removeRange": "Remove range {{n}} of {{day}}",
+    "copyToAll": "Copy to all days",
+    "saved": "Opening hours saved.",
+    "dayEndsAt": "The business day ends at",
+    "dayEndsAtHint": "Orders before this hour count for the day before, and the order numbers start again after it. 00:00 is midnight."
+  },
+  "printers": {
+    "intro": "Network printers at this branch. A branch can have several printers of each kind.",
+    "empty": "This branch has no printers yet.",
+    "add": "Add printer",
+    "item": "Printer {{n}}",
+    "remove": "Remove printer {{n}}",
+    "name": "Name",
+    "kind": "Type",
+    "kinds": {
+      "receipt": "Receipts",
+      "kitchen": "Kitchen tickets"
+    },
+    "host": "Address",
+    "hostHint": "An IP address or a host name, for example 192.168.1.50.",
+    "port": "Port",
+    "portHint": "Usually 9100.",
+    "saved": "Printers saved."
+  },
+  "menu": {
+    "title": "Menu",
+    "currency": "KWD",
+    "brand": "Brand",
+    "noBrand": "There is no brand to build a menu for yet.",
+    "readOnly": "You can see the menu but you cannot change it.",
+    "tabs": {
+      "label": "Menu sections",
+      "items": "Items",
+      "categories": "Categories",
+      "combos": "Combos",
+      "preview": "Branch menu"
+    },
+    "categories": {
+      "intro": "Categories group the items on the terminals. Drag a category, or use its arrows, to change the order the terminals show.",
+      "empty": "There are no categories yet.",
+      "addTitle": "Add a category",
+      "addButton": "Add category",
+      "edit": "Edit",
+      "editFor": "Edit {{name}}",
+      "moveUp": "Move {{name}} up",
+      "moveDown": "Move {{name}} down",
+      "deactivate": "Deactivate",
+      "deactivateFor": "Deactivate {{name}}",
+      "activate": "Activate",
+      "activateFor": "Activate {{name}}",
+      "hint": "A category is never deleted. When you deactivate it, its items stay in old orders but are not sold.",
+      "messages": {
+        "created": "Category added.",
+        "saved": "Category saved.",
+        "deactivated": "Category deactivated. Its items are not on the terminals any more.",
+        "activated": "The category is active again.",
+        "reordered": "The new order is saved."
+      },
+      "station": "Kitchen station",
+      "firstStation": "First station"
+    },
+    "items": {
+      "search": "Search",
+      "searchPlaceholder": "Name in English or Arabic",
+      "filterCategory": "Category",
+      "filterStatus": "Status",
+      "newItem": "New item",
+      "needCategory": "Add a category first: every item belongs to a category.",
+      "goToCategories": "Go to categories",
+      "empty": "There are no items yet.",
+      "noMatch": "No item matches these filters.",
+      "columns": {
+        "name": "Name",
+        "category": "Category",
+        "price": "Price",
+        "status": "Status"
+      }
+    },
+    "item": {
+      "newTitle": "New item",
+      "created": "Item created. Next, set the prices of the branches and the modifiers.",
+      "saved": "Changes saved.",
+      "readOnly": "You can see this item but you cannot change it.",
+      "form": {
+        "category": "Category",
+        "chooseCategory": "Choose a category",
+        "descriptionEnglish": "Description (English)",
+        "descriptionArabic": "Description (Arabic)",
+        "descriptionHint": "Optional. Write it in both languages, or leave both empty.",
+        "basePrice": "Price",
+        "basePriceHint": "The price at every branch, unless a branch sets its own.",
+        "imageUrl": "Image link",
+        "imageUrlHint": "A link to a picture. Uploading a file comes later.",
+        "active": "Active",
+        "activeHint": "Leave this off to set the item up before it is sold."
+      },
+      "actions": {
+        "deactivate": "Deactivate",
+        "activate": "Activate"
+      },
+      "messages": {
+        "deactivated": "The item is deactivated. It is no longer sold.",
+        "activated": "The item is active again."
+      },
+      "deactivateHint": "An item is never deleted: old orders keep its name and price. A deactivated item is not on any terminal.",
+      "tabs": {
+        "label": "Item settings",
+        "details": "Details",
+        "pricing": "Branch prices",
+        "modifiers": "Modifiers"
+      }
+    },
+    "schedule": {
+      "modeLabel": "Availability on {{day}}",
+      "modes": {
+        "closed": "Not available",
+        "all_day": "Available all day",
+        "ranges": "Available at certain times"
+      },
+      "opensLabel": "{{day}}: available from (range {{n}})",
+      "closesLabel": "{{day}}: available until (range {{n}})",
+      "everyDay": "Every day",
+      "allDay": "all day",
+      "never": "Never"
+    },
+    "pricing": {
+      "intro": "A branch can sell this item at its own price, switch it off, or sell it only at certain times. A branch you do not change uses the brand's settings.",
+      "empty": "There are no branches to show.",
+      "columns": {
+        "price": "Price",
+        "availability": "Availability",
+        "when": "When"
+      },
+      "brandPrice": "brand price",
+      "available": "Available",
+      "switchedOff": "Switched off",
+      "always": "Always",
+      "edit": "Edit",
+      "editFor": "Edit {{name}}",
+      "form": {
+        "price": "Price at this branch",
+        "priceHint": "Leave empty to use the brand price ({{price}}).",
+        "available": "Available at this branch",
+        "when": "When can it be sold?",
+        "always": "Always",
+        "certainTimes": "Only at certain times",
+        "scheduleHint": "The times are read on the clock of the branch.",
+        "reset": "Use the brand settings"
+      },
+      "messages": {
+        "saved": "Saved for {{name}}.",
+        "reset": "{{name}} now uses the brand settings."
+      }
+    },
+    "modifiers": {
+      "intro": "Modifiers are the choices a guest makes for this item, such as a size or extra toppings. A group whose fewest choices is 1 or more must be answered before the item is added.",
+      "empty": "This item has no modifiers yet.",
+      "rule": {
+        "required": "Required: choose {{min}}",
+        "requiredRange": "Required: choose {{min}} to {{max}}",
+        "optional": "Optional: up to {{max}}"
+      },
+      "noModifiers": "This group has no modifiers yet.",
+      "addGroupTitle": "Add a modifier group",
+      "addGroupButton": "Add group",
+      "addModifierTitle": "Add a modifier",
+      "addModifierButton": "Add modifier",
+      "group": {
+        "minSelect": "Fewest choices",
+        "minSelectHint": "0 makes the group optional. 1 or more makes it required.",
+        "maxSelect": "Most choices",
+        "maxSelectHint": "How many modifiers a guest can pick from this group."
+      },
+      "modifier": {
+        "priceDelta": "Price change",
+        "priceDeltaHint": "What it adds to the price of the item. Use a minus sign for a discount, for example -2.000."
+      },
+      "edit": "Edit",
+      "editGroupFor": "Edit group {{name}}",
+      "editFor": "Edit {{name}}",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "deactivateGroupFor": "Deactivate group {{name}}",
+      "activateGroupFor": "Activate group {{name}}",
+      "deactivateFor": "Deactivate {{name}}",
+      "activateFor": "Activate {{name}}",
+      "hint": "Nothing is deleted. A group or a modifier that is deactivated is not on the terminals, and old orders keep it.",
+      "messages": {
+        "saved": "Saved."
+      }
+    },
+    "combos": {
+      "intro": "A combo is one price for a set of choices. Each choice (a pizza, a side, a drink) is filled by one of the items you allow for it.",
+      "filterStatus": "Status",
+      "newCombo": "New combo",
+      "needItems": "Add some items first: a combo is made of items.",
+      "goToItems": "Go to items",
+      "empty": "There are no combos yet.",
+      "noMatch": "No combo matches this filter.",
+      "columns": {
+        "name": "Name",
+        "price": "Price",
+        "choices": "Choices",
+        "status": "Status"
+      }
+    },
+    "combo": {
+      "newTitle": "New combo",
+      "created": "Combo created.",
+      "saved": "Changes saved.",
+      "readOnly": "You can see this combo but you cannot change it.",
+      "form": {
+        "price": "Combo price",
+        "priceHint": "What the guest pays for the combo. The extra charges of the items they choose come on top.",
+        "active": "Active",
+        "activeHint": "A combo that is not active is not on any terminal. Leave it off to set it up first."
+      },
+      "slots": {
+        "title": "Choices",
+        "hint": "Each choice is one place in the combo. The guest picks one of its items.",
+        "slotTitle": "Choice {{n}}",
+        "removeSlot": "Remove choice {{n}}",
+        "addSlot": "Add a choice",
+        "options": "Items the guest can pick",
+        "optionsHint": "An item can have an extra charge, for example a bigger drink. Leave it empty for none.",
+        "chooseItem": "Choose an item",
+        "itemLabel": "Choice {{slot}}, item {{n}}",
+        "deltaLabel": "Choice {{slot}}, item {{n}}: extra charge",
+        "addOption": "Add an item",
+        "addOptionTo": "Add an item to choice {{n}}",
+        "removeOption": "Remove item {{n}} of choice {{slot}}"
+      }
+    },
+    "preview": {
+      "intro": "The menu exactly as the terminal of the branch loads it: only what can be sold there, at the prices of the branch.",
+      "branch": "Branch",
+      "noBranches": "There are no branches to show a menu for.",
+      "empty": "Nothing can be sold at this branch yet.",
+      "combos": "Combos",
+      "notNow": "Not available right now"
+    }
+  },
+  "weekdaysShort": {
+    "sunday": "Sun",
+    "monday": "Mon",
+    "tuesday": "Tue",
+    "wednesday": "Wed",
+    "thursday": "Thu",
+    "friday": "Fri",
+    "saturday": "Sat"
+  },
+  "pos": {
+    "setup": {
+      "title": "Set up this terminal",
+      "intro": "Choose the branch this terminal belongs to. You are then signed out, and the staff of the branch sign in here with their staff code and PIN.",
+      "branch": "Branch",
+      "noBranches": "You cannot see any branch.",
+      "save": "Use this branch",
+      "station": "Kitchen station",
+      "allStations": "All stations"
+    },
+    "notSetUp": {
+      "title": "This terminal is not set up",
+      "body": "A manager sets up a terminal once, with their email and password, by choosing its branch.",
+      "setUp": "Set up this terminal"
+    },
+    "notAllowed": {
+      "noOrders": "{{name}} cannot take orders on this terminal.",
+      "otherBranch": "{{name}} does not work at this branch."
+    },
+    "signIn": {
+      "staffCode": "Staff code",
+      "pin": "PIN",
+      "backspace": "Delete the last digit",
+      "clear": "Clear",
+      "withEmail": "Sign in with email",
+      "changeBranch": "Change the branch",
+      "errors": {
+        "invalid": "The staff code or PIN is not correct.",
+        "branchInactive": "This branch is switched off. Ask a manager."
+      }
+    },
+    "menu": {
+      "label": "Menu",
+      "search": "Search the menu",
+      "combos": "Combos",
+      "noMatch": "Nothing on the menu matches.",
+      "empty": "Nothing in this category."
+    },
+    "choice": {
+      "add": "Add to order"
+    },
+    "order": {
+      "label": "Order",
+      "new": "New order",
+      "number": "Order {{number}}",
+      "types": {
+        "dine_in": "Dine-in",
+        "takeaway": "Takeaway"
+      },
+      "empty": "Tap a dish to start the order.",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "total": "Total",
+      "send": "Send to kitchen",
+      "sendCount_one": "Send {{count}} item to kitchen",
+      "sendCount_other": "Send {{count}} items to kitchen",
+      "discountButton": "Discount",
+      "voidOrder": "Void order",
+      "newOrder": "New order",
+      "less": "One less",
+      "more": "One more",
+      "removeLine": "Remove {{name}}",
+      "lessOf": "One less {{name}}",
+      "moreOf": "One more {{name}}",
+      "quantity": "× {{count}}",
+      "sent": "Sent",
+      "voided": "Voided",
+      "void": "Void",
+      "voidLine": "Void {{name}}",
+      "voidedBecause": "Voided: {{reason}}",
+      "pay": "Pay",
+      "paid": "Paid",
+      "kitchen": {
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "done": "Done"
+      },
+      "markDone": "Mark done"
+    },
+    "openOrders": {
+      "button": "Open orders",
+      "title": "Open orders",
+      "none": "No order is open at this branch.",
+      "lines_one": "{{count}} item",
+      "lines_other": "{{count}} items"
+    },
+    "void": {
+      "title": "Void {{what}}",
+      "reason": "Why?",
+      "otherReason": "The reason",
+      "confirm": "Void",
+      "reasons": {
+        "changedMind": "The customer changed their mind",
+        "wrongItem": "Wrong item",
+        "tooLong": "Took too long",
+        "quality": "Quality problem",
+        "other": "Other"
+      }
+    },
+    "discount": {
+      "title": "Discount on the order",
+      "percent": "Percent",
+      "amount": "Amount",
+      "percentValue": "Percent off",
+      "amountValue": "Amount off",
+      "reason": "Reason",
+      "preview": "Discount",
+      "remove": "Remove discount",
+      "apply": "Give discount"
+    },
+    "approval": {
+      "title": "A manager must approve",
+      "intro": "A manager of this branch types their staff code and PIN.",
+      "approve": "Approve"
+    },
+    "notices": {
+      "orderVoided": "Order {{number}} was voided.",
+      "dismiss": "Close the message"
+    },
+    "errors": {
+      "ITEM_NOT_AVAILABLE": "This dish is not on the menu of the branch any more. The menu was loaded again.",
+      "ITEM_NOT_AVAILABLE_NOW": "This dish cannot be sold at this time.",
+      "MODIFIER_NOT_AVAILABLE": "A choice is not on the menu any more. The menu was loaded again.",
+      "MODIFIER_CHOICE_MISSING": "A required choice is missing.",
+      "TOO_MANY_MODIFIERS": "Too many choices in one group.",
+      "COMBO_NOT_AVAILABLE": "This combo is not on the menu any more. The menu was loaded again.",
+      "SLOT_NOT_FOUND": "This combo changed. The menu was loaded again.",
+      "SLOT_CHOICE_MISSING": "Choose a dish for every part of the combo.",
+      "OPTION_NOT_AVAILABLE": "A dish of the combo is not available any more. The menu was loaded again.",
+      "ORDER_NOT_OPEN": "This order is not open any more. It was changed on another terminal.",
+      "LINE_ALREADY_SENT": "This dish was sent to the kitchen already.",
+      "LINE_VOIDED": "This dish was voided already.",
+      "LINE_NOT_SENT": "This dish was not sent yet. Remove it instead.",
+      "NOTHING_TO_SEND": "Everything was sent already.",
+      "ORDER_FULL": "This order is full. Start a new order.",
+      "BRANCH_INACTIVE": "This branch is switched off.",
+      "NOT_FOUND": "This order cannot be found.",
+      "APPROVAL_INVALID": "The staff code or PIN is not correct, or this person is not a manager of this branch.",
+      "APPROVAL_LOCKED": "This manager is locked after too many wrong PINs. Try again later.",
+      "APPROVAL_NOT_ALLOWED": "This person cannot approve this.",
+      "DISCOUNT_VALUE_INVALID": "Type a percent from 0.01 to 100, or an amount above 0 with up to 3 decimals.",
+      "REASON_REQUIRED": "A reason is needed.",
+      "REASON_TOO_LONG": "The reason is too long.",
+      "network": "Cannot reach the server. Check the connection and try again.",
+      "unknown": "Something went wrong. Try again.",
+      "PAYMENT_TOTAL_MISMATCH": "The total of the order changed. Check it and take the payment again.",
+      "PAYMENT_TENDERED_SHORT": "The cash received is less than the amount due.",
+      "PAYMENT_TOO_MANY_CASH": "Only one cash payment is allowed.",
+      "PAYMENT_AMOUNT_INVALID": "An amount is not valid.",
+      "PAYMENT_TENDERS_INVALID": "Choose how the order is paid.",
+      "PAYMENT_ID_TAKEN": "This payment was already used. Open the payment again.",
+      "ORDER_EMPTY": "This order has nothing to pay for.",
+      "PAYMENT_METHOD_INVALID": "This way to pay is switched off. The settings were loaded again."
+    },
+    "pay": {
+      "title": "Pay order {{number}}",
+      "due": "Amount due",
+      "modes": {
+        "cash": "Cash",
+        "card": "Card",
+        "split": "Card + cash",
+        "mixed": "Mixed"
+      },
+      "methods": {
+        "cash": "Cash",
+        "card": "Card"
+      },
+      "tendered": "Cash received",
+      "tenderedRest": "Cash received for the rest ({{amount}})",
+      "exact": "Exact",
+      "change": "Change",
+      "cardHint": "Take the payment on the card machine, then confirm here.",
+      "cardAmount": "Amount by card",
+      "reference": "Reference number (optional)",
+      "nothingDue": "Nothing to pay. Confirm to close the order.",
+      "confirm": "Confirm payment",
+      "close": "Close the order",
+      "mixedMethod": "Paid by",
+      "methodAmount": "Amount by {{method}}",
+      "otherHint": "Take the payment by {{method}}, then confirm here."
+    },
+    "receipt": {
+      "title": "Receipt",
+      "cashier": "Cashier: {{name}}",
+      "slip": "slip",
+      "thanks": "Thank you for your visit",
+      "print": "Print"
+    }
+  },
+  "kds": {
+    "title": "Kitchen",
+    "notAllowed": "{{name}} cannot see the kitchen tickets.",
+    "waiting_one": "{{count}} ticket waiting",
+    "waiting_other": "{{count}} tickets waiting",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "empty": "Nothing to make. New orders appear here.",
+    "openTickets": "Tickets to make",
+    "doneTickets": "Done",
+    "void": "VOID",
+    "status": {
+      "new": "New",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "done": "Done"
+    },
+    "actions": {
+      "start": "Start",
+      "ready": "Ready",
+      "done": "Done",
+      "recall": "Recall"
+    },
+    "problems": {
+      "changed": "This ticket was moved on another screen. The tickets were loaded again.",
+      "network": "Cannot reach the server. Check the connection.",
+      "unknown": "Something went wrong. Try again."
+    },
+    "station": "Station",
+    "allStations": "All stations"
+  },
+  "settings": {
+    "title": "Settings",
+    "intro": "How the terminals of this brand work. A change reaches every terminal within a few minutes.",
+    "brand": "Brand",
+    "remove": "Remove",
+    "saved": "The settings were saved.",
+    "payment": {
+      "title": "Ways to pay",
+      "intro": "Cash is always there and is the only way that gives change. Add the others: KNET, Link, Talabat, Keeta, Jahez and so on.",
+      "key": "Key",
+      "keyHint": "Small letters, digits and underscores, for example knet. It cannot change later.",
+      "active": "In use",
+      "add": "Add a way to pay"
+    },
+    "discounts": {
+      "title": "Discounts",
+      "presets": "Discount buttons",
+      "presetsHint": "Percentages shown as buttons on the POS, separated by commas: 5, 10, 15.",
+      "limit": "A cashier may give up to (%)",
+      "limitHint": "A percentage discount up to this needs no manager. 0 means every discount needs a manager."
+    },
+    "voids": {
+      "title": "Voids",
+      "rule": "A void needs a manager's staff code and PIN",
+      "never": "Never: the cashier voids with a reason, and it is recorded",
+      "afterSend": "Once the dish or the order was sent to the kitchen",
+      "always": "Always"
+    },
+    "kitchen": {
+      "title": "Kitchen",
+      "doneBy": "Who marks an order done",
+      "doneByKitchen": "The kitchen, on the kitchen screen",
+      "doneByCashier": "The cashier, on the POS, when the food is handed over",
+      "stations": "Kitchen stations",
+      "stationsHint": "One kitchen screen per station, for example Pizza and Drinks. Each menu category goes to a station. Leave empty for one screen.",
+      "addStation": "Add a station"
+    }
+  }
+}

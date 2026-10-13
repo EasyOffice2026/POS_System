@@ -17,6 +17,24 @@ jobs:
     name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # The API tests run against a real PostgreSQL, the same major version as docker-compose.yml.
+    # They create and migrate their own schema (pos_test) inside this database.
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: pos
+          POSTGRES_PASSWORD: pos
+          POSTGRES_DB: pos
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pos -d pos"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://pos:pos@localhost:5432/pos
     steps:
       - uses: actions/checkout@v7
 
