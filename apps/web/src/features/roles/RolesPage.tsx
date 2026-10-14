@@ -30,6 +30,7 @@ const permissionKeys = {
   'promotions:write': 'permissions.promotions_write',
   'customers:read': 'permissions.customers_read',
   'customers:write': 'permissions.customers_write',
+  'tables:write': 'permissions.tables_write',
   'audit:read': 'permissions.audit_read',
 } as const satisfies Record<Permission, string>;
 

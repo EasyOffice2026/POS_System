@@ -326,6 +326,44 @@ try {
 
   await seedDemoMenus(prisma, brandIds, branchIds);
 
+  // The floor plan of the Mall: six tables inside and four round ones on the terrace
+  // (docs/specs/023-floor-plan.md). A table someone made with the same name is left alone.
+  const demoTables = [
+    ...[0, 1, 2, 3, 4, 5].map((index) => ({
+      name: String(index + 1),
+      area: 'Inside',
+      seats: index < 4 ? 4 : 6,
+      shape: 'square' as const,
+      x: 1 + (index % 3) * 4,
+      y: 1 + Math.floor(index / 3) * 4,
+      width: index < 4 ? 2 : 3,
+      height: 2,
+    })),
+    ...[0, 1, 2, 3].map((index) => ({
+      name: String(index + 7),
+      area: 'Terrace',
+      seats: 2,
+      shape: 'round' as const,
+      x: 1 + index * 3,
+      y: 1,
+      width: 2,
+      height: 2,
+    })),
+  ];
+  for (const [position, table] of demoTables.entries()) {
+    const id = `01990000-0000-7000-8000-00000000e${String(position + 1).padStart(3, '0')}`;
+    const clash = await prisma.diningTable.findFirst({
+      where: { branchId: branchIds.pizzaMall, nameKey: table.name, id: { not: id } },
+    });
+    if (clash) continue;
+    const data = { ...table, nameKey: table.name, position, isActive: true };
+    await prisma.diningTable.upsert({
+      where: { id },
+      update: data,
+      create: { ...data, id, brandId: brandIds.pizza, branchId: branchIds.pizzaMall },
+    });
+  }
+
   console.log('Demo data is ready (development only).');
   console.log(`\nEmail accounts, password "${DEV_PASSWORD}":`);
   for (const user of users.filter((u) => u.email)) {

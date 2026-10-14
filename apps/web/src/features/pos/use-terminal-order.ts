@@ -1,4 +1,4 @@
-import type { Approval, Order, OrderLine, OrderType } from '@pos/shared';
+import type { Approval, Order, OrderLine, OrderTable, OrderType } from '@pos/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { moveTicket } from '../kitchen/kitchen-api';
@@ -6,6 +6,7 @@ import { problemsFrom } from '../../lib/error-messages';
 import { menuKeys } from '../menu/menu-api';
 import { settingsKeys } from '../settings/settings-api';
 import { shiftKeys } from '../shifts/shifts-api';
+import { tableKeys } from '../tables/tables-api';
 import {
   type AddLineInput,
   addLine,
@@ -16,17 +17,20 @@ import {
   getOrder,
   orderKeys,
   payOrder,
+  printBill,
   refundOrder,
   type RefundRequestInput,
   removeDiscount,
   removeOrderCustomer,
   removeOrderPoints,
+  removeOrderTable,
   removePromoCode,
   removeLine,
   sendOrder,
   setDiscount,
   setOrderCustomer,
   setOrderPoints,
+  setOrderTable,
   setPromoCode,
   voidLine,
   voidOrder,
@@ -55,6 +59,8 @@ export function useTerminalOrder(branchId: string, brandId: string) {
   const queryClient = useQueryClient();
   const [orderId, setOrderId] = useState<string | null>(null);
   const [draftType, setDraftType] = useState<OrderType>('takeaway');
+  // The table picked for an order not made yet (docs/specs/023-floor-plan.md).
+  const [draftTable, setDraftTable] = useState<OrderTable | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [approval, setApproval] = useState<PendingApproval | null>(null);
@@ -73,6 +79,7 @@ export function useTerminalOrder(branchId: string, brandId: string) {
     queryClient.setQueryData(orderKeys.order(next.id), next);
     setOrderId(next.id);
     void queryClient.invalidateQueries({ queryKey: orderKeys.open(branchId) });
+    void queryClient.invalidateQueries({ queryKey: tableKeys.floor(branchId) });
   }
 
   function fail(error: unknown) {
@@ -87,6 +94,10 @@ export function useTerminalOrder(branchId: string, brandId: string) {
       void queryClient.invalidateQueries({ queryKey: settingsKeys.brand(brandId) });
     }
     // The shift was closed elsewhere: the gate asks for a new one.
+    // Another terminal sat an order at the table first.
+    if (code === 'TABLE_TAKEN' || code === 'TABLE_NOT_FOUND') {
+      void queryClient.invalidateQueries({ queryKey: tableKeys.floor(branchId) });
+    }
     if (code === 'SHIFT_REQUIRED') {
       void queryClient.invalidateQueries({ queryKey: shiftKeys.current(branchId) });
     }
@@ -158,8 +169,19 @@ export function useTerminalOrder(branchId: string, brandId: string) {
     const result = await perform(async () => {
       const id = order?.status === 'open' ? order.id : null;
       const target =
-        id ?? (await createOrder({ id: crypto.randomUUID(), branchId, type: draftType })).id;
-      if (!id) setOrderId(target);
+        id ??
+        (
+          await createOrder({
+            id: crypto.randomUUID(),
+            branchId,
+            type: draftTable ? 'dine_in' : draftType,
+            ...(draftTable ? { tableId: draftTable.id } : {}),
+          })
+        ).id;
+      if (!id) {
+        setOrderId(target);
+        setDraftTable(null);
+      }
       return addLine(target, { ...input, id: crypto.randomUUID() });
     });
     return result !== null;
@@ -168,7 +190,9 @@ export function useTerminalOrder(branchId: string, brandId: string) {
   return {
     order,
     loading: Boolean(orderId) && query.isPending,
-    type: order?.type ?? draftType,
+    type: order?.type ?? (draftTable ? 'dine_in' : draftType),
+    // The order's table, or the one picked for the order about to be made.
+    table: order ? order.table : draftTable,
     busy,
     notice,
     dismissNotice: () => setNotice(null),
@@ -176,8 +200,10 @@ export function useTerminalOrder(branchId: string, brandId: string) {
     add,
 
     setType: (type: OrderType) => {
-      if (!order) setDraftType(type);
-      else if (order.status === 'open') void perform(() => changeOrderType(order.id, type));
+      if (!order) {
+        setDraftType(type);
+        if (type === 'takeaway') setDraftTable(null);
+      } else if (order.status === 'open') void perform(() => changeOrderType(order.id, type));
     },
 
     setQuantity: (line: OrderLine, quantity: number) => {
@@ -265,13 +291,36 @@ export function useTerminalOrder(branchId: string, brandId: string) {
 
     newOrder: () => {
       setOrderId(null);
+      setDraftTable(null);
       setNotice(null);
     },
 
     open: (id: string) => {
       setOrderId(id);
+      setDraftTable(null);
       setNotice(null);
     },
+
+    // A new dine-in order at a free table: it is made with its first dish.
+    startAt: (table: OrderTable) => {
+      setOrderId(null);
+      setDraftTable(table);
+      setNotice(null);
+    },
+
+    // Puts the open order at a table, or moves it; before the order exists, picks the table.
+    chooseTable: (table: OrderTable) => {
+      if (order?.status === 'open') void perform(() => setOrderTable(order.id, table.id));
+      else if (!order) setDraftTable(table);
+    },
+
+    removeTable: () => {
+      if (order?.status === 'open') void perform(() => removeOrderTable(order.id));
+      else if (!order) setDraftTable(null);
+    },
+
+    // Records that the bill was printed; answers the order to print, or null when it failed.
+    printBill: () => (order ? perform(() => printBill(order.id)) : Promise.resolve(null)),
 
     // The approval dialog asks for a manager, sends the change again, and closes.
     approval: approval?.change ?? null,

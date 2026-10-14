@@ -11,13 +11,14 @@ import { ApprovalDialog } from './ApprovalDialog';
 import { type Choosing, ChoiceDialog } from './ChoiceDialog';
 import { CustomerDialog } from './CustomerDialog';
 import { DiscountDialog } from './DiscountDialog';
+import { FloorDialog } from './FloorDialog';
 import { PromoCodeDialog } from './PromoCodeDialog';
 import { MenuPanel } from './MenuPanel';
 import { OpenOrdersDialog } from './OpenOrdersDialog';
 import { OrderPanel } from './OrderPanel';
 import { PaymentDialog } from './PaymentDialog';
 import { PointsDialog } from './PointsDialog';
-import { Receipt, ReceiptDialog } from './Receipt';
+import { BillDialog, Receipt, ReceiptDialog } from './Receipt';
 import { RefundDialog } from './RefundDialog';
 import { useBrandSettings } from '../settings/settings-api';
 
@@ -57,6 +58,10 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
   const [promoCoding, setPromoCoding] = useState(false);
   const [customering, setCustomering] = useState(false);
   const [pointing, setPointing] = useState(false);
+  // The floor of the branch: to open a table's order, or to move the order on the screen.
+  const [floorMode, setFloorMode] = useState<'open' | 'move' | null>(null);
+  // The order whose bill is shown, and printed (spec 023).
+  const [bill, setBill] = useState<Order | null>(null);
   const [refunding, setRefunding] = useState(false);
   const [listing, setListing] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -112,6 +117,13 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
               {clock}
             </span>
             <span className="text-sm text-slate-600">{user?.name}</span>
+            <button
+              type="button"
+              onClick={() => setFloorMode('open')}
+              className={headerButtonClass}
+            >
+              {t('pos.table.button')}
+            </button>
             <button type="button" onClick={() => setListing(true)} className={headerButtonClass}>
               {t('pos.openOrders.button')}
             </button>
@@ -180,6 +192,14 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             onRemoveCustomer={terminalOrder.removeCustomer}
             onPoints={() => setPointing(true)}
             onRemovePoints={terminalOrder.removePoints}
+            table={terminalOrder.table}
+            onChooseTable={() => setFloorMode('move')}
+            onRemoveTable={terminalOrder.removeTable}
+            onPrintBill={() => {
+              void terminalOrder.printBill().then((billed) => {
+                if (billed) setBill(billed);
+              });
+            }}
             onRefund={() => setRefunding(true)}
             onVoidOrder={() => setVoiding({ kind: 'order' })}
             onNewOrder={terminalOrder.newOrder}
@@ -233,6 +253,34 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
           <PromoCodeDialog
             onApply={terminalOrder.applyPromoCode}
             onCancel={() => setPromoCoding(false)}
+          />
+        )}
+
+        {floorMode && (
+          <FloorDialog
+            branchId={terminal.branchId}
+            mode={floorMode}
+            currentTableId={floorMode === 'move' ? (terminalOrder.table?.id ?? null) : null}
+            onClose={() => setFloorMode(null)}
+            onTaken={(id) => {
+              setFloorMode(null);
+              terminalOrder.open(id);
+            }}
+            onFree={(table) => {
+              const mode = floorMode;
+              setFloorMode(null);
+              if (mode === 'move') terminalOrder.chooseTable(table);
+              else terminalOrder.startAt(table);
+            }}
+          />
+        )}
+
+        {bill && (
+          <BillDialog
+            order={bill}
+            terminal={terminal}
+            cashier={cashier}
+            onClose={() => setBill(null)}
           />
         )}
 
@@ -318,6 +366,11 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
       </div>
 
       {/* Only the receipt is printed, never the screen around it. */}
+      {bill && !receipt && (
+        <div className="hidden bg-white print:block">
+          <Receipt order={bill} terminal={terminal} cashier={cashier} bill />
+        </div>
+      )}
       {receipt && (
         <div className="hidden bg-white print:block">
           <Receipt order={receipt} terminal={terminal} cashier={cashier} />

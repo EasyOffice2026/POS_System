@@ -76,6 +76,8 @@ const tenantModels: Record<string, ModelRule> = {
   // A customer belongs to the brand and is the same at every branch; a cashier adds them too.
   Customer: { brand: 'brandId' },
   LoyaltyEntry: { brand: 'brandId' },
+  // The tables of a branch's floor plan (docs/specs/023-floor-plan.md).
+  DiningTable: { brand: 'brandId', branch: 'branchId' },
 };
 
 // Reference data every signed-in person may read. Never writable through this client.

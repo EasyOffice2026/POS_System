@@ -39,6 +39,7 @@ function ticket(overrides: Partial<KitchenTicket> = {}): KitchenTicket {
     orderNumber: 12,
     orderType: 'dine_in',
     orderNote: null,
+    tableName: null,
     stationId: null,
     status: 'new',
     sentAt: minutesAgo(2.5),

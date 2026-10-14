@@ -45,6 +45,8 @@ const knownCodes = [
   'POINTS_NOT_ENOUGH',
   'LOYALTY_OFF',
   'CUSTOMER_REQUIRED',
+  'TABLE_TAKEN',
+  'TABLE_NOT_FOUND',
   'network',
 ] as const;
 

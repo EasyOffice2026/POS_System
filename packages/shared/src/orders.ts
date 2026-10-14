@@ -5,6 +5,7 @@ import { CASH, paymentMethodKeySchema } from './settings';
 import { cursorQuerySchema } from './pagination';
 import { appliedPromotionSchema } from './promotions';
 import { orderCustomerSchema } from './customers';
+import { orderTableSchema } from './tables';
 
 // Orders at a branch: dishes and combos copied from the branch menu with their prices, sent to the
 // kitchen, discounted or voided with a manager's approval. See docs/specs/005-orders.md. A problem
@@ -161,6 +162,9 @@ const orderFields = {
   pointsRedeemed: z.number().int(),
   pointsDiscount: z.string(),
   pointsEarned: z.number().int(),
+  // The table of a dine-in order, and when its bill was printed (docs/specs/023-floor-plan.md).
+  table: orderTableSchema.nullable(),
+  billPrintedAt: z.iso.datetime().nullable(),
   total: z.string(),
   openedById: z.uuid(),
   voidedAt: z.iso.datetime().nullable(),
@@ -235,6 +239,8 @@ export const createOrderRequestSchema = z.strictObject({
   branchId: z.uuid({ error: 'BRANCH_REQUIRED' }),
   type: orderTypeSchema,
   note: noteField.optional(),
+  // A dine-in order at a table (docs/specs/023-floor-plan.md, rule 3).
+  tableId: z.uuid({ error: 'TABLE_NOT_FOUND' }).optional(),
 });
 export type CreateOrderRequest = z.infer<typeof createOrderRequestSchema>;
 

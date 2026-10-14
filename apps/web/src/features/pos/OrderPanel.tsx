@@ -3,6 +3,7 @@ import {
   MAX_LINE_QUANTITY,
   type Order,
   type OrderLine,
+  type OrderTable,
   type OrderType,
   toMils,
 } from '@pos/shared';
@@ -151,6 +152,57 @@ function LineRow({
   );
 }
 
+// The table of a dine-in order, with the buttons to choose or change it (spec 023, rules 3 to 5).
+function TableRow({ table, type, open, busy, ...props }: OrderPanelProps & { open: boolean }) {
+  const { t } = useTranslation();
+  if (table) {
+    return (
+      <div
+        className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-slate-50 px-2 py-1 text-sm"
+        data-testid="order-table"
+      >
+        <p>
+          <span className="font-medium">{t('pos.table.name', { name: table.name })}</span>{' '}
+          <span className="text-xs text-slate-600">
+            <bdi>{table.area}</bdi>
+          </span>
+        </p>
+        {open && (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={props.onChooseTable}
+              className="rounded-md px-2 py-1 text-xs font-medium text-slate-700 underline"
+            >
+              {t('pos.table.change')}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={props.onRemoveTable}
+              aria-label={t('pos.table.remove')}
+              className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 underline"
+            >
+              {t('pos.promo.remove')}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+  return type === 'dine_in' && open ? (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={props.onChooseTable}
+      className={`${secondaryButtonClass} w-full`}
+    >
+      {t('pos.table.choose')}
+    </button>
+  ) : null;
+}
+
 interface CustomerRowProps extends OrderPanelProps {
   order: Order;
   open: boolean;
@@ -243,6 +295,11 @@ interface OrderPanelProps {
   onRemoveCustomer: () => void;
   onPoints: () => void;
   onRemovePoints: () => void;
+  // The table of a dine-in order, or the one picked before it exists (spec 023).
+  table: OrderTable | null;
+  onChooseTable: () => void;
+  onRemoveTable: () => void;
+  onPrintBill: () => void;
   onVoidOrder: () => void;
   onNewOrder: () => void;
   onPay: () => void;
@@ -291,6 +348,11 @@ export function OrderPanel(props: OrderPanelProps) {
               {t('pos.order.voided')}
             </span>
           )}
+          {order?.status === 'open' && order.billPrintedAt && (
+            <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-950">
+              {t('pos.table.billPrinted')}
+            </span>
+          )}
           {order?.status === 'paid' && (
             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900">
               {t('pos.order.paid')}
@@ -301,6 +363,7 @@ export function OrderPanel(props: OrderPanelProps) {
           {typeButton('dine_in')}
           {typeButton('takeaway')}
         </div>
+        <TableRow {...props} open={open} />
         {order && <CustomerRow {...props} order={order} open={open} />}
       </div>
 
@@ -454,7 +517,7 @@ export function OrderPanel(props: OrderPanelProps) {
         >
           {pending > 0 ? t('pos.order.sendCount', { count: pending }) : t('pos.order.send')}
         </button>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {order?.status === 'paid' ? (
             <button
               type="button"
@@ -472,6 +535,16 @@ export function OrderPanel(props: OrderPanelProps) {
               className={secondaryButtonClass}
             >
               {t('pos.order.discountButton')}
+            </button>
+          )}
+          {open && (
+            <button
+              type="button"
+              disabled={busy || !order || live === 0}
+              onClick={props.onPrintBill}
+              className={secondaryButtonClass}
+            >
+              {t('pos.table.printBill')}
             </button>
           )}
           <button

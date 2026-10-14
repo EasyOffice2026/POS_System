@@ -38,8 +38,12 @@ export const listOrders = (branchId: string, status: 'open' | 'paid') =>
 
 export const getOrder = (id: string) => request(`/orders/${id}`, asOrder);
 
-export const createOrder = (body: { id: string; branchId: string; type: OrderType }) =>
-  request('/orders', { method: 'POST', body, ...asOrder });
+export const createOrder = (body: {
+  id: string;
+  branchId: string;
+  type: OrderType;
+  tableId?: string;
+}) => request('/orders', { method: 'POST', body, ...asOrder });
 
 export const changeOrderType = (id: string, type: OrderType) =>
   request(`/orders/${id}`, { method: 'PATCH', body: { type }, ...asOrder });
@@ -115,6 +119,16 @@ export const setPromoCode = (orderId: string, code: string) =>
 
 export const removePromoCode = (orderId: string) =>
   request(`/orders/${orderId}/promo-code`, { method: 'DELETE', ...asOrder });
+
+// The table of a dine-in order, and its bill (docs/specs/023-floor-plan.md).
+export const setOrderTable = (orderId: string, tableId: string) =>
+  request(`/orders/${orderId}/table`, { method: 'PUT', body: { tableId }, ...asOrder });
+
+export const removeOrderTable = (orderId: string) =>
+  request(`/orders/${orderId}/table`, { method: 'DELETE', ...asOrder });
+
+export const printBill = (orderId: string) =>
+  request(`/orders/${orderId}/bill`, { method: 'POST', ...asOrder });
 
 // A customer on the order, and the points they spend on it (docs/specs/022-loyalty.md).
 export const findCustomer = async (phone: string): Promise<Customer | null> => {

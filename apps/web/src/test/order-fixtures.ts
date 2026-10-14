@@ -55,6 +55,8 @@ export function order(overrides: Partial<Order> = {}): Order {
     pointsRedeemed: 0,
     pointsDiscount: '0.000',
     pointsEarned: 0,
+    table: null,
+    billPrintedAt: null,
     discount: null,
     total: '0.000',
     openedById: '01990000-0000-7000-8000-000000000107',

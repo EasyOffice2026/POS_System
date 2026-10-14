@@ -17,6 +17,7 @@ export const auditActions = [
   'brand.updated',
   'branch.created',
   'branch.updated',
+  'branch.tables_updated',
   'menu.category.created',
   'menu.category.updated',
   'menu.category.reordered',

@@ -23,6 +23,7 @@ const actionKeys = {
   'brand.updated': 'audit.actions.brand_updated',
   'branch.created': 'audit.actions.branch_created',
   'branch.updated': 'audit.actions.branch_updated',
+  'branch.tables_updated': 'audit.actions.branch_tables_updated',
   'menu.category.created': 'audit.actions.menu_category_created',
   'menu.category.updated': 'audit.actions.menu_category_updated',
   'menu.category.reordered': 'audit.actions.menu_category_reordered',

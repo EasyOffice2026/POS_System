@@ -32,6 +32,7 @@ export const permissions = [
   'promotions:write',
   'customers:read',
   'customers:write',
+  'tables:write',
   'audit:read',
 ] as const;
 export const permissionSchema = z.enum(permissions);
@@ -89,6 +90,7 @@ export const systemRoles: readonly RoleDefinition[] = [
       'promotions:write',
       'customers:read',
       'customers:write',
+      'tables:write',
       'audit:read',
     ],
   },
@@ -124,6 +126,7 @@ export const systemRoles: readonly RoleDefinition[] = [
       'inventory:write',
       'reports:read',
       'customers:read',
+      'tables:write',
     ],
   },
   {

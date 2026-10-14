@@ -40,6 +40,7 @@ export async function resetDatabase(prisma: PrismaClient): Promise<void> {
   await prisma.kitchenTicket.deleteMany();
   await prisma.order.deleteMany();
   await prisma.customer.deleteMany();
+  await prisma.diningTable.deleteMany();
   await prisma.orderCounter.deleteMany();
   await prisma.comboSlotOption.deleteMany();
   await prisma.comboSlot.deleteMany();

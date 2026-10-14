@@ -114,7 +114,8 @@
     "reports_read": "See the reports",
     "promotions_write": "Change the promotions",
     "customers_read": "See customers and their points",
-    "customers_write": "Change customers and give points"
+    "customers_write": "Change customers and give points",
+    "tables_write": "Change the floor plan"
   },
   "users": {
     "title": "Users",
@@ -316,7 +317,22 @@
     "POINTS_TOO_MANY": "That is more points than the order needs.",
     "LOYALTY_OFF": "Loyalty points are switched off for this brand.",
     "CUSTOMER_REQUIRED": "Put a customer on the order first.",
-    "PHONE_TAKEN": "Another customer has this phone number."
+    "PHONE_TAKEN": "Another customer has this phone number.",
+    "TABLE_OVERLAP": "It overlaps another table in use in the same area.",
+    "TABLE_OUTSIDE": "It does not fit on the grid. Move it or make it smaller.",
+    "TABLE_NAME_REQUIRED": "Give the table a name.",
+    "TABLE_NAME_TOO_LONG": "A table name has at most 10 characters.",
+    "TABLE_NAME_TAKEN": "Another table of this branch has this name.",
+    "AREA_REQUIRED": "Give the area a name.",
+    "AREA_TOO_LONG": "An area name has at most 40 characters.",
+    "SEATS_INVALID": "Type the seats as a whole number from 1 to 50.",
+    "TABLE_SIZE_INVALID": "A table is 1 to 4 cells wide and high.",
+    "TABLE_SHAPE_INVALID": "Pick square or round.",
+    "TABLE_REPEATED": "This table is in the plan twice.",
+    "TABLES_TOO_MANY": "A branch has at most 200 tables.",
+    "TABLE_NOT_FOUND": "This table is not in use at this branch.",
+    "TABLE_IN_USE": "A table with an open order must stay in use. Pay or move its order first.",
+    "TABLE_TAKEN": "Another order is open at this table."
   },
   "rolesPage": {
     "title": "Roles",
@@ -399,7 +415,8 @@
       "menu_promotion_updated": "Promotion changed",
       "customer_created": "Customer added",
       "customer_updated": "Customer changed",
-      "customer_points_adjusted": "Points given or taken"
+      "customer_points_adjusted": "Points given or taken",
+      "branch_tables_updated": "Floor plan changed"
     }
   },
   "notFound": {
@@ -463,7 +480,8 @@
       "label": "Branch settings",
       "details": "Details",
       "hours": "Opening hours",
-      "printers": "Printers"
+      "printers": "Printers",
+      "tables": "Floor plan"
     },
     "form": {
       "address": "Address",
@@ -990,7 +1008,9 @@
       "REFUND_ID_TAKEN": "This refund was already used. Open the refund again.",
       "POINTS_NOT_ENOUGH": "The customer no longer has the points on this order. Take them off or spend fewer.",
       "LOYALTY_OFF": "Loyalty points are switched off for this brand.",
-      "CUSTOMER_REQUIRED": "Put a customer on the order first."
+      "CUSTOMER_REQUIRED": "Put a customer on the order first.",
+      "TABLE_TAKEN": "Another order is open at this table. Open it from Tables.",
+      "TABLE_NOT_FOUND": "This table is no longer in use. Pick another one."
     },
     "pay": {
       "title": "Pay order {{number}}",
@@ -1077,6 +1097,26 @@
       "row_other": "Points ({{count}})",
       "earned": "Points earned",
       "newBalance": "Points balance"
+    },
+    "table": {
+      "button": "Tables",
+      "title": "Tables",
+      "moveTitle": "Move to a table",
+      "name": "Table {{name}}",
+      "seats_one": "{{count}} seat",
+      "seats_other": "{{count}} seats",
+      "free": "Free",
+      "taken": "Taken",
+      "bill": "Bill",
+      "billPrinted": "Bill printed",
+      "none": "This branch has no tables yet. A manager draws them in the branch's floor plan.",
+      "choose": "Choose a table",
+      "change": "Change",
+      "remove": "Take the order off its table",
+      "printBill": "Print bill",
+      "billTitle": "Bill",
+      "notPaid": "Not paid",
+      "billThanks": "Please pay at the counter or ask for the card machine."
     }
   },
   "kds": {
@@ -1565,5 +1605,30 @@
       "takeButton": "Take points",
       "done": "The points were changed."
     }
+  },
+  "tables": {
+    "intro": "Draw the tables of this branch, area by area. Pick a table, then tap an empty spot or use the arrow keys to move it.",
+    "defaultArea": "Inside",
+    "areaName": "Name of the new area",
+    "addArea": "Add area",
+    "add": "Add table",
+    "remove": "Remove table",
+    "name": "Name",
+    "seats": "Seats",
+    "area": "Area",
+    "shape": "Shape",
+    "shapes": {
+      "square": "Square",
+      "round": "Round"
+    },
+    "width": "Width (cells)",
+    "height": "Height (cells)",
+    "column": "Column",
+    "row": "Row",
+    "inUse": "In use",
+    "outOfUse": "out of use",
+    "pickHint": "Pick a table to change it.",
+    "placeHint": "Tap an empty spot to move the table there, or use the arrow keys.",
+    "saved": "The floor plan was saved."
   }
 }
