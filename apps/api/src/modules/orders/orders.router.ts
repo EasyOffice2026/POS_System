@@ -3,6 +3,7 @@ import {
   createOrderRequestSchema,
   orderListQuerySchema,
   payOrderRequestSchema,
+  putPromoCodeRequestSchema,
   refundRequestSchema,
   removeDiscountRequestSchema,
   setDiscountRequestSchema,
@@ -94,6 +95,18 @@ export function createOrdersRouter({ service }: { service: OrdersService }): Rou
     const { id } = parseWith(orderParams, req.params);
     const input = parseWith(removeDiscountRequestSchema, req.body ?? {});
     res.json(await service.removeDiscount(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  // A promotion code on the order (docs/specs/021-promotions.md).
+  router.put('/:id/promo-code', write, async (req, res) => {
+    const { id } = parseWith(orderParams, req.params);
+    const { code } = parseWith(putPromoCodeRequestSchema, req.body);
+    res.json(await service.setPromoCode(requestContext(req), id, code));
+  });
+
+  router.delete('/:id/promo-code', write, async (req, res) => {
+    const { id } = parseWith(orderParams, req.params);
+    res.json(await service.removePromoCode(requestContext(req), id));
   });
 
   router.post('/:id/refunds', write, async (req, res) => {

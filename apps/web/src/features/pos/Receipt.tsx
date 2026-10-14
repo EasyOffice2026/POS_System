@@ -69,6 +69,14 @@ export function Receipt({ order, terminal, cashier }: ReceiptProps) {
             <Price value={order.subtotal} />
           </dd>
         </div>
+        {order.promotions.map((promotion) => (
+          <div key={promotion.id} className={row}>
+            <dt>{localize(promotion.name, i18n.language)}</dt>
+            <dd>
+              − <Price value={promotion.amount} />
+            </dd>
+          </div>
+        ))}
         {order.discount && (
           <div className={row}>
             <dt>{t('pos.order.discount')}</dt>

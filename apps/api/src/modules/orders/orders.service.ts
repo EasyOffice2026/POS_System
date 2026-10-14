@@ -1,6 +1,7 @@
 import {
   activePaymentMethods,
   type AddOrderLineRequest,
+  applyPromotions,
   type BranchMenu,
   type BrandSettings,
   businessDateOn,
@@ -52,6 +53,7 @@ import {
   totalsOf,
 } from './orders.common';
 import { priceLine } from './pricing';
+import { toPromotion } from '../menu/promotions.service';
 
 export interface OrdersDeps {
   prisma: PrismaClient;
@@ -206,14 +208,58 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
     return order;
   }
 
-  // Puts the totals right after the lines or the discount changed (rules 9 and 10).
+  // What the brand's promotions take off the order now, from the promotions as they are
+  // (docs/specs/021-promotions.md, rules 2 to 6).
+  async function promotionsFor(tx: OrderTx, order: OrderRow, lines: LineRow[]) {
+    const rows = await tx.promotion.findMany({ where: { brandId: order.brandId, isActive: true } });
+    if (rows.length === 0) return [];
+    const itemIds = [...new Set(lines.flatMap((line) => (line.itemId ? [line.itemId] : [])))];
+    const items = await tx.menuItem.findMany({
+      where: { id: { in: itemIds } },
+      select: { id: true, categoryId: true },
+    });
+    const categoryOf = new Map(items.map((item) => [item.id, item.categoryId]));
+    const branch = await tx.branch.findUnique({ where: { id: order.branchId } });
+    return applyPromotions(
+      lines.map((line) => ({
+        id: line.id,
+        kind: line.kind,
+        itemId: line.itemId,
+        categoryId: line.itemId ? (categoryOf.get(line.itemId) ?? null) : null,
+        quantity: line.quantity,
+        unitPrice: mils(line.unitPrice),
+        status: line.status,
+        addedAt: line.createdAt,
+      })),
+      rows.map(toPromotion),
+      {
+        businessDate: order.businessDate.toISOString().slice(0, 10),
+        branchId: order.branchId,
+        timeZone: branch?.timezone ?? 'Asia/Kuwait',
+        promoCode: order.promoCode,
+      },
+    );
+  }
+
+  // Puts the totals right after the lines, the discount or the code changed (rules 9 and 10).
   async function settle(tx: OrderTx, order: OrderRow): Promise<Order> {
     const lines = await readLines(tx, order.id);
-    const { subtotal, discount, total } = totalsOf(order, lines);
+    const applied = await promotionsFor(tx, order, lines);
+    const { subtotal, promotions, discount, total } = totalsOf(
+      order,
+      lines,
+      applied.reduce((sum, row) => sum + row.amount, 0),
+    );
     const updated = await tx.order.update({
       where: { id: order.id },
       data: {
         subtotal: fromMils(subtotal),
+        promotionDiscount: fromMils(promotions),
+        promotions: applied.map((row) => ({
+          id: row.promotion.id,
+          name: row.promotion.name,
+          amount: fromMils(row.amount),
+        })),
         discountAmount: fromMils(discount),
         total: fromMils(total),
       },
@@ -603,6 +649,42 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
         meta,
       );
       return result.order;
+    },
+
+    // Types a promotion code on an open order: an active promotion of the brand with that code,
+    // for the order's day and branch (docs/specs/021-promotions.md, rule 5).
+    async setPromoCode(ctx: ActorContext, orderId: string, code: string): Promise<Order> {
+      const { db } = ctx;
+      const order = await load(db, orderId);
+      if (order.status !== 'open') throw notOpen();
+      const day = order.businessDate.toISOString().slice(0, 10);
+      const promotion = await db.promotion.findFirst({
+        where: { brandId: order.brandId, code, isActive: true },
+      });
+      const fits =
+        promotion &&
+        (promotion.branchIds.length === 0 || promotion.branchIds.includes(order.branchId)) &&
+        (!promotion.startsOn || day >= promotion.startsOn.toISOString().slice(0, 10)) &&
+        (!promotion.endsOn || day <= promotion.endsOn.toISOString().slice(0, 10));
+      if (!fits) throw errors.validation([{ path: 'code', message: 'PROMO_CODE_INVALID' }]);
+
+      return db.$transaction(async (tx) => {
+        await lockOpen(tx, orderId);
+        const row = await tx.order.update({ where: { id: orderId }, data: { promoCode: code } });
+        return settle(tx, row);
+      });
+    },
+
+    async removePromoCode(ctx: ActorContext, orderId: string): Promise<Order> {
+      const { db } = ctx;
+      const order = await load(db, orderId);
+      if (order.status !== 'open') throw notOpen();
+      if (!order.promoCode) return describe(db, order);
+      return db.$transaction(async (tx) => {
+        await lockOpen(tx, orderId);
+        const row = await tx.order.update({ where: { id: orderId }, data: { promoCode: null } });
+        return settle(tx, row);
+      });
     },
 
     async setDiscount(

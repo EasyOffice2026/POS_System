@@ -17,6 +17,7 @@ import { ComboPage } from '../features/menu/ComboPage';
 import { CombosPage } from '../features/menu/CombosPage';
 import { ItemPage } from '../features/menu/ItemPage';
 import { ItemsPage } from '../features/menu/ItemsPage';
+import { PromotionsPage } from '../features/menu/PromotionsPage';
 import { MenuIndexRedirect, MenuLayout } from '../features/menu/MenuLayout';
 import { PosPage } from '../features/pos/PosPage';
 import { PosSetupPage } from '../features/pos/PosSetupPage';
@@ -120,6 +121,7 @@ export const routes: RouteObject[] = [
               { path: 'items', element: <ItemsPage /> },
               { path: 'categories', element: <CategoriesPage /> },
               { path: 'combos', element: <CombosPage /> },
+              { path: 'promotions', element: <PromotionsPage /> },
               { path: 'preview', element: <BranchMenuPreviewPage /> },
             ],
           },

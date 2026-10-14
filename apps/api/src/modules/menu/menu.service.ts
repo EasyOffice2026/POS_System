@@ -8,6 +8,7 @@ import { createItemsService } from './items.service';
 import type { MenuDeps } from './menu.common';
 import { createModifiersService } from './modifiers.service';
 import { createRecipesService } from './recipes.service';
+import { createPromotionsService } from './promotions.service';
 
 export interface MenuServiceDeps {
   prisma: PrismaClient;
@@ -30,6 +31,7 @@ export function createMenuService({ prisma, cache }: MenuServiceDeps) {
     modifiers: createModifiersService(deps),
     recipes: createRecipesService(deps),
     combos: createCombosService(deps),
+    promotions: createPromotionsService(deps),
     branchMenu: createBranchMenuService(deps),
   };
 }

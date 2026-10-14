@@ -10,6 +10,7 @@ import { useNow } from '../menu/use-now';
 import { ApprovalDialog } from './ApprovalDialog';
 import { type Choosing, ChoiceDialog } from './ChoiceDialog';
 import { DiscountDialog } from './DiscountDialog';
+import { PromoCodeDialog } from './PromoCodeDialog';
 import { MenuPanel } from './MenuPanel';
 import { OpenOrdersDialog } from './OpenOrdersDialog';
 import { OrderPanel } from './OrderPanel';
@@ -51,6 +52,7 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
   const [choosing, setChoosing] = useState<Choosing | null>(null);
   const [voiding, setVoiding] = useState<Voiding | null>(null);
   const [discounting, setDiscounting] = useState(false);
+  const [promoCoding, setPromoCoding] = useState(false);
   const [refunding, setRefunding] = useState(false);
   const [listing, setListing] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -167,6 +169,8 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             onVoidLine={(line) => setVoiding({ kind: 'line', line })}
             onSend={terminalOrder.send}
             onDiscount={() => setDiscounting(true)}
+            onPromoCode={() => setPromoCoding(true)}
+            onRemovePromoCode={() => terminalOrder.removePromoCode()}
             onRefund={() => setRefunding(true)}
             onVoidOrder={() => setVoiding({ kind: 'order' })}
             onNewOrder={terminalOrder.newOrder}
@@ -213,6 +217,13 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
               setRefunding(false);
               terminalOrder.refund(input);
             }}
+          />
+        )}
+
+        {promoCoding && order && (
+          <PromoCodeDialog
+            onApply={terminalOrder.applyPromoCode}
+            onCancel={() => setPromoCoding(false)}
           />
         )}
 

@@ -2,6 +2,7 @@ import type { Approval, Order, OrderLine, OrderType } from '@pos/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { moveTicket } from '../kitchen/kitchen-api';
+import { problemsFrom } from '../../lib/error-messages';
 import { menuKeys } from '../menu/menu-api';
 import { settingsKeys } from '../settings/settings-api';
 import { shiftKeys } from '../shifts/shifts-api';
@@ -18,9 +19,11 @@ import {
   refundOrder,
   type RefundRequestInput,
   removeDiscount,
+  removePromoCode,
   removeLine,
   sendOrder,
   setDiscount,
+  setPromoCode,
   voidLine,
   voidOrder,
 } from './pos-api';
@@ -179,6 +182,27 @@ export function useTerminalOrder(branchId: string, brandId: string) {
 
     removeDiscount: () => {
       if (order) void performApproved((given) => removeDiscount(order.id, given));
+    },
+
+    // Types a promotion code; answers the problem to show in the code's box, or null when it
+    // was taken (docs/specs/021-promotions.md, rule 5).
+    applyPromoCode: async (code: string): Promise<string | null> => {
+      if (!order) return null;
+      setBusy(true);
+      setNotice(null);
+      try {
+        show(await setPromoCode(order.id, code));
+        return null;
+      } catch (error) {
+        const found = problemsFrom(error);
+        return found.fields.code ?? found.form ?? 'saveError';
+      } finally {
+        setBusy(false);
+      }
+    },
+
+    removePromoCode: () => {
+      if (order) void perform(() => removePromoCode(order.id));
     },
 
     // Answers the paid order, for the receipt, or null when it failed.

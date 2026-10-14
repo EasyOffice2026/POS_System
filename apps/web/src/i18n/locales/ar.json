@@ -114,7 +114,8 @@
     "inventory_write": "تغيير المخزون",
     "ingredients_write": "تغيير المكونات",
     "suppliers_write": "تغيير الموردين",
-    "reports_read": "عرض التقارير"
+    "reports_read": "عرض التقارير",
+    "promotions_write": "تغيير العروض"
   },
   "users": {
     "title": "المستخدمون",
@@ -303,7 +304,11 @@
     "RECEIPT_EMPTY": "اكتب كمية واحدة على الأقل وصلت.",
     "INVOICE_NUMBER_INVALID": "يمكن أن يضم رقم الفاتورة حتى 50 حرفًا.",
     "RANGE_TOO_LONG": "اختر فترة لا تزيد على 92 يومًا.",
-    "RANGE_INVALID": "لا يمكن أن يسبق اليوم الأخير اليوم الأول."
+    "RANGE_INVALID": "لا يمكن أن يسبق اليوم الأخير اليوم الأول.",
+    "PROMO_CODE_INVALID": "هذا الرمز غير صالح هنا اليوم.",
+    "PROMO_CODE_TAKEN": "يستخدم عرض آخر للعلامة التجارية هذا الرمز.",
+    "TIME_INVALID": "اكتب الوقتين بصيغة HH:MM، على ألا يتساويا.",
+    "DAYS_INVALID": "اختر كل يوم مرة واحدة."
   },
   "rolesPage": {
     "title": "الأدوار",
@@ -381,7 +386,9 @@
       "inventory_purchase_order_updated": "تغيير أمر شراء",
       "inventory_purchase_order_sent": "إرسال أمر شراء",
       "inventory_purchase_order_cancelled": "إلغاء أمر شراء",
-      "inventory_purchase_order_received": "استلام أمر شراء"
+      "inventory_purchase_order_received": "استلام أمر شراء",
+      "menu_promotion_created": "إضافة عرض",
+      "menu_promotion_updated": "تغيير عرض"
     }
   },
   "notFound": {
@@ -515,7 +522,8 @@
       "items": "الأصناف",
       "categories": "الفئات",
       "combos": "الوجبات المركبة",
-      "preview": "قائمة الفرع"
+      "preview": "قائمة الفرع",
+      "promotions": "العروض"
     },
     "categories": {
       "intro": "تجمع الفئات الأصناف على أجهزة الكاشير. اسحب الفئة أو استخدم أسهمها لتغيير الترتيب الذي تعرضه الأجهزة.",
@@ -742,6 +750,62 @@
       "quantityInvalid": "اكتب كمية أكبر من 0 بثلاث منازل عشرية كحد أقصى.",
       "saved": "تم حفظ الوصفة.",
       "close": "إغلاق"
+    },
+    "promotions": {
+      "intro": "خصومات تطبقها نقطة البيع تلقائيًا: ساعة سعيدة، اشترِ 2 واحصل على 1، أو رمز يقدمه العميل. يحصل كل طبق على عرض واحد على الأكثر، بهذا الترتيب.",
+      "add": "إضافة عرض",
+      "edit": "تعديل",
+      "editFor": "تعديل {{name}}",
+      "empty": "لا يوجد عرض بعد.",
+      "kind": "ما يقدمه",
+      "kinds": {
+        "percent_off": "نسبة خصم",
+        "buy_get": "اشترِ واحصل مجانًا",
+        "amount_off": "مبلغ خصم من الطلب"
+      },
+      "percent": "نسبة الخصم",
+      "amount": "مبلغ الخصم",
+      "buy": "اشترِ",
+      "get": "واحصل مجانًا على",
+      "appliesTo": "على",
+      "scopes": {
+        "all": "كل الأطباق",
+        "categories": "بعض الفئات",
+        "items": "بعض الأطباق"
+      },
+      "categories": "الفئات",
+      "items": "الأطباق",
+      "branches": "الفروع",
+      "branchesHint": "عدم الاختيار يعني كل الفروع.",
+      "days": "الأيام",
+      "daysHint": "عدم الاختيار يعني كل يوم.",
+      "startTime": "من (الوقت)",
+      "endTime": "إلى (الوقت)",
+      "startsOn": "اليوم الأول",
+      "endsOn": "اليوم الأخير",
+      "code": "الرمز (اختياري)",
+      "codeHint": "مع الرمز، يُطبق العرض فقط عندما يكتبه الكاشير.",
+      "active": "نشط",
+      "gives": {
+        "percent_off": "خصم {{value}}٪",
+        "amount_off": "خصم {{value}} د.ك",
+        "buy_get": "اشترِ {{buy}} واحصل على {{get}} مجانًا"
+      },
+      "on": {
+        "all": "كل الأطباق",
+        "categories_zero": "لا فئات",
+        "categories_one": "فئة واحدة",
+        "categories_two": "فئتان",
+        "categories_few": "{{count}} فئات",
+        "categories_many": "{{count}} فئة",
+        "categories_other": "{{count}} فئة",
+        "items_zero": "لا أطباق",
+        "items_one": "طبق واحد",
+        "items_two": "طبقان",
+        "items_few": "{{count}} أطباق",
+        "items_many": "{{count}} طبقًا",
+        "items_other": "{{count}} طبق"
+      }
     }
   },
   "weekdaysShort": {
@@ -975,6 +1039,15 @@
       "method": "يعود بواسطة",
       "reason": "السبب",
       "confirm": "منح الاسترداد"
+    },
+    "promo": {
+      "title": "رمز العرض",
+      "code": "الرمز",
+      "apply": "تطبيق",
+      "add": "رمز عرض",
+      "typed": "الرمز",
+      "remove": "إزالة",
+      "removeFor": "إزالة الرمز {{code}}"
     }
   },
   "kds": {
