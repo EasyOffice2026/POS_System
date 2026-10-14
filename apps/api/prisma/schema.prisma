@@ -179,6 +179,8 @@ model AuditLog {
   @@index([brandId, createdAt])
   @@index([userId, createdAt])
   @@index([action, createdAt])
+  // The whole log, newest first, as a group admin reads it.
+  @@index([createdAt])
   @@map("audit_logs")
 }
 
@@ -452,6 +454,8 @@ model Order {
   // Lets a line point at "this order of this branch of this brand".
   @@unique([id, branchId, brandId])
   @@index([branchId, createdAt])
+  // The open orders of a branch (the POS list and the dashboard) among all its history.
+  @@index([branchId, status, createdAt])
   @@index([brandId, createdAt])
   @@map("orders")
 }
@@ -574,6 +578,8 @@ model KitchenTicket {
   lines OrderLine[]
 
   @@index([branchId, status, sentAt])
+  // The last finished tickets of a branch, newest first, without reading its whole history.
+  @@index([branchId, status, doneAt])
   @@index([orderId])
   @@map("kitchen_tickets")
 }

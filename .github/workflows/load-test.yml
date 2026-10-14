@@ -1,0 +1,88 @@
+name: Load test
+
+# Started by hand from the Actions tab (Run workflow): many tills taking orders at once against a
+# real PostgreSQL, with the API built and started as in production. The timings appear in the
+# summary of the run. See docs/load-test.md.
+on:
+  workflow_dispatch:
+    inputs:
+      tills:
+        description: Tills taking orders at once
+        default: '20'
+        required: true
+        type: string
+      minutes:
+        description: How long, in minutes
+        default: '3'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  load:
+    name: Load test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: pos
+          POSTGRES_PASSWORD: pos
+          POSTGRES_DB: pos
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pos -d pos"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://pos:pos@localhost:5432/pos?schema=load
+      TILLS: ${{ inputs.tills }}
+      MINUTES: ${{ inputs.minutes }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npm run db:deploy
+      - run: npm run db:seed
+      - run: npm run build -w @pos/api
+
+      - name: Start the API as in production
+        env:
+          NODE_ENV: production
+          AUTH_RATE_LIMIT_MAX: '1000'
+        run: |
+          JWT_ACCESS_SECRET="$(openssl rand -base64 48)" npm run start -w @pos/api > api.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl -sf http://localhost:3000/api/v1/health > /dev/null && exit 0
+            sleep 1
+          done
+          cat api.log
+          exit 1
+
+      - name: Run the load test
+        working-directory: apps/api
+        run: node scripts/load-test.mjs --tills "$TILLS" --minutes "$MINUTES" | tee load-test.txt
+
+      - name: Put the timings in the summary
+        if: always()
+        run: |
+          {
+            echo "### $TILLS tills for $MINUTES minutes"
+            echo '```'
+            cat apps/api/load-test.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Show the end of the API log
+        if: always()
+        run: tail -n 50 api.log
