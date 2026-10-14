@@ -11,11 +11,13 @@ interface ReceiptProps {
   order: Order;
   terminal: Terminal;
   cashier: string;
+  // The bill of an order not paid yet, printed for the table (docs/specs/023-floor-plan.md).
+  bill?: boolean;
 }
 
 // What was sold and how it was paid. It shows no tax until the VAT decision is made, and nothing
 // it cannot back up. See docs/specs/007-payments.md, rule 9.
-export function Receipt({ order, terminal, cashier }: ReceiptProps) {
+export function Receipt({ order, terminal, cashier, bill = false }: ReceiptProps) {
   const { t, i18n } = useTranslation();
   const names = (modifiers: Order['lines'][number]['modifiers']) =>
     modifiers.map((modifier) => localize(modifier.name, i18n.language)).join(', ');
@@ -32,9 +34,14 @@ export function Receipt({ order, terminal, cashier }: ReceiptProps) {
           {t('pos.order.number', { number: order.number })}
         </p>
         <p className="text-xs text-slate-600">
-          {t(`pos.order.types.${order.type}`)} ·{' '}
-          {formatDateTime(order.paidAt ?? order.updatedAt, i18n.language)}
+          {t(`pos.order.types.${order.type}`)}
+          {order.table && ` · ${t('pos.table.name', { name: order.table.name })}`} ·{' '}
+          {formatDateTime(
+            bill ? (order.billPrintedAt ?? order.updatedAt) : (order.paidAt ?? order.updatedAt),
+            i18n.language,
+          )}
         </p>
+        {bill && <p className="mt-1 font-semibold uppercase">{t('pos.table.notPaid')}</p>}
         <p className="text-xs text-slate-600">{t('pos.receipt.cashier', { name: cashier })}</p>
         {order.customer && (
           <p className="text-xs text-slate-600">
@@ -107,7 +114,7 @@ export function Receipt({ order, terminal, cashier }: ReceiptProps) {
         </div>
       </dl>
 
-      {order.payments.length > 0 && (
+      {!bill && order.payments.length > 0 && (
         <dl className="space-y-1 border-t border-dashed border-slate-300 pt-2">
           {order.payments.map((payment) => (
             <div key={payment.id}>
@@ -138,7 +145,7 @@ export function Receipt({ order, terminal, cashier }: ReceiptProps) {
         </dl>
       )}
 
-      {order.customer && (order.pointsEarned > 0 || order.pointsRedeemed > 0) && (
+      {!bill && order.customer && (order.pointsEarned > 0 || order.pointsRedeemed > 0) && (
         <dl className="space-y-1 border-t border-dashed border-slate-300 pt-2 text-xs">
           {order.pointsEarned > 0 && (
             <div className={row}>
@@ -153,7 +160,9 @@ export function Receipt({ order, terminal, cashier }: ReceiptProps) {
         </dl>
       )}
 
-      <p className="pt-2 text-center text-xs text-slate-600">{t('pos.receipt.thanks')}</p>
+      <p className="pt-2 text-center text-xs text-slate-600">
+        {bill ? t('pos.table.billThanks') : t('pos.receipt.thanks')}
+      </p>
     </div>
   );
 }
@@ -161,6 +170,29 @@ export function Receipt({ order, terminal, cashier }: ReceiptProps) {
 interface ReceiptDialogProps extends ReceiptProps {
   onNewOrder: () => void;
   onClose: () => void;
+}
+
+interface BillDialogProps extends ReceiptProps {
+  onClose: () => void;
+}
+
+// The bill of a table before it pays, with a button to print it (spec 023, rule 6).
+export function BillDialog({ onClose, ...receipt }: BillDialogProps) {
+  const { t } = useTranslation();
+
+  return (
+    <Dialog title={t('pos.table.billTitle')} onClose={onClose}>
+      <Receipt {...receipt} bill />
+      <div className="mt-4 flex justify-end gap-2">
+        <button type="button" onClick={onClose} className={secondaryButtonClass}>
+          {t('common.back')}
+        </button>
+        <button type="button" onClick={() => window.print()} className={primaryButtonClass}>
+          {t('pos.receipt.print')}
+        </button>
+      </div>
+    </Dialog>
+  );
 }
 
 // The receipt after payment, with a button to print it on any printer the browser knows.

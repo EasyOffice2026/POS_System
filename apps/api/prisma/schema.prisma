@@ -71,6 +71,7 @@ model Branch {
   transfersIn    StockTransfer[]  @relation("transfersIn")
   stockCounts    StockCount[]
   purchaseOrders PurchaseOrder[]
+  tables         DiningTable[]
 
   // Lets tables that carry a brand id point at "this branch of this brand".
   @@unique([id, brandId])
@@ -410,6 +411,11 @@ model Order {
   pointsRedeemed       Int           @default(0) @map("points_redeemed")
   pointsDiscount       Decimal       @default(0) @map("points_discount") @db.Decimal(15, 3)
   pointsEarned         Int           @default(0) @map("points_earned")
+  // The table of a dine-in order (docs/specs/023-floor-plan.md). The open key equals the table
+  // while the order is open and is null after, so a table holds one open order at most.
+  tableId              String?       @map("table_id") @db.Uuid
+  tableOpenKey         String?       @unique @map("table_open_key") @db.Uuid
+  billPrintedAt        DateTime?     @map("bill_printed_at") @db.Timestamptz(3)
   discountKind         DiscountKind? @map("discount_kind")
   // The percentage or the amount that was given. The amount it takes off is worked out again
   // whenever the lines change.
@@ -437,6 +443,7 @@ model Order {
   branch   Branch          @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
   lines    OrderLine[]
   customer Customer?       @relation(fields: [customerId, brandId], references: [id, brandId], onDelete: Restrict)
+  table    DiningTable?    @relation(fields: [tableId, branchId], references: [id, branchId], onDelete: Restrict)
   payments Payment[]
   tickets  KitchenTicket[]
   refunds  Refund[]
@@ -1098,4 +1105,43 @@ model LoyaltyEntry {
 
   @@index([customerId, createdAt])
   @@map("loyalty_entries")
+}
+
+enum TableShape {
+  square
+  round
+
+  @@map("table_shape")
+}
+
+// A table of a branch on its floor plan: an area's grid of 24 by 16 cells, a place and a size in
+// cells. See docs/specs/023-floor-plan.md.
+model DiningTable {
+  id        String     @id @default(uuid(7)) @db.Uuid
+  brandId   String     @map("brand_id") @db.Uuid
+  branchId  String     @map("branch_id") @db.Uuid
+  name      String
+  // The name in small letters with single spaces, unique in the branch.
+  nameKey   String     @map("name_key")
+  area      String
+  seats     Int
+  shape     TableShape @default(square)
+  x         Int
+  y         Int
+  width     Int        @default(1)
+  height    Int        @default(1)
+  isActive  Boolean    @default(true) @map("is_active")
+  // Its place in the list of the plan.
+  position  Int        @default(0)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  branch Branch  @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
+  orders Order[]
+
+  @@unique([branchId, nameKey])
+  // Lets an order point at "this table of this branch".
+  @@unique([id, branchId])
+  @@index([brandId])
+  @@map("dining_tables")
 }

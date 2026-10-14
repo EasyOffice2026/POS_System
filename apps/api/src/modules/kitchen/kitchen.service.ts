@@ -41,8 +41,19 @@ export function createKitchenService({ now }: KitchenDeps) {
     const ticketIds = rows.map((row) => row.id);
     const orders = await db.order.findMany({
       where: { id: { in: [...new Set(rows.map((row) => row.orderId))] } },
-      select: { id: true, number: true, type: true, note: true, status: true },
+      select: { id: true, number: true, type: true, note: true, status: true, tableId: true },
     });
+    const tableIds = [
+      ...new Set(orders.flatMap((order) => (order.tableId ? [order.tableId] : []))),
+    ];
+    const tables =
+      tableIds.length === 0
+        ? []
+        : await db.diningTable.findMany({
+            where: { id: { in: tableIds } },
+            select: { id: true, name: true },
+          });
+    const tableName = new Map(tables.map((table) => [table.id, table.name]));
     const lines = await db.orderLine.findMany({
       where: { ticketId: { in: ticketIds } },
       orderBy: [{ position: 'asc' }, { id: 'asc' }],
@@ -59,6 +70,7 @@ export function createKitchenService({ now }: KitchenDeps) {
           orderNumber: order.number,
           orderType: order.type,
           orderNote: order.note,
+          tableName: order.tableId ? (tableName.get(order.tableId) ?? null) : null,
           stationId: row.stationId,
           status: row.status,
           sentAt: row.sentAt.toISOString(),

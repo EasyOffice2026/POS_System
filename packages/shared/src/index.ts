@@ -23,6 +23,7 @@ export * from './refunds';
 export * from './search';
 export * from './settings';
 export * from './suppliers';
+export * from './tables';
 export * from './transfers';
 export * from './shifts';
 export * from './users';

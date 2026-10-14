@@ -51,6 +51,8 @@ export const kitchenTicketSchema = z.object({
   orderNumber: z.number().int(),
   orderType: orderTypeSchema,
   orderNote: z.string().nullable(),
+  // The table of a dine-in order (docs/specs/023-floor-plan.md).
+  tableName: z.string().nullable(),
   // The kitchen station it is for, or null when the brand has none (docs/specs/009-settings.md).
   stationId: z.uuid().nullable(),
   status: ticketStatusSchema,

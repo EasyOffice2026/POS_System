@@ -84,6 +84,7 @@ describe('the details of a branch', () => {
       'Details',
       'Opening hours',
       'Printers',
+      'Floor plan',
     ]);
     expect(tabs.getByRole('link', { name: 'Details' })).toHaveAttribute('aria-current', 'page');
     expect(tabs.getByRole('link', { name: 'Printers' })).not.toHaveAttribute('aria-current');

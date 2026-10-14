@@ -133,6 +133,21 @@ const messageKeys = {
   LOYALTY_OFF: 'validation.LOYALTY_OFF',
   CUSTOMER_REQUIRED: 'validation.CUSTOMER_REQUIRED',
   PHONE_TAKEN: 'validation.PHONE_TAKEN',
+  TABLE_OVERLAP: 'validation.TABLE_OVERLAP',
+  TABLE_OUTSIDE: 'validation.TABLE_OUTSIDE',
+  TABLE_NAME_REQUIRED: 'validation.TABLE_NAME_REQUIRED',
+  TABLE_NAME_TOO_LONG: 'validation.TABLE_NAME_TOO_LONG',
+  TABLE_NAME_TAKEN: 'validation.TABLE_NAME_TAKEN',
+  AREA_REQUIRED: 'validation.AREA_REQUIRED',
+  AREA_TOO_LONG: 'validation.AREA_TOO_LONG',
+  SEATS_INVALID: 'validation.SEATS_INVALID',
+  TABLE_SIZE_INVALID: 'validation.TABLE_SIZE_INVALID',
+  TABLE_SHAPE_INVALID: 'validation.TABLE_SHAPE_INVALID',
+  TABLE_REPEATED: 'validation.TABLE_REPEATED',
+  TABLES_TOO_MANY: 'validation.TABLES_TOO_MANY',
+  TABLE_NOT_FOUND: 'validation.TABLE_NOT_FOUND',
+  TABLE_IN_USE: 'validation.TABLE_IN_USE',
+  TABLE_TAKEN: 'validation.TABLE_TAKEN',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;
@@ -193,6 +208,8 @@ export function problemsFrom(error: unknown, options: { notFound?: string } = {}
     case 'ORDER_CLOSED':
     case 'ORDER_NOT_SENT':
     case 'LOYALTY_OFF':
+    case 'TABLE_IN_USE':
+    case 'TABLE_TAKEN':
     case 'FORBIDDEN':
       return { fields: {}, form: error.code };
     case 'NOT_FOUND':

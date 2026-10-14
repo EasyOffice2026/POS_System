@@ -77,6 +77,7 @@ export interface OrdersDeps {
 }
 
 const notOpen = () => errors.conflict('ORDER_NOT_OPEN', 'This order is not open');
+const tableTaken = () => errors.conflict('TABLE_TAKEN', 'Another order is open at this table');
 const pointsNotEnough = () => errors.validation([{ path: 'points', message: 'POINTS_NOT_ENOUGH' }]);
 
 // Orders at a branch. See docs/specs/005-orders.md.
@@ -104,7 +105,10 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
     db.orderLine.findMany({ where: { orderId }, orderBy: [{ position: 'asc' }, { id: 'asc' }] });
 
   async function describe(
-    db: Pick<OrderTx, 'orderLine' | 'payment' | 'kitchenTicket' | 'refund' | 'customer'>,
+    db: Pick<
+      OrderTx,
+      'orderLine' | 'payment' | 'kitchenTicket' | 'refund' | 'customer' | 'diningTable'
+    >,
     row: OrderRow,
   ): Promise<Order> {
     const lines = await readLines(db, row.id);
@@ -126,8 +130,30 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
       payments,
       new Map(tickets.map((ticket) => [ticket.id, ticket.status])),
       refunds,
-      row.customerId ? await db.customer.findUnique({ where: { id: row.customerId } }) : null,
+      {
+        customer: row.customerId
+          ? await db.customer.findUnique({ where: { id: row.customerId } })
+          : null,
+        table: row.tableId ? await db.diningTable.findUnique({ where: { id: row.tableId } }) : null,
+      },
     );
+  }
+
+  // A table an order can go to: in use, at the order's branch, and holding no other open order
+  // (docs/specs/023-floor-plan.md, rules 3 and 4).
+  async function freeTable(
+    db: Pick<OrderTx, 'diningTable' | 'order'>,
+    branchId: string,
+    tableId: string,
+    orderId: string | null,
+  ) {
+    const table = await db.diningTable.findUnique({ where: { id: tableId } });
+    if (!table || !table.isActive || table.branchId !== branchId) {
+      throw errors.validation([{ path: 'tableId', message: 'TABLE_NOT_FOUND' }]);
+    }
+    const holder = await db.order.findUnique({ where: { tableOpenKey: tableId } });
+    if (holder && holder.id !== orderId) throw tableTaken();
+    return table;
   }
 
   // Puts the lines that were not sent on a new kitchen ticket (spec 008, rule 1). Answers how many
@@ -326,6 +352,8 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
         pointsRedeemed,
         pointsDiscount: fromMils(points),
         total: fromMils(total),
+        // The bill printed before is out of date (docs/specs/023-floor-plan.md, rule 6).
+        ...(fromMils(total) === order.total.toFixed(3) ? {} : { billPrintedAt: null }),
       },
     });
     return describe(tx, updated);
@@ -419,14 +447,19 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
           ? []
           : await db.customer.findMany({ where: { id: { in: customerIds } } });
       const customerOf = new Map(customers.map((customer) => [customer.id, customer]));
+      const tableIds = [...new Set(page.rows.flatMap((row) => (row.tableId ? [row.tableId] : [])))];
+      const tables =
+        tableIds.length === 0
+          ? []
+          : await db.diningTable.findMany({ where: { id: { in: tableIds } } });
+      const tableOf = new Map(tables.map((table) => [table.id, table]));
 
       return {
         data: page.rows.map((row) =>
-          toSummary(
-            row,
-            countOf.get(row.id) ?? 0,
-            row.customerId ? (customerOf.get(row.customerId) ?? null) : null,
-          ),
+          toSummary(row, countOf.get(row.id) ?? 0, {
+            customer: row.customerId ? (customerOf.get(row.customerId) ?? null) : null,
+            table: row.tableId ? (tableOf.get(row.tableId) ?? null) : null,
+          }),
         ),
         nextCursor: page.nextCursor,
       };
@@ -452,6 +485,8 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
         branch.timezone,
         parseBranchConfig(branch.config).dayEndsAt,
       );
+      // An order at a table is dine-in (docs/specs/023-floor-plan.md, rule 3).
+      const table = input.tableId ? await freeTable(db, branch.id, input.tableId, null) : null;
       const number = await nextNumber(db, branch, businessDate);
 
       try {
@@ -462,17 +497,22 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
             branchId: branch.id,
             businessDate: dbDate(businessDate),
             number,
-            type: input.type,
+            type: table ? 'dine_in' : input.type,
             note: input.note ?? null,
             openedById: auth.sub,
+            ...(table ? { tableId: table.id, tableOpenKey: table.id } : {}),
           },
         });
-        return { order: toOrder(row, []), created: true };
+        return { order: toOrder(row, [], [], new Map(), [], { table }), created: true };
       } catch (error) {
         // The same order sent twice at the same moment: the first one made it.
         if (input.id && isUniqueViolation(error)) {
           const existing = await existingOrder(db, input.id, input.branchId);
           if (existing) return { order: await describe(db, existing), created: false };
+        }
+        // Another terminal opened an order at the table first.
+        if (input.tableId && isUniqueViolation(error)) throw tableTaken();
+        if (input.id && isUniqueViolation(error)) {
           // The id belongs to an order this person cannot see.
           throw errors.conflict('ORDER_ID_TAKEN', 'This order id is already used');
         }
@@ -487,6 +527,8 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
           where: { id },
           data: {
             ...(input.type ? { type: input.type } : {}),
+            // A takeaway order has no table (docs/specs/023-floor-plan.md, rule 3).
+            ...(input.type === 'takeaway' ? { tableId: null, tableOpenKey: null } : {}),
             ...(input.note !== undefined ? { note: input.note } : {}),
           },
         });
@@ -702,6 +744,7 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
             voidedById: auth.sub,
             voidReason: input.reason,
             voidApprovedById: approvedById,
+            tableOpenKey: null,
           },
         });
         return { order: await describe(tx, row), sent: sentNow };
@@ -727,6 +770,58 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
         meta,
       );
       return result.order;
+    },
+
+    // Puts an open order at a table, or moves it there; it becomes dine-in
+    // (docs/specs/023-floor-plan.md, rules 3 to 5).
+    async setTable(ctx: ActorContext, orderId: string, tableId: string): Promise<Order> {
+      const { db } = ctx;
+      const order = await load(db, orderId);
+      if (order.status !== 'open') throw notOpen();
+      await freeTable(db, order.branchId, tableId, orderId);
+      try {
+        return await db.$transaction(async (tx) => {
+          await lockOpen(tx, orderId);
+          await freeTable(tx, order.branchId, tableId, orderId);
+          const row = await tx.order.update({
+            where: { id: orderId },
+            data: { type: 'dine_in', tableId, tableOpenKey: tableId },
+          });
+          return describe(tx, row);
+        });
+      } catch (error) {
+        if (isUniqueViolation(error)) throw tableTaken();
+        throw error;
+      }
+    },
+
+    async removeTable(ctx: ActorContext, orderId: string): Promise<Order> {
+      const { db } = ctx;
+      const order = await load(db, orderId);
+      if (order.status !== 'open') throw notOpen();
+      if (!order.tableId) return describe(db, order);
+      return db.$transaction(async (tx) => {
+        await lockOpen(tx, orderId);
+        const row = await tx.order.update({
+          where: { id: orderId },
+          data: { tableId: null, tableOpenKey: null },
+        });
+        return describe(tx, row);
+      });
+    },
+
+    // The bill was printed for the customer: the table waits to be paid (rule 6).
+    async printBill(ctx: ActorContext, orderId: string): Promise<Order> {
+      return ctx.db.$transaction(async (tx) => {
+        await lockOpen(tx, orderId);
+        const live = await tx.orderLine.count({ where: { orderId, status: { not: 'voided' } } });
+        if (live === 0) throw errors.conflict('ORDER_EMPTY', 'This order has nothing to pay for');
+        const row = await tx.order.update({
+          where: { id: orderId },
+          data: { billPrintedAt: now() },
+        });
+        return describe(tx, row);
+      });
     },
 
     // Puts a customer on an open order by phone, adding them when the phone is new; a customer
@@ -1091,7 +1186,14 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
           const earned = await loyaltyOnPay(tx, order, by, at);
           const closed = await tx.order.update({
             where: { id: orderId },
-            data: { status: 'paid', paidAt: at, paidById: auth.sub, pointsEarned: earned },
+            // The table is free again; the order keeps its name (spec 023, rule 7).
+            data: {
+              status: 'paid',
+              paidAt: at,
+              paidById: auth.sub,
+              pointsEarned: earned,
+              tableOpenKey: null,
+            },
           });
           return describe(tx, closed);
         });

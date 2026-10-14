@@ -10,8 +10,9 @@ import { BranchDetailsForm } from './BranchDetailsForm';
 import { getBranch } from './branches-api';
 import { OpeningHoursEditor } from './OpeningHoursEditor';
 import { PrintersEditor } from './PrintersEditor';
+import { FloorPlanEditor } from '../tables/FloorPlanEditor';
 
-const tabs = ['details', 'hours', 'printers'] as const;
+const tabs = ['details', 'hours', 'printers', 'tables'] as const;
 type Tab = (typeof tabs)[number];
 
 // The settings of one branch, in tabs: details, opening hours and printers. The tab is in the
@@ -33,12 +34,14 @@ export function BranchPage() {
   });
 
   const canWrite = me?.permissions.includes('branches:write') ?? false;
+  // The floor plan has its own right: a branch manager draws their tables (spec 023).
+  const canEditTables = me?.permissions.includes('tables:write') ?? false;
   const requested = searchParams.get('tab');
   const tab: Tab = tabs.find((name) => name === requested) ?? 'details';
   const brand = directory.brands.find((item) => item.id === branch.data?.brandId);
 
   return (
-    <div className="max-w-3xl space-y-4">
+    <div className={`space-y-4 ${tab === 'tables' ? 'max-w-5xl' : 'max-w-3xl'}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">
@@ -75,7 +78,9 @@ export function BranchPage() {
               {t('branches.created')}
             </p>
           )}
-          {!canWrite && <p className="text-sm text-slate-600">{t('branches.readOnly')}</p>}
+          {!canWrite && tab !== 'tables' && (
+            <p className="text-sm text-slate-600">{t('branches.readOnly')}</p>
+          )}
 
           <nav
             aria-label={t('branches.tabs.label')}
@@ -116,6 +121,13 @@ export function BranchPage() {
           )}
           {tab === 'printers' && (
             <PrintersEditor key={branch.data.id} branch={branch.data} readOnly={!canWrite} />
+          )}
+          {tab === 'tables' && (
+            <FloorPlanEditor
+              key={branch.data.id}
+              branchId={branch.data.id}
+              readOnly={!canEditTables}
+            />
           )}
         </>
       )}

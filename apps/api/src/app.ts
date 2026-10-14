@@ -30,6 +30,8 @@ import { createReportsRouter } from './modules/reports/reports.router';
 import { createReportsService } from './modules/reports/reports.service';
 import { createCustomersRouter } from './modules/customers/customers.router';
 import { createCustomersService } from './modules/customers/customers.service';
+import { createTablesRouter } from './modules/tables/tables.router';
+import { createTablesService } from './modules/tables/tables.service';
 import { createRolesRouter } from './modules/roles/roles.router';
 import { createShiftsRouter } from './modules/shifts/shifts.router';
 import { createShiftsService } from './modules/shifts/shifts.service';
@@ -99,6 +101,11 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
   const protectedRoutes = [authenticate(tokens), withTenant(prisma)];
   v1.use('/brands', ...protectedRoutes, createBrandsRouter({ service: brandsService }));
   v1.use('/branches', ...protectedRoutes, createBranchesRouter({ service: brandsService }));
+  v1.use(
+    '/branches',
+    ...protectedRoutes,
+    createTablesRouter({ service: createTablesService({ prisma }) }),
+  );
   v1.use('/menu', ...protectedRoutes, createMenuRouter({ service: menuService }));
   v1.use('/orders', ...protectedRoutes, createOrdersRouter({ service: ordersService }));
   v1.use('/kitchen', ...protectedRoutes, createKitchenRouter({ service: kitchenService }));

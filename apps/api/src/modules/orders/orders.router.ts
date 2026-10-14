@@ -4,6 +4,7 @@ import {
   orderListQuerySchema,
   payOrderRequestSchema,
   putOrderCustomerRequestSchema,
+  putOrderTableRequestSchema,
   putOrderPointsRequestSchema,
   putPromoCodeRequestSchema,
   refundRequestSchema,
@@ -97,6 +98,21 @@ export function createOrdersRouter({ service }: { service: OrdersService }): Rou
     const { id } = parseWith(orderParams, req.params);
     const input = parseWith(removeDiscountRequestSchema, req.body ?? {});
     res.json(await service.removeDiscount(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  // The table of a dine-in order, and its bill (docs/specs/023-floor-plan.md).
+  router.put('/:id/table', write, async (req, res) => {
+    const { id } = parseWith(orderParams, req.params);
+    const { tableId } = parseWith(putOrderTableRequestSchema, req.body);
+    res.json(await service.setTable(requestContext(req), id, tableId));
+  });
+  router.delete('/:id/table', write, async (req, res) => {
+    const { id } = parseWith(orderParams, req.params);
+    res.json(await service.removeTable(requestContext(req), id));
+  });
+  router.post('/:id/bill', write, async (req, res) => {
+    const { id } = parseWith(orderParams, req.params);
+    res.json(await service.printBill(requestContext(req), id));
   });
 
   // The customer and their points on the order (docs/specs/022-loyalty.md).

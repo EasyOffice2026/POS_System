@@ -6,11 +6,13 @@ interface DialogProps {
   children: ReactNode;
   // The buttons at the bottom.
   footer?: ReactNode;
+  // For a floor plan: as wide as a tablet allows.
+  wide?: boolean;
 }
 
 // A dialog over the page. The first field (or button) gets the focus, Escape closes it, and the
 // focus goes back where it was when it closes. Tab stays inside it.
-export function Dialog({ title, onClose, children, footer }: DialogProps) {
+export function Dialog({ title, onClose, children, footer, wide = false }: DialogProps) {
   const titleId = useId();
   const panel = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
@@ -76,7 +78,7 @@ export function Dialog({ title, onClose, children, footer }: DialogProps) {
         aria-labelledby={titleId}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className="flex max-h-[90vh] w-full flex-col rounded-t-xl bg-white shadow-xl sm:max-w-md sm:rounded-xl"
+        className={`flex max-h-[90vh] w-full flex-col rounded-t-xl bg-white shadow-xl sm:rounded-xl ${wide ? 'sm:max-w-4xl' : 'sm:max-w-md'}`}
       >
         <h2 id={titleId} className="border-b border-slate-200 px-4 py-3 text-lg font-semibold">
           {title}

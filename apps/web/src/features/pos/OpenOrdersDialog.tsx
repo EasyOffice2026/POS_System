@@ -74,7 +74,9 @@ export function OpenOrdersDialog({ branchId, currentId, onOpen, onClose }: OpenO
                   {t('pos.order.number', { number: order.number })}
                 </span>
                 <span className="block text-xs text-slate-600">
-                  {t(`pos.order.types.${order.type}`)} · {time.format(new Date(order.createdAt))} ·{' '}
+                  {t(`pos.order.types.${order.type}`)}
+                  {order.table && ` · ${t('pos.table.name', { name: order.table.name })}`} ·{' '}
+                  {time.format(new Date(order.createdAt))} ·{' '}
                   {t('pos.openOrders.lines', { count: order.lineCount })}
                   {Number(order.refunded) > 0 &&
                     ` · ${t('pos.order.refundedAmount', { amount: order.refunded })}`}

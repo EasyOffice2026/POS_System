@@ -49,7 +49,17 @@ export function TicketCard({ ticket, now, onMove, busy, doneByCashier = false }:
           <h2 className="text-lg font-bold">
             {t('pos.order.number', { number: ticket.orderNumber })}
           </h2>
-          <p className="text-xs text-slate-600">{t(`pos.order.types.${ticket.orderType}`)}</p>
+          <p className="text-xs text-slate-600">
+            {t(`pos.order.types.${ticket.orderType}`)}
+            {ticket.tableName && (
+              <>
+                {' · '}
+                <span className="text-sm font-semibold text-slate-900">
+                  {t('pos.table.name', { name: ticket.tableName })}
+                </span>
+              </>
+            )}
+          </p>
         </div>
         <div className="text-end">
           <p

@@ -146,6 +146,7 @@ describe('the settings on the kitchen screen', () => {
     orderNumber: 4,
     orderType: 'takeaway',
     orderNote: null,
+    tableName: null,
     stationId: stations[0]?.id,
     status: 'ready',
     sentAt: new Date().toISOString(),

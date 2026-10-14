@@ -17,6 +17,7 @@ import {
 import { z } from 'zod';
 import {
   type Customer as CustomerRow,
+  type DiningTable as TableRow,
   type OrderLine as LineRow,
   type Order as OrderRow,
   type Payment as PaymentRow,
@@ -41,6 +42,7 @@ export type OrderTx = Pick<
   | 'promotion'
   | 'customer'
   | 'loyaltyEntry'
+  | 'diningTable'
   | 'recipeLine'
   | 'branchStock'
   | 'stockMovement'
@@ -92,7 +94,13 @@ export function toOrderLine(row: LineRow, tickets: TicketStatuses = new Map()): 
   };
 }
 
-function orderFields(row: OrderRow, customer: CustomerRow | null) {
+// What an order shows besides its own row: its customer and its table.
+export interface OrderLinks {
+  customer?: CustomerRow | null;
+  table?: TableRow | null;
+}
+
+function orderFields(row: OrderRow, { customer = null, table = null }: OrderLinks) {
   return {
     id: row.id,
     brandId: row.brandId,
@@ -113,6 +121,8 @@ function orderFields(row: OrderRow, customer: CustomerRow | null) {
     pointsRedeemed: row.pointsRedeemed,
     pointsDiscount: row.pointsDiscount.toFixed(3),
     pointsEarned: row.pointsEarned,
+    table: table ? { id: table.id, name: table.name, area: table.area } : null,
+    billPrintedAt: iso(row.billPrintedAt),
     discount:
       row.discountKind && row.discountValue
         ? {
@@ -167,10 +177,10 @@ export function toOrder(
   payments: PaymentRow[] = [],
   tickets: TicketStatuses = new Map(),
   refunds: RefundRow[] = [],
-  customer: CustomerRow | null = null,
+  links: OrderLinks = {},
 ): Order {
   return {
-    ...orderFields(row, customer),
+    ...orderFields(row, links),
     lines: lines.map((line) => toOrderLine(line, tickets)),
     payments: payments.map(toPayment),
     change: fromMils(payments.reduce((sum, payment) => sum + mils(payment.change), 0)),
@@ -178,12 +188,8 @@ export function toOrder(
   };
 }
 
-export function toSummary(
-  row: OrderRow,
-  lineCount: number,
-  customer: CustomerRow | null = null,
-): OrderSummary {
-  return { ...orderFields(row, customer), lineCount };
+export function toSummary(row: OrderRow, lineCount: number, links: OrderLinks = {}): OrderSummary {
+  return { ...orderFields(row, links), lineCount };
 }
 
 // The totals of an order from its lines: the subtotal of the lines that are not voided, less what
