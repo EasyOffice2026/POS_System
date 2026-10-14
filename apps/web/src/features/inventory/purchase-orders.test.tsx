@@ -163,7 +163,9 @@ describe('the purchase orders of a branch', () => {
     renderApp('/admin/inventory/purchase-orders');
 
     await user.click(await screen.findByRole('link', { name: 'New order' }));
-    await user.selectOptions(await screen.findByLabelText('Supplier'), 'Gulf Dairy');
+    // The suppliers arrive after the page.
+    await screen.findByRole('option', { name: 'Gulf Dairy' });
+    await user.selectOptions(screen.getByLabelText('Supplier'), 'Gulf Dairy');
     // What the supplier sells comes first, with its price.
     const options = within(await screen.findByLabelText('Add an ingredient')).getAllByRole(
       'option',

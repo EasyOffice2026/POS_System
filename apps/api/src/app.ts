@@ -7,6 +7,7 @@ import type { PrismaClient } from './lib/prisma';
 import { createTokenService } from './lib/tokens';
 import { authenticate, withTenant } from './middleware/authenticate';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
+import { securityHeaders } from './middleware/security-headers';
 import { createAuditRouter } from './modules/audit/audit.router';
 import { createAuthRouter } from './modules/auth/auth.router';
 import { createAuthService } from './modules/auth/auth.service';
@@ -54,6 +55,7 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', config.trustProxy);
+  app.use(securityHeaders({ https: config.refreshToken.cookieSecure }));
   app.use(express.json({ limit: '100kb' }));
 
   const tokens = createTokenService(config);
