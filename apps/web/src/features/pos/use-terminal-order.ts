@@ -19,10 +19,14 @@ import {
   refundOrder,
   type RefundRequestInput,
   removeDiscount,
+  removeOrderCustomer,
+  removeOrderPoints,
   removePromoCode,
   removeLine,
   sendOrder,
   setDiscount,
+  setOrderCustomer,
+  setOrderPoints,
   setPromoCode,
   voidLine,
   voidOrder,
@@ -79,14 +83,20 @@ export function useTerminalOrder(branchId: string, brandId: string) {
       void queryClient.invalidateQueries({ queryKey: menuKeys.branchMenu(branchId) });
     }
     // A way to pay was switched off in the settings since the terminal loaded them.
-    if (code === 'PAYMENT_METHOD_INVALID') {
+    if (code === 'PAYMENT_METHOD_INVALID' || code === 'LOYALTY_OFF') {
       void queryClient.invalidateQueries({ queryKey: settingsKeys.brand(brandId) });
     }
     // The shift was closed elsewhere: the gate asks for a new one.
     if (code === 'SHIFT_REQUIRED') {
       void queryClient.invalidateQueries({ queryKey: shiftKeys.current(branchId) });
     }
-    const changedElsewhere = ['ORDER_NOT_OPEN', 'LINE_VOIDED', 'PAYMENT_TOTAL_MISMATCH'];
+    const changedElsewhere = [
+      'ORDER_NOT_OPEN',
+      'LINE_VOIDED',
+      'PAYMENT_TOTAL_MISMATCH',
+      // The customer's points went on another order first.
+      'POINTS_NOT_ENOUGH',
+    ];
     if (changedElsewhere.includes(code) && orderId) {
       void queryClient.invalidateQueries({ queryKey: orderKeys.order(orderId) });
     }
@@ -118,6 +128,26 @@ export function useTerminalOrder(branchId: string, brandId: string) {
     } catch (error) {
       if (needsApproval(error)) setApproval({ change, after });
       else fail(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // A change typed in a dialog: its problem is shown in the dialog, not on the screen. Answers
+  // the code of the problem, or null when the change was made.
+  async function boxed(
+    change: (orderId: string) => Promise<Order>,
+    field: string,
+  ): Promise<string | null> {
+    if (!order) return null;
+    setBusy(true);
+    setNotice(null);
+    try {
+      show(await change(order.id));
+      return null;
+    } catch (error) {
+      const found = problemsFrom(error);
+      return found.fields[field] ?? found.form ?? 'saveError';
     } finally {
       setBusy(false);
     }
@@ -186,23 +216,26 @@ export function useTerminalOrder(branchId: string, brandId: string) {
 
     // Types a promotion code; answers the problem to show in the code's box, or null when it
     // was taken (docs/specs/021-promotions.md, rule 5).
-    applyPromoCode: async (code: string): Promise<string | null> => {
-      if (!order) return null;
-      setBusy(true);
-      setNotice(null);
-      try {
-        show(await setPromoCode(order.id, code));
-        return null;
-      } catch (error) {
-        const found = problemsFrom(error);
-        return found.fields.code ?? found.form ?? 'saveError';
-      } finally {
-        setBusy(false);
-      }
-    },
+    applyPromoCode: (code: string) => boxed((id) => setPromoCode(id, code), 'code'),
 
     removePromoCode: () => {
       if (order) void perform(() => removePromoCode(order.id));
+    },
+
+    // Puts a customer on the order by phone, adding them when the phone is new; answers the
+    // problem to show in the box, or null when it was done (docs/specs/022-loyalty.md, rule 2).
+    applyCustomer: (input: { phone: string; name?: string }) =>
+      boxed((id) => setOrderCustomer(id, input), 'phone'),
+
+    removeCustomer: () => {
+      if (order) void perform(() => removeOrderCustomer(order.id));
+    },
+
+    // Spends points on the order (rule 4), the same way.
+    applyPoints: (points: number) => boxed((id) => setOrderPoints(id, points), 'points'),
+
+    removePoints: () => {
+      if (order) void perform(() => removeOrderPoints(order.id));
     },
 
     // Answers the paid order, for the receipt, or null when it failed.

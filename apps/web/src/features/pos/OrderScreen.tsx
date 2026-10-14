@@ -9,12 +9,14 @@ import { getBranchMenu, menuKeys } from '../menu/menu-api';
 import { useNow } from '../menu/use-now';
 import { ApprovalDialog } from './ApprovalDialog';
 import { type Choosing, ChoiceDialog } from './ChoiceDialog';
+import { CustomerDialog } from './CustomerDialog';
 import { DiscountDialog } from './DiscountDialog';
 import { PromoCodeDialog } from './PromoCodeDialog';
 import { MenuPanel } from './MenuPanel';
 import { OpenOrdersDialog } from './OpenOrdersDialog';
 import { OrderPanel } from './OrderPanel';
 import { PaymentDialog } from './PaymentDialog';
+import { PointsDialog } from './PointsDialog';
 import { Receipt, ReceiptDialog } from './Receipt';
 import { RefundDialog } from './RefundDialog';
 import { useBrandSettings } from '../settings/settings-api';
@@ -53,6 +55,8 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
   const [voiding, setVoiding] = useState<Voiding | null>(null);
   const [discounting, setDiscounting] = useState(false);
   const [promoCoding, setPromoCoding] = useState(false);
+  const [customering, setCustomering] = useState(false);
+  const [pointing, setPointing] = useState(false);
   const [refunding, setRefunding] = useState(false);
   const [listing, setListing] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -171,6 +175,11 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             onDiscount={() => setDiscounting(true)}
             onPromoCode={() => setPromoCoding(true)}
             onRemovePromoCode={() => terminalOrder.removePromoCode()}
+            loyalty={brandSettings.loyalty}
+            onCustomer={() => setCustomering(true)}
+            onRemoveCustomer={terminalOrder.removeCustomer}
+            onPoints={() => setPointing(true)}
+            onRemovePoints={terminalOrder.removePoints}
             onRefund={() => setRefunding(true)}
             onVoidOrder={() => setVoiding({ kind: 'order' })}
             onNewOrder={terminalOrder.newOrder}
@@ -224,6 +233,22 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
           <PromoCodeDialog
             onApply={terminalOrder.applyPromoCode}
             onCancel={() => setPromoCoding(false)}
+          />
+        )}
+
+        {customering && order && (
+          <CustomerDialog
+            onApply={terminalOrder.applyCustomer}
+            onCancel={() => setCustomering(false)}
+          />
+        )}
+
+        {pointing && order && (
+          <PointsDialog
+            order={order}
+            loyalty={brandSettings.loyalty}
+            onApply={terminalOrder.applyPoints}
+            onCancel={() => setPointing(false)}
           />
         )}
 

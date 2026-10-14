@@ -16,6 +16,7 @@ import {
 } from '@pos/shared';
 import { z } from 'zod';
 import {
+  type Customer as CustomerRow,
   type OrderLine as LineRow,
   type Order as OrderRow,
   type Payment as PaymentRow,
@@ -38,6 +39,8 @@ export type OrderTx = Pick<
   | 'shift'
   | 'refund'
   | 'promotion'
+  | 'customer'
+  | 'loyaltyEntry'
   | 'recipeLine'
   | 'branchStock'
   | 'stockMovement'
@@ -89,7 +92,7 @@ export function toOrderLine(row: LineRow, tickets: TicketStatuses = new Map()): 
   };
 }
 
-function orderFields(row: OrderRow) {
+function orderFields(row: OrderRow, customer: CustomerRow | null) {
   return {
     id: row.id,
     brandId: row.brandId,
@@ -104,6 +107,12 @@ function orderFields(row: OrderRow) {
     promoCode: row.promoCode,
     promotionDiscount: row.promotionDiscount.toFixed(3),
     promotions: appliedListSchema.safeParse(row.promotions).data ?? [],
+    customer: customer
+      ? { id: customer.id, name: customer.name, phone: customer.phone, points: customer.points }
+      : null,
+    pointsRedeemed: row.pointsRedeemed,
+    pointsDiscount: row.pointsDiscount.toFixed(3),
+    pointsEarned: row.pointsEarned,
     discount:
       row.discountKind && row.discountValue
         ? {
@@ -158,9 +167,10 @@ export function toOrder(
   payments: PaymentRow[] = [],
   tickets: TicketStatuses = new Map(),
   refunds: RefundRow[] = [],
+  customer: CustomerRow | null = null,
 ): Order {
   return {
-    ...orderFields(row),
+    ...orderFields(row, customer),
     lines: lines.map((line) => toOrderLine(line, tickets)),
     payments: payments.map(toPayment),
     change: fromMils(payments.reduce((sum, payment) => sum + mils(payment.change), 0)),
@@ -168,14 +178,20 @@ export function toOrder(
   };
 }
 
-export function toSummary(row: OrderRow, lineCount: number): OrderSummary {
-  return { ...orderFields(row), lineCount };
+export function toSummary(
+  row: OrderRow,
+  lineCount: number,
+  customer: CustomerRow | null = null,
+): OrderSummary {
+  return { ...orderFields(row, customer), lineCount };
 }
 
 // The totals of an order from its lines: the subtotal of the lines that are not voided, less what
 // the promotions took off, less the manual discount worked out again on what is left. See
 // docs/specs/005-orders.md, rules 9 and 10, and docs/specs/021-promotions.md, rule 6.
-export function totalsOf(order: OrderRow, lines: LineRow[], promotionDiscount = 0) {
+// Last come the points the customer spends, worth pointValue fils each, never more than is left
+// (docs/specs/022-loyalty.md, rule 4).
+export function totalsOf(order: OrderRow, lines: LineRow[], promotionDiscount = 0, pointValue = 0) {
   const subtotal = lines
     .filter((line) => line.status !== 'voided')
     .reduce((sum, line) => sum + mils(line.lineTotal), 0);
@@ -188,5 +204,10 @@ export function totalsOf(order: OrderRow, lines: LineRow[], promotionDiscount = 
   } else if (order.discountKind === 'amount' && order.discountValue) {
     discount = Math.min(mils(order.discountValue), base);
   }
-  return { subtotal, promotions, discount, total: base - discount };
+  const left = base - discount;
+  // An order that shrank keeps only the points it can still use.
+  const pointsRedeemed =
+    pointValue > 0 ? Math.min(order.pointsRedeemed, Math.ceil(left / pointValue)) : 0;
+  const points = Math.min(pointsRedeemed * pointValue, left);
+  return { subtotal, promotions, discount, pointsRedeemed, points, total: left - points };
 }

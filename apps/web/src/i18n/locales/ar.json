@@ -38,7 +38,8 @@
     "settings": "الإعدادات",
     "shifts": "الورديات",
     "inventory": "المخزون",
-    "reports": "التقارير"
+    "reports": "التقارير",
+    "customers": "العملاء"
   },
   "language": {
     "switchTo": "تغيير اللغة",
@@ -115,7 +116,9 @@
     "ingredients_write": "تغيير المكونات",
     "suppliers_write": "تغيير الموردين",
     "reports_read": "عرض التقارير",
-    "promotions_write": "تغيير العروض"
+    "promotions_write": "تغيير العروض",
+    "customers_read": "عرض العملاء ونقاطهم",
+    "customers_write": "تعديل العملاء ومنح النقاط"
   },
   "users": {
     "title": "المستخدمون",
@@ -289,7 +292,7 @@
     "SUPPLIER_NAME_REQUIRED": "أدخل اسم المورد.",
     "SUPPLIER_NAME_TAKEN": "لدى العلامة التجارية مورد بهذا الاسم.",
     "SUPPLIER_NOT_FOUND": "هذا المورد غير متاح.",
-    "PHONE_INVALID": "اكتب رقم هاتف بالأرقام والمسافات و+ و- فقط.",
+    "PHONE_INVALID": "اكتب رقم هاتف كاملًا، مثل 9999 1234 أو +965 9999 1234.",
     "EMAIL_INVALID": "اكتب بريدًا إلكترونيًا مثل name@example.com.",
     "PAYMENT_DAYS_INVALID": "اكتب عددًا صحيحًا من الأيام من 0 إلى 365.",
     "PRICE_LIST_TOO_LONG": "يمكن أن تضم قائمة الأسعار حتى 500 مكوّن.",
@@ -308,7 +311,16 @@
     "PROMO_CODE_INVALID": "هذا الرمز غير صالح هنا اليوم.",
     "PROMO_CODE_TAKEN": "يستخدم عرض آخر للعلامة التجارية هذا الرمز.",
     "TIME_INVALID": "اكتب الوقتين بصيغة HH:MM، على ألا يتساويا.",
-    "DAYS_INVALID": "اختر كل يوم مرة واحدة."
+    "DAYS_INVALID": "اختر كل يوم مرة واحدة.",
+    "POINTS_RATE_INVALID": "اكتب عددًا صحيحًا من 0 إلى 1000.",
+    "POINTS_MIN_INVALID": "اكتب عددًا صحيحًا لا يقل عن 1.",
+    "POINTS_INVALID": "اكتب عددًا صحيحًا من النقاط.",
+    "POINTS_TOO_FEW": "هذه نقاط أقل من الحد الأدنى للاستخدام.",
+    "POINTS_NOT_ENOUGH": "ليس لدى العميل هذا العدد من النقاط.",
+    "POINTS_TOO_MANY": "هذه نقاط أكثر مما يحتاجه الطلب.",
+    "LOYALTY_OFF": "نقاط الولاء متوقفة لهذه العلامة التجارية.",
+    "CUSTOMER_REQUIRED": "أضف عميلًا إلى الطلب أولًا.",
+    "PHONE_TAKEN": "رقم الهاتف هذا لعميل آخر."
   },
   "rolesPage": {
     "title": "الأدوار",
@@ -388,7 +400,10 @@
       "inventory_purchase_order_cancelled": "إلغاء أمر شراء",
       "inventory_purchase_order_received": "استلام أمر شراء",
       "menu_promotion_created": "إضافة عرض",
-      "menu_promotion_updated": "تغيير عرض"
+      "menu_promotion_updated": "تغيير عرض",
+      "customer_created": "إضافة عميل",
+      "customer_updated": "تعديل عميل",
+      "customer_points_adjusted": "منح نقاط أو خصمها"
     }
   },
   "notFound": {
@@ -992,7 +1007,10 @@
       "REFUND_TOO_MUCH": "هذا أكثر مما تبقّى من الطلب.",
       "REFUND_METHOD_INVALID": "يعود المال نقدًا، أو بالطريقة التي دُفع بها الطلب.",
       "REFUND_AMOUNT_INVALID": "اكتب مبلغًا أكبر من 0.",
-      "REFUND_ID_TAKEN": "هذا الاسترداد مستخدم من قبل. افتح الاسترداد من جديد."
+      "REFUND_ID_TAKEN": "هذا الاسترداد مستخدم من قبل. افتح الاسترداد من جديد.",
+      "POINTS_NOT_ENOUGH": "لم يعد لدى العميل النقاط المستخدمة في هذا الطلب. أزلها أو استخدم أقل.",
+      "LOYALTY_OFF": "نقاط الولاء متوقفة لهذه العلامة التجارية.",
+      "CUSTOMER_REQUIRED": "أضف عميلًا إلى الطلب أولًا."
     },
     "pay": {
       "title": "دفع الطلب {{number}}",
@@ -1026,7 +1044,8 @@
       "cashier": "الكاشير: {{name}}",
       "slip": "إيصال",
       "thanks": "شكرًا لزيارتكم",
-      "print": "طباعة"
+      "print": "طباعة",
+      "customer": "العميل:"
     },
     "shift": {
       "since": "وردية منذ {{time}}",
@@ -1048,6 +1067,48 @@
       "typed": "الرمز",
       "remove": "إزالة",
       "removeFor": "إزالة الرمز {{code}}"
+    },
+    "customer": {
+      "button": "العميل",
+      "title": "العميل",
+      "phone": "رقم الهاتف",
+      "phoneHint": "ثمانية أرقام تعني رقمًا كويتيًا.",
+      "find": "بحث",
+      "isNew": "عميل جديد:",
+      "name": "الاسم",
+      "nameHint": "اختياري.",
+      "add": "إضافة إلى الطلب",
+      "back": "رجوع",
+      "remove": "إزالة العميل من الطلب",
+      "points_zero": "{{count}} نقطة",
+      "points_one": "نقطة واحدة",
+      "points_two": "نقطتان",
+      "points_few": "{{count}} نقاط",
+      "points_many": "{{count}} نقطة",
+      "points_other": "{{count}} نقطة"
+    },
+    "points": {
+      "use": "استخدام النقاط",
+      "title": "استخدام النقاط",
+      "balance_zero": "ليس لدى العميل نقاط.",
+      "balance_one": "لدى العميل نقطة واحدة.",
+      "balance_two": "لدى العميل نقطتان.",
+      "balance_few": "لدى العميل {{count}} نقاط.",
+      "balance_many": "لدى العميل {{count}} نقطة.",
+      "balance_other": "لدى العميل {{count}} نقطة.",
+      "range": "من {{min}} إلى {{max}} في هذا الطلب",
+      "howMany": "النقاط المستخدمة",
+      "worth": "قيمتها",
+      "apply": "استخدام",
+      "remove": "عدم استخدام النقاط",
+      "row_zero": "النقاط ({{count}})",
+      "row_one": "النقاط ({{count}})",
+      "row_two": "النقاط ({{count}})",
+      "row_few": "النقاط ({{count}})",
+      "row_many": "النقاط ({{count}})",
+      "row_other": "النقاط ({{count}})",
+      "earned": "النقاط المكتسبة",
+      "newBalance": "رصيد النقاط"
     }
   },
   "kds": {
@@ -1125,6 +1186,17 @@
       "stations": "محطات المطبخ",
       "stationsHint": "شاشة مطبخ لكل محطة، مثل البيتزا والمشروبات. كل قسم من القائمة يذهب إلى محطة. اتركها فارغة لشاشة واحدة.",
       "addStation": "إضافة محطة"
+    },
+    "loyalty": {
+      "title": "نقاط الولاء",
+      "intro": "يكسب العملاء نقاطًا على ما يدفعونه ويستخدمونها في طلب لاحق.",
+      "enabled": "العملاء يكسبون النقاط ويستخدمونها",
+      "pointsPerKwd": "النقاط لكل دينار",
+      "pointsPerKwdHint": "النقاط المكتسبة لكل دينار مدفوع، مقربة للأسفل.",
+      "pointValue": "قيمة النقطة (د.ك)",
+      "pointValueHint": "مثلًا 0.010: كل 100 نقطة تخصم 1.000.",
+      "minRedeem": "أقل عدد من النقاط للاستخدام",
+      "minRedeemHint": "أقل ما يمكن للعميل استخدامه في المرة الواحدة."
     }
   },
   "shifts": {
@@ -1515,5 +1587,43 @@
     "combos": "الوجبات",
     "nothing": "لا مبيعات في هذه الفترة.",
     "downloadCsv": "تنزيل CSV"
+  },
+  "customers": {
+    "title": "العملاء",
+    "intro": "عملاء العلامة التجارية، الأحدث زيارة أولًا. ابحث بالهاتف أو الاسم.",
+    "search": "بحث",
+    "empty": "لا يوجد عملاء بعد. يضيفهم الكاشير من نقطة البيع.",
+    "noMatch": "لا يوجد عميل مطابق.",
+    "customer": "العميل",
+    "points": "النقاط",
+    "visits": "الزيارات",
+    "spent": "المصروف",
+    "lastVisit": "آخر زيارة",
+    "back": "العودة إلى العملاء",
+    "edit": "تعديل",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "notes": "ملاحظات",
+    "history": "سجل النقاط",
+    "noHistory": "لا توجد نقاط بعد.",
+    "when": "الوقت",
+    "what": "العملية",
+    "balance": "الرصيد",
+    "by": "بواسطة",
+    "kinds": {
+      "earn": "مكتسبة",
+      "redeem": "مستخدمة",
+      "adjust": "يدويًا"
+    },
+    "adjust": {
+      "title": "منح نقاط أو خصمها",
+      "give": "منح",
+      "take": "خصم",
+      "points": "النقاط",
+      "reason": "السبب",
+      "giveButton": "منح النقاط",
+      "takeButton": "خصم النقاط",
+      "done": "تم تعديل النقاط."
+    }
   }
 }

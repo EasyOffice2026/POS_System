@@ -3,6 +3,8 @@ import {
   createOrderRequestSchema,
   orderListQuerySchema,
   payOrderRequestSchema,
+  putOrderCustomerRequestSchema,
+  putOrderPointsRequestSchema,
   putPromoCodeRequestSchema,
   refundRequestSchema,
   removeDiscountRequestSchema,
@@ -95,6 +97,29 @@ export function createOrdersRouter({ service }: { service: OrdersService }): Rou
     const { id } = parseWith(orderParams, req.params);
     const input = parseWith(removeDiscountRequestSchema, req.body ?? {});
     res.json(await service.removeDiscount(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  // The customer and their points on the order (docs/specs/022-loyalty.md).
+  router.put('/:id/customer', write, async (req, res) => {
+    const { id } = parseWith(orderParams, req.params);
+    const input = parseWith(putOrderCustomerRequestSchema, req.body);
+    res.json(await service.setCustomer(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  router.delete('/:id/customer', write, async (req, res) => {
+    const { id } = parseWith(orderParams, req.params);
+    res.json(await service.removeCustomer(requestContext(req), id));
+  });
+
+  router.put('/:id/points', write, async (req, res) => {
+    const { id } = parseWith(orderParams, req.params);
+    const { points } = parseWith(putOrderPointsRequestSchema, req.body);
+    res.json(await service.setPoints(requestContext(req), id, points));
+  });
+
+  router.delete('/:id/points', write, async (req, res) => {
+    const { id } = parseWith(orderParams, req.params);
+    res.json(await service.removePoints(requestContext(req), id));
   });
 
   // A promotion code on the order (docs/specs/021-promotions.md).

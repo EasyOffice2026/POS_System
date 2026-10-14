@@ -42,6 +42,9 @@ const knownCodes = [
   'REFUND_AMOUNT_INVALID',
   'REFUND_ID_TAKEN',
   'ORDER_EMPTY',
+  'POINTS_NOT_ENOUGH',
+  'LOYALTY_OFF',
+  'CUSTOMER_REQUIRED',
   'network',
 ] as const;
 

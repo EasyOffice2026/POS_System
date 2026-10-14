@@ -28,6 +28,8 @@ import { createOrdersRouter } from './modules/orders/orders.router';
 import { createOrdersService } from './modules/orders/orders.service';
 import { createReportsRouter } from './modules/reports/reports.router';
 import { createReportsService } from './modules/reports/reports.service';
+import { createCustomersRouter } from './modules/customers/customers.router';
+import { createCustomersService } from './modules/customers/customers.service';
 import { createRolesRouter } from './modules/roles/roles.router';
 import { createShiftsRouter } from './modules/shifts/shifts.router';
 import { createShiftsService } from './modules/shifts/shifts.service';
@@ -114,6 +116,13 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
   );
   v1.use('/users', ...protectedRoutes, createUsersRouter({ service: usersService }));
   v1.use('/reports', ...protectedRoutes, createReportsRouter({ service: createReportsService() }));
+  v1.use(
+    '/customers',
+    ...protectedRoutes,
+    createCustomersRouter({
+      service: createCustomersService({ prisma, now: now ?? (() => new Date()) }),
+    }),
+  );
   v1.use('/roles', ...protectedRoutes, createRolesRouter());
   v1.use('/audit-logs', ...protectedRoutes, createAuditRouter());
   app.use('/api/v1', v1);

@@ -4,14 +4,19 @@ import {
   applyPromotions,
   type BranchMenu,
   type BrandSettings,
+  customerSearchText,
   businessDateOn,
   CASH,
   CASH_NAME,
   type CreateOrderRequest,
   fromMils,
   MAX_ORDER_LINES,
+  maxPointsFor,
   parseBranchConfig,
   parseBrandSettings,
+  pointsEarned,
+  pointsValueMils,
+  type PutOrderCustomerRequest,
   voidNeedsApproval,
   withinCashierLimit,
   type Order,
@@ -72,6 +77,7 @@ export interface OrdersDeps {
 }
 
 const notOpen = () => errors.conflict('ORDER_NOT_OPEN', 'This order is not open');
+const pointsNotEnough = () => errors.validation([{ path: 'points', message: 'POINTS_NOT_ENOUGH' }]);
 
 // Orders at a branch. See docs/specs/005-orders.md.
 export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock }: OrdersDeps) {
@@ -98,7 +104,7 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
     db.orderLine.findMany({ where: { orderId }, orderBy: [{ position: 'asc' }, { id: 'asc' }] });
 
   async function describe(
-    db: Pick<OrderTx, 'orderLine' | 'payment' | 'kitchenTicket' | 'refund'>,
+    db: Pick<OrderTx, 'orderLine' | 'payment' | 'kitchenTicket' | 'refund' | 'customer'>,
     row: OrderRow,
   ): Promise<Order> {
     const lines = await readLines(db, row.id);
@@ -120,6 +126,7 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
       payments,
       new Map(tickets.map((ticket) => [ticket.id, ticket.status])),
       refunds,
+      row.customerId ? await db.customer.findUnique({ where: { id: row.customerId } }) : null,
     );
   }
 
@@ -241,14 +248,69 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
     );
   }
 
+  // At payment: the points spent leave the customer's balance, the points earned arrive, and the
+  // visit and what was spent are counted, each change with an entry (spec 022, rules 3 to 6).
+  // Answers the points the order earned.
+  async function loyaltyOnPay(
+    tx: OrderTx,
+    order: OrderRow,
+    by: { id: string; name: string | null },
+    at: Date,
+  ): Promise<number> {
+    if (!order.customerId) return 0;
+    const customer = await tx.customer.findUnique({ where: { id: order.customerId } });
+    if (!customer) return 0;
+    const { loyalty } = await settingsOf(tx, order.brandId);
+    let balance = customer.points;
+    const entry = (kind: 'earn' | 'redeem', points: number) =>
+      tx.loyaltyEntry.create({
+        data: {
+          brandId: order.brandId,
+          branchId: order.branchId,
+          customerId: customer.id,
+          kind,
+          points,
+          balanceAfter: balance,
+          orderId: order.id,
+          note: null,
+          byId: by.id,
+          byName: by.name,
+          createdAt: at,
+        },
+      });
+
+    if (order.pointsRedeemed > 0) {
+      if (balance < order.pointsRedeemed) throw pointsNotEnough();
+      balance -= order.pointsRedeemed;
+      await entry('redeem', -order.pointsRedeemed);
+    }
+    const earned = pointsEarned(mils(order.total), loyalty);
+    if (earned > 0) {
+      balance += earned;
+      await entry('earn', earned);
+    }
+    await tx.customer.update({
+      where: { id: customer.id },
+      data: {
+        points: balance,
+        visits: { increment: 1 },
+        totalSpent: fromMils(mils(customer.totalSpent) + mils(order.total)),
+        lastVisitAt: at,
+      },
+    });
+    return earned;
+  }
+
   // Puts the totals right after the lines, the discount or the code changed (rules 9 and 10).
   async function settle(tx: OrderTx, order: OrderRow): Promise<Order> {
     const lines = await readLines(tx, order.id);
     const applied = await promotionsFor(tx, order, lines);
-    const { subtotal, promotions, discount, total } = totalsOf(
+    const { loyalty } = await settingsOf(tx, order.brandId);
+    const { subtotal, promotions, discount, pointsRedeemed, points, total } = totalsOf(
       order,
       lines,
       applied.reduce((sum, row) => sum + row.amount, 0),
+      order.pointsRedeemed > 0 ? pointsValueMils(1, loyalty) : 0,
     );
     const updated = await tx.order.update({
       where: { id: order.id },
@@ -261,6 +323,8 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
           amount: fromMils(row.amount),
         })),
         discountAmount: fromMils(discount),
+        pointsRedeemed,
+        pointsDiscount: fromMils(points),
         total: fromMils(total),
       },
     });
@@ -347,9 +411,23 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
               _count: { _all: true },
             });
       const countOf = new Map(counts.map((count) => [count.orderId, count._count._all]));
+      const customerIds = [
+        ...new Set(page.rows.flatMap((row) => (row.customerId ? [row.customerId] : []))),
+      ];
+      const customers =
+        customerIds.length === 0
+          ? []
+          : await db.customer.findMany({ where: { id: { in: customerIds } } });
+      const customerOf = new Map(customers.map((customer) => [customer.id, customer]));
 
       return {
-        data: page.rows.map((row) => toSummary(row, countOf.get(row.id) ?? 0)),
+        data: page.rows.map((row) =>
+          toSummary(
+            row,
+            countOf.get(row.id) ?? 0,
+            row.customerId ? (customerOf.get(row.customerId) ?? null) : null,
+          ),
+        ),
         nextCursor: page.nextCursor,
       };
     },
@@ -651,6 +729,127 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
       return result.order;
     },
 
+    // Puts a customer on an open order by phone, adding them when the phone is new; a customer
+    // changed starts with no points spent (docs/specs/022-loyalty.md, rule 2).
+    async setCustomer(
+      ctx: ActorContext,
+      orderId: string,
+      input: PutOrderCustomerRequest,
+      meta: RequestMeta,
+    ): Promise<Order> {
+      const { auth, db } = ctx;
+      const order = await load(db, orderId);
+      if (order.status !== 'open') throw notOpen();
+      let customer = await db.customer.findFirst({
+        where: { brandId: order.brandId, phone: input.phone },
+      });
+      let created = false;
+      if (!customer) {
+        try {
+          customer = await db.customer.create({
+            data: {
+              brandId: order.brandId,
+              phone: input.phone,
+              name: input.name ?? null,
+              searchText: customerSearchText(input.phone, input.name ?? null),
+            },
+          });
+          created = true;
+        } catch (error) {
+          // Added by another terminal at the same moment.
+          if (!isUniqueViolation(error)) throw error;
+          customer = await db.customer.findFirst({
+            where: { brandId: order.brandId, phone: input.phone },
+          });
+          if (!customer) throw error;
+        }
+        if (created) {
+          await audit(
+            {
+              action: 'customer.created',
+              userId: auth.sub,
+              brandId: order.brandId,
+              branchId: order.branchId,
+              entityType: 'customer',
+              entityId: customer.id,
+              metadata: { phone: customer.phone, orderId },
+            },
+            meta,
+          );
+        }
+      }
+      const customerId = customer.id;
+      return db.$transaction(async (tx) => {
+        const locked = await lockOpen(tx, orderId);
+        const row = await tx.order.update({
+          where: { id: orderId },
+          data: {
+            customerId,
+            ...(locked.customerId === customerId ? {} : { pointsRedeemed: 0 }),
+          },
+        });
+        return settle(tx, row);
+      });
+    },
+
+    async removeCustomer(ctx: ActorContext, orderId: string): Promise<Order> {
+      const { db } = ctx;
+      const order = await load(db, orderId);
+      if (order.status !== 'open') throw notOpen();
+      if (!order.customerId) return describe(db, order);
+      return db.$transaction(async (tx) => {
+        await lockOpen(tx, orderId);
+        const row = await tx.order.update({
+          where: { id: orderId },
+          data: { customerId: null, pointsRedeemed: 0 },
+        });
+        return settle(tx, row);
+      });
+    },
+
+    // Spends some of the customer's points on the order (rule 4). They leave the balance only
+    // when the order is paid.
+    async setPoints(ctx: ActorContext, orderId: string, points: number): Promise<Order> {
+      const { db } = ctx;
+      const order = await load(db, orderId);
+      if (order.status !== 'open') throw notOpen();
+      const { loyalty } = await settingsOf(db, order.brandId);
+      if (!loyalty.enabled) throw errors.conflict('LOYALTY_OFF', 'Loyalty is off for this brand');
+      const customer = order.customerId
+        ? await db.customer.findUnique({ where: { id: order.customerId } })
+        : null;
+      if (!customer) throw errors.validation([{ path: 'points', message: 'CUSTOMER_REQUIRED' }]);
+      if (points < loyalty.minRedeem) {
+        throw errors.validation([{ path: 'points', message: 'POINTS_TOO_FEW' }]);
+      }
+      if (points > customer.points) throw pointsNotEnough();
+      // What is left to pay before any points.
+      const left = mils(order.total) + mils(order.pointsDiscount);
+      if (points > maxPointsFor(left, loyalty)) {
+        throw errors.validation([{ path: 'points', message: 'POINTS_TOO_MANY' }]);
+      }
+      return db.$transaction(async (tx) => {
+        await lockOpen(tx, orderId);
+        const row = await tx.order.update({
+          where: { id: orderId },
+          data: { pointsRedeemed: points },
+        });
+        return settle(tx, row);
+      });
+    },
+
+    async removePoints(ctx: ActorContext, orderId: string): Promise<Order> {
+      const { db } = ctx;
+      const order = await load(db, orderId);
+      if (order.status !== 'open') throw notOpen();
+      if (order.pointsRedeemed === 0) return describe(db, order);
+      return db.$transaction(async (tx) => {
+        await lockOpen(tx, orderId);
+        const row = await tx.order.update({ where: { id: orderId }, data: { pointsRedeemed: 0 } });
+        return settle(tx, row);
+      });
+    },
+
     // Types a promotion code on an open order: an active promotion of the brand with that code,
     // for the order's day and branch (docs/specs/021-promotions.md, rule 5).
     async setPromoCode(ctx: ActorContext, orderId: string, code: string): Promise<Order> {
@@ -888,9 +1087,11 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
               createdAt: at,
             })),
           });
+          // The customer spends and earns points, in the same transaction (spec 022, rules 3-6).
+          const earned = await loyaltyOnPay(tx, order, by, at);
           const closed = await tx.order.update({
             where: { id: orderId },
-            data: { status: 'paid', paidAt: at, paidById: auth.sub },
+            data: { status: 'paid', paidAt: at, paidById: auth.sub, pointsEarned: earned },
           });
           return describe(tx, closed);
         });

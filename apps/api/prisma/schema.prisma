@@ -43,6 +43,7 @@ model Brand {
   ingredients    Ingredient[]
   suppliers      Supplier[]
   promotions     Promotion[]
+  customers      Customer[]
 
   @@map("brands")
 }
@@ -403,6 +404,12 @@ model Order {
   promoCode            String?       @map("promo_code")
   promotionDiscount    Decimal       @default(0) @map("promotion_discount") @db.Decimal(15, 3)
   promotions           Json          @default("[]")
+  // The customer, the points spent and what they took off, and the points earned once paid
+  // (docs/specs/022-loyalty.md).
+  customerId           String?       @map("customer_id") @db.Uuid
+  pointsRedeemed       Int           @default(0) @map("points_redeemed")
+  pointsDiscount       Decimal       @default(0) @map("points_discount") @db.Decimal(15, 3)
+  pointsEarned         Int           @default(0) @map("points_earned")
   discountKind         DiscountKind? @map("discount_kind")
   // The percentage or the amount that was given. The amount it takes off is worked out again
   // whenever the lines change.
@@ -429,6 +436,7 @@ model Order {
 
   branch   Branch          @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
   lines    OrderLine[]
+  customer Customer?       @relation(fields: [customerId, brandId], references: [id, brandId], onDelete: Restrict)
   payments Payment[]
   tickets  KitchenTicket[]
   refunds  Refund[]
@@ -1031,4 +1039,63 @@ model Promotion {
   @@unique([brandId, code])
   @@index([brandId, isActive])
   @@map("promotions")
+}
+
+// ---- Customers and loyalty points. See docs/specs/022-loyalty.md.
+
+enum LoyaltyEntryKind {
+  earn
+  redeem
+  adjust
+
+  @@map("loyalty_entry_kind")
+}
+
+// A customer of a brand, the same at every branch, known by their phone.
+model Customer {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  brandId     String    @map("brand_id") @db.Uuid
+  // "+" and digits.
+  phone       String
+  name        String?
+  email       String?
+  notes       String?
+  // The phone and the name lower-cased, for search.
+  searchText  String    @map("search_text")
+  points      Int       @default(0)
+  visits      Int       @default(0)
+  totalSpent  Decimal   @default(0) @map("total_spent") @db.Decimal(15, 3)
+  lastVisitAt DateTime? @map("last_visit_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  brand   Brand          @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  entries LoyaltyEntry[]
+  orders  Order[]
+
+  @@unique([id, brandId])
+  @@unique([brandId, phone])
+  @@map("customers")
+}
+
+// Every change of a customer's points, with the balance after it.
+model LoyaltyEntry {
+  id           String           @id @default(uuid(7)) @db.Uuid
+  brandId      String           @map("brand_id") @db.Uuid
+  branchId     String?          @map("branch_id") @db.Uuid
+  customerId   String           @map("customer_id") @db.Uuid
+  kind         LoyaltyEntryKind
+  // Negative when points go.
+  points       Int
+  balanceAfter Int              @map("balance_after")
+  orderId      String?          @map("order_id") @db.Uuid
+  note         String?
+  byId         String?          @map("by_id") @db.Uuid
+  byName       String?          @map("by_name")
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  customer Customer @relation(fields: [customerId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  @@index([customerId, createdAt])
+  @@map("loyalty_entries")
 }

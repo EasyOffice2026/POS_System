@@ -124,6 +124,15 @@ const messageKeys = {
   PROMO_CODE_TAKEN: 'validation.PROMO_CODE_TAKEN',
   TIME_INVALID: 'validation.TIME_INVALID',
   DAYS_INVALID: 'validation.DAYS_INVALID',
+  POINTS_RATE_INVALID: 'validation.POINTS_RATE_INVALID',
+  POINTS_MIN_INVALID: 'validation.POINTS_MIN_INVALID',
+  POINTS_INVALID: 'validation.POINTS_INVALID',
+  POINTS_TOO_FEW: 'validation.POINTS_TOO_FEW',
+  POINTS_NOT_ENOUGH: 'validation.POINTS_NOT_ENOUGH',
+  POINTS_TOO_MANY: 'validation.POINTS_TOO_MANY',
+  LOYALTY_OFF: 'validation.LOYALTY_OFF',
+  CUSTOMER_REQUIRED: 'validation.CUSTOMER_REQUIRED',
+  PHONE_TAKEN: 'validation.PHONE_TAKEN',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;
@@ -183,6 +192,7 @@ export function problemsFrom(error: unknown, options: { notFound?: string } = {}
     case 'ORDER_NOT_DRAFT':
     case 'ORDER_CLOSED':
     case 'ORDER_NOT_SENT':
+    case 'LOYALTY_OFF':
     case 'FORBIDDEN':
       return { fields: {}, form: error.code };
     case 'NOT_FOUND':

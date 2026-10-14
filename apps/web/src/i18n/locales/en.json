@@ -38,7 +38,8 @@
     "settings": "Settings",
     "shifts": "Shifts",
     "inventory": "Inventory",
-    "reports": "Reports"
+    "reports": "Reports",
+    "customers": "Customers"
   },
   "language": {
     "switchTo": "Switch language",
@@ -111,7 +112,9 @@
     "ingredients_write": "Change the ingredients",
     "suppliers_write": "Change the suppliers",
     "reports_read": "See the reports",
-    "promotions_write": "Change the promotions"
+    "promotions_write": "Change the promotions",
+    "customers_read": "See customers and their points",
+    "customers_write": "Change customers and give points"
   },
   "users": {
     "title": "Users",
@@ -285,7 +288,7 @@
     "SUPPLIER_NAME_REQUIRED": "Enter the supplier's name.",
     "SUPPLIER_NAME_TAKEN": "The brand already has a supplier with this name.",
     "SUPPLIER_NOT_FOUND": "This supplier is not available.",
-    "PHONE_INVALID": "Type a phone number with digits, spaces, + and - only.",
+    "PHONE_INVALID": "Type a whole phone number, like 9999 1234 or +965 9999 1234.",
     "EMAIL_INVALID": "Type an email address like name@example.com.",
     "PAYMENT_DAYS_INVALID": "Type a whole number of days from 0 to 365.",
     "PRICE_LIST_TOO_LONG": "A price list can have up to 500 ingredients.",
@@ -304,7 +307,16 @@
     "PROMO_CODE_INVALID": "This code is not valid here today.",
     "PROMO_CODE_TAKEN": "Another promotion of the brand has this code.",
     "TIME_INVALID": "Type both times, as HH:MM, and not the same.",
-    "DAYS_INVALID": "Choose each day once."
+    "DAYS_INVALID": "Choose each day once.",
+    "POINTS_RATE_INVALID": "Type a whole number from 0 to 1000.",
+    "POINTS_MIN_INVALID": "Type a whole number of at least 1.",
+    "POINTS_INVALID": "Type a whole number of points.",
+    "POINTS_TOO_FEW": "That is fewer points than can be spent at once.",
+    "POINTS_NOT_ENOUGH": "The customer does not have that many points.",
+    "POINTS_TOO_MANY": "That is more points than the order needs.",
+    "LOYALTY_OFF": "Loyalty points are switched off for this brand.",
+    "CUSTOMER_REQUIRED": "Put a customer on the order first.",
+    "PHONE_TAKEN": "Another customer has this phone number."
   },
   "rolesPage": {
     "title": "Roles",
@@ -384,7 +396,10 @@
       "inventory_purchase_order_cancelled": "Purchase order cancelled",
       "inventory_purchase_order_received": "Purchase order received",
       "menu_promotion_created": "Promotion added",
-      "menu_promotion_updated": "Promotion changed"
+      "menu_promotion_updated": "Promotion changed",
+      "customer_created": "Customer added",
+      "customer_updated": "Customer changed",
+      "customer_points_adjusted": "Points given or taken"
     }
   },
   "notFound": {
@@ -972,7 +987,10 @@
       "REFUND_TOO_MUCH": "That is more than what is left of the order.",
       "REFUND_METHOD_INVALID": "Money goes back in cash, or the way the order was paid.",
       "REFUND_AMOUNT_INVALID": "Type an amount above 0.",
-      "REFUND_ID_TAKEN": "This refund was already used. Open the refund again."
+      "REFUND_ID_TAKEN": "This refund was already used. Open the refund again.",
+      "POINTS_NOT_ENOUGH": "The customer no longer has the points on this order. Take them off or spend fewer.",
+      "LOYALTY_OFF": "Loyalty points are switched off for this brand.",
+      "CUSTOMER_REQUIRED": "Put a customer on the order first."
     },
     "pay": {
       "title": "Pay order {{number}}",
@@ -1006,7 +1024,8 @@
       "cashier": "Cashier: {{name}}",
       "slip": "slip",
       "thanks": "Thank you for your visit",
-      "print": "Print"
+      "print": "Print",
+      "customer": "Customer:"
     },
     "shift": {
       "since": "Shift since {{time}}",
@@ -1028,6 +1047,36 @@
       "typed": "Code",
       "remove": "Remove",
       "removeFor": "Remove the code {{code}}"
+    },
+    "customer": {
+      "button": "Customer",
+      "title": "Customer",
+      "phone": "Phone number",
+      "phoneHint": "Eight digits are a Kuwaiti number.",
+      "find": "Find",
+      "isNew": "New customer:",
+      "name": "Name",
+      "nameHint": "Optional.",
+      "add": "Add to the order",
+      "back": "Back",
+      "remove": "Take the customer off the order",
+      "points_one": "{{count}} point",
+      "points_other": "{{count}} points"
+    },
+    "points": {
+      "use": "Use points",
+      "title": "Use points",
+      "balance_one": "The customer has {{count}} point.",
+      "balance_other": "The customer has {{count}} points.",
+      "range": "from {{min}} to {{max}} on this order",
+      "howMany": "Points to spend",
+      "worth": "Worth",
+      "apply": "Use",
+      "remove": "Spend no points",
+      "row_one": "Points ({{count}})",
+      "row_other": "Points ({{count}})",
+      "earned": "Points earned",
+      "newBalance": "Points balance"
     }
   },
   "kds": {
@@ -1097,6 +1146,17 @@
       "stations": "Kitchen stations",
       "stationsHint": "One kitchen screen per station, for example Pizza and Drinks. Each menu category goes to a station. Leave empty for one screen.",
       "addStation": "Add a station"
+    },
+    "loyalty": {
+      "title": "Loyalty points",
+      "intro": "Customers earn points on what they pay and spend them on a later order.",
+      "enabled": "Customers earn and spend points",
+      "pointsPerKwd": "Points per KWD",
+      "pointsPerKwdHint": "Points earned for each dinar paid, rounded down.",
+      "pointValue": "Value of a point (KWD)",
+      "pointValueHint": "For example 0.010: 100 points take 1.000 off.",
+      "minRedeem": "Fewest points to spend",
+      "minRedeemHint": "The least a customer can spend at once."
     }
   },
   "shifts": {
@@ -1467,5 +1527,43 @@
     "combos": "Combos",
     "nothing": "Nothing sold in this period.",
     "downloadCsv": "Download CSV"
+  },
+  "customers": {
+    "title": "Customers",
+    "intro": "The brand's customers, the latest visits first. Find them by phone or name.",
+    "search": "Search",
+    "empty": "No customers yet. The cashier adds them on the POS.",
+    "noMatch": "No customer matches.",
+    "customer": "Customer",
+    "points": "Points",
+    "visits": "Visits",
+    "spent": "Spent",
+    "lastVisit": "Last visit",
+    "back": "Back to customers",
+    "edit": "Edit",
+    "name": "Name",
+    "email": "Email",
+    "notes": "Notes",
+    "history": "Points history",
+    "noHistory": "No points yet.",
+    "when": "When",
+    "what": "What",
+    "balance": "Balance",
+    "by": "By",
+    "kinds": {
+      "earn": "Earned",
+      "redeem": "Spent",
+      "adjust": "By hand"
+    },
+    "adjust": {
+      "title": "Give or take points",
+      "give": "Give",
+      "take": "Take",
+      "points": "Points",
+      "reason": "Reason",
+      "giveButton": "Give points",
+      "takeButton": "Take points",
+      "done": "The points were changed."
+    }
   }
 }

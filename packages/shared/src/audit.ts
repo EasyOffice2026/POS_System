@@ -56,6 +56,9 @@ export const auditActions = [
   'inventory.purchase_order.received',
   'menu.promotion.created',
   'menu.promotion.updated',
+  'customer.created',
+  'customer.updated',
+  'customer.points_adjusted',
 ] as const;
 
 export type AuditAction = (typeof auditActions)[number];

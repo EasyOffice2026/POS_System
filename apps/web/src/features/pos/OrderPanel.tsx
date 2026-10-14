@@ -1,4 +1,11 @@
-import { MAX_LINE_QUANTITY, type Order, type OrderLine, type OrderType, toMils } from '@pos/shared';
+import {
+  type LoyaltySettings,
+  MAX_LINE_QUANTITY,
+  type Order,
+  type OrderLine,
+  type OrderType,
+  toMils,
+} from '@pos/shared';
 import { useTranslation } from 'react-i18next';
 import { secondaryButtonClass } from '../../components/form';
 import { Price } from '../../components/Price';
@@ -144,6 +151,81 @@ function LineRow({
   );
 }
 
+interface CustomerRowProps extends OrderPanelProps {
+  order: Order;
+  open: boolean;
+}
+
+// Who the order is for, their points, and the buttons to change them (spec 022, rules 2 and 4).
+function CustomerRow({ order, open, busy, loyalty, ...props }: CustomerRowProps) {
+  const { t } = useTranslation();
+  const { customer } = order;
+
+  if (!customer) {
+    return open ? (
+      <button
+        type="button"
+        disabled={busy}
+        onClick={props.onCustomer}
+        className={`${secondaryButtonClass} w-full`}
+      >
+        {t('pos.customer.button')}
+      </button>
+    ) : null;
+  }
+
+  const canSpend =
+    open &&
+    loyalty.enabled &&
+    order.pointsRedeemed === 0 &&
+    customer.points >= loyalty.minRedeem &&
+    toMils(order.total) > 0;
+
+  return (
+    <div
+      className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-slate-50 px-2 py-1 text-sm"
+      data-testid="order-customer"
+    >
+      <div className="min-w-0">
+        <p className="font-medium">
+          {customer.name ? <bdi>{customer.name}</bdi> : <bdi dir="ltr">{customer.phone}</bdi>}
+        </p>
+        <p className="text-xs text-slate-600">
+          {customer.name && (
+            <>
+              <bdi dir="ltr">{customer.phone}</bdi> ·{' '}
+            </>
+          )}
+          {t('pos.customer.points', { count: customer.points })}
+        </p>
+      </div>
+      <div className="flex gap-2">
+        {canSpend && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={props.onPoints}
+            className="rounded-md bg-emerald-700 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-800"
+          >
+            {t('pos.points.use')}
+          </button>
+        )}
+        {open && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={props.onRemoveCustomer}
+            aria-label={t('pos.customer.remove')}
+            className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 underline"
+          >
+            {t('pos.promo.remove')}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface OrderPanelProps {
   order: Order | null;
   type: OrderType;
@@ -155,6 +237,12 @@ interface OrderPanelProps {
   onDiscount: () => void;
   onPromoCode: () => void;
   onRemovePromoCode: () => void;
+  // The customer on the order and the points they spend (spec 022).
+  loyalty: LoyaltySettings;
+  onCustomer: () => void;
+  onRemoveCustomer: () => void;
+  onPoints: () => void;
+  onRemovePoints: () => void;
   onVoidOrder: () => void;
   onNewOrder: () => void;
   onPay: () => void;
@@ -213,6 +301,7 @@ export function OrderPanel(props: OrderPanelProps) {
           {typeButton('dine_in')}
           {typeButton('takeaway')}
         </div>
+        {order && <CustomerRow {...props} order={order} open={open} />}
       </div>
 
       <div className="min-h-32 flex-1 overflow-y-auto px-3">
@@ -302,6 +391,30 @@ export function OrderPanel(props: OrderPanelProps) {
             </dd>
           </div>
         )}
+        {order && order.pointsRedeemed > 0 && (
+          <div className="flex justify-between text-emerald-800">
+            <dt>
+              {t('pos.points.row', { count: order.pointsRedeemed })}
+              {open && (
+                <>
+                  {' '}
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={props.onRemovePoints}
+                    aria-label={t('pos.points.remove')}
+                    className="text-xs text-slate-600 underline"
+                  >
+                    {t('pos.promo.remove')}
+                  </button>
+                </>
+              )}
+            </dt>
+            <dd>
+              − <Price value={order.pointsDiscount} />
+            </dd>
+          </div>
+        )}
         {order && Number(order.refunded) > 0 && (
           <div className="flex justify-between text-red-700">
             <dt>{t('pos.order.refunds')}</dt>
@@ -316,6 +429,12 @@ export function OrderPanel(props: OrderPanelProps) {
             <Price value={order?.total ?? '0.000'} />
           </dd>
         </div>
+        {order && order.pointsEarned > 0 && (
+          <div className="flex justify-between text-xs text-slate-600">
+            <dt>{t('pos.points.earned')}</dt>
+            <dd>{t('pos.customer.points', { count: order.pointsEarned })}</dd>
+          </div>
+        )}
       </dl>
 
       <div className="space-y-2 border-t border-slate-200 p-3">

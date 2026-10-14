@@ -72,6 +72,7 @@ export function createReportsService() {
         _sum: {
           subtotal: true,
           promotionDiscount: true,
+          pointsDiscount: true,
           discountAmount: true,
           total: true,
           refunded: true,
@@ -90,7 +91,10 @@ export function createReportsService() {
       for (const row of byDay) {
         orders += row._count._all;
         gross += mils(row._sum.subtotal);
-        discounts += mils(row._sum.discountAmount) + mils(row._sum.promotionDiscount);
+        discounts +=
+          mils(row._sum.discountAmount) +
+          mils(row._sum.promotionDiscount) +
+          mils(row._sum.pointsDiscount);
         net += mils(row._sum.total);
         refunds += mils(row._sum.refunded);
       }

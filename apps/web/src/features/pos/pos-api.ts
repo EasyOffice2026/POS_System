@@ -1,6 +1,8 @@
 import {
   type addOrderLineRequestSchema,
   type Approval,
+  type Customer,
+  customerSchema,
   type DiscountKind,
   type OrderType,
   orderSchema,
@@ -10,7 +12,7 @@ import {
   type refundRequestSchema,
 } from '@pos/shared';
 import type { z } from 'zod';
-import { request } from '../../lib/api';
+import { ApiError, request } from '../../lib/api';
 import { queryString } from '../../lib/query-string';
 
 // A line as the terminal sends it, before the server fills in the defaults.
@@ -113,3 +115,25 @@ export const setPromoCode = (orderId: string, code: string) =>
 
 export const removePromoCode = (orderId: string) =>
   request(`/orders/${orderId}/promo-code`, { method: 'DELETE', ...asOrder });
+
+// A customer on the order, and the points they spend on it (docs/specs/022-loyalty.md).
+export const findCustomer = async (phone: string): Promise<Customer | null> => {
+  try {
+    return await request(`/customers/lookup${queryString({ phone })}`, { schema: customerSchema });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+};
+
+export const setOrderCustomer = (orderId: string, body: { phone: string; name?: string }) =>
+  request(`/orders/${orderId}/customer`, { method: 'PUT', body, ...asOrder });
+
+export const removeOrderCustomer = (orderId: string) =>
+  request(`/orders/${orderId}/customer`, { method: 'DELETE', ...asOrder });
+
+export const setOrderPoints = (orderId: string, points: number) =>
+  request(`/orders/${orderId}/points`, { method: 'PUT', body: { points }, ...asOrder });
+
+export const removeOrderPoints = (orderId: string) =>
+  request(`/orders/${orderId}/points`, { method: 'DELETE', ...asOrder });

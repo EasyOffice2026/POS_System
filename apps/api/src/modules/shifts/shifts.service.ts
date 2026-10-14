@@ -69,7 +69,12 @@ export function createShiftsService({ prisma, now }: ShiftsDeps) {
         ? []
         : await db.order.findMany({
             where: { id: { in: orderIds } },
-            select: { total: true, discountAmount: true, promotionDiscount: true },
+            select: {
+              total: true,
+              discountAmount: true,
+              promotionDiscount: true,
+              pointsDiscount: true,
+            },
           });
 
     const byMethod = new Map<string, { name: unknown; amount: number }>();
@@ -99,7 +104,11 @@ export function createShiftsService({ prisma, now }: ShiftsDeps) {
       // What promotions took off counts as a discount too (spec 021, rule 7).
       discounts: fromMils(
         orders.reduce(
-          (sum, order) => sum + mils(order.discountAmount) + mils(order.promotionDiscount),
+          (sum, order) =>
+            sum +
+            mils(order.discountAmount) +
+            mils(order.promotionDiscount) +
+            mils(order.pointsDiscount),
           0,
         ),
       ),

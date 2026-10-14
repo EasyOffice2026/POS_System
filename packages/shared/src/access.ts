@@ -30,6 +30,8 @@ export const permissions = [
   'suppliers:write',
   'reports:read',
   'promotions:write',
+  'customers:read',
+  'customers:write',
   'audit:read',
 ] as const;
 export const permissionSchema = z.enum(permissions);
@@ -85,6 +87,8 @@ export const systemRoles: readonly RoleDefinition[] = [
       'suppliers:write',
       'reports:read',
       'promotions:write',
+      'customers:read',
+      'customers:write',
       'audit:read',
     ],
   },
@@ -92,7 +96,14 @@ export const systemRoles: readonly RoleDefinition[] = [
     key: 'marketing',
     name: 'Marketing',
     scope: 'BRAND',
-    permissions: ['brands:read', 'branches:read', 'menu:read', 'promotions:write'],
+    permissions: [
+      'brands:read',
+      'branches:read',
+      'menu:read',
+      'promotions:write',
+      'customers:read',
+      'customers:write',
+    ],
   },
   {
     key: 'branch_manager',
@@ -112,6 +123,7 @@ export const systemRoles: readonly RoleDefinition[] = [
       'inventory:read',
       'inventory:write',
       'reports:read',
+      'customers:read',
     ],
   },
   {

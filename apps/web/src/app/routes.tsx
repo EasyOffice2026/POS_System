@@ -22,6 +22,8 @@ import { MenuIndexRedirect, MenuLayout } from '../features/menu/MenuLayout';
 import { PosPage } from '../features/pos/PosPage';
 import { PosSetupPage } from '../features/pos/PosSetupPage';
 import { ReportsPage } from '../features/reports/ReportsPage';
+import { CustomerPage } from '../features/customers/CustomerPage';
+import { CustomersPage } from '../features/customers/CustomersPage';
 import { RolesPage } from '../features/roles/RolesPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { CountPage } from '../features/inventory/CountPage';
@@ -215,6 +217,22 @@ export const routes: RouteObject[] = [
             element: (
               <RequirePermission permission="reports:read">
                 <ReportsPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'customers',
+            element: (
+              <RequirePermission permission="customers:read">
+                <CustomersPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'customers/:id',
+            element: (
+              <RequirePermission permission="customers:read">
+                <CustomerPage />
               </RequirePermission>
             ),
           },
