@@ -153,6 +153,8 @@ interface OrderPanelProps {
   onVoidLine: (line: OrderLine) => void;
   onSend: () => void;
   onDiscount: () => void;
+  onPromoCode: () => void;
+  onRemovePromoCode: () => void;
   onVoidOrder: () => void;
   onNewOrder: () => void;
   onPay: () => void;
@@ -166,7 +168,7 @@ interface OrderPanelProps {
 // See docs/specs/006-pos-terminal.md, rules 6 to 8.
 export function OrderPanel(props: OrderPanelProps) {
   const { order, type, busy } = props;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const open = !order || order.status === 'open';
   const lines = order?.lines ?? [];
   const pending = lines.filter((line) => line.status === 'pending').length;
@@ -241,6 +243,49 @@ export function OrderPanel(props: OrderPanelProps) {
             <Price value={order?.subtotal ?? '0.000'} />
           </dd>
         </div>
+        {/* What each promotion took off, and the code typed (spec 021). */}
+        {order?.promotions.map((promotion) => (
+          <div key={promotion.id} className="flex justify-between text-emerald-800">
+            <dt>{localize(promotion.name, i18n.language)}</dt>
+            <dd>
+              − <Price value={promotion.amount} />
+            </dd>
+          </div>
+        ))}
+        {order?.promoCode ? (
+          <div className="flex items-center justify-between text-xs text-slate-600">
+            <dt>
+              {t('pos.promo.typed')} <bdi dir="ltr">{order.promoCode}</bdi>
+            </dt>
+            <dd>
+              {open && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={props.onRemovePromoCode}
+                  aria-label={t('pos.promo.removeFor', { code: order.promoCode })}
+                  className="underline"
+                >
+                  {t('pos.promo.remove')}
+                </button>
+              )}
+            </dd>
+          </div>
+        ) : (
+          open &&
+          live > 0 && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={props.onPromoCode}
+                className="text-xs text-slate-600 underline"
+              >
+                {t('pos.promo.add')}
+              </button>
+            </div>
+          )
+        )}
         {order?.discount && (
           <div className="flex justify-between text-red-700">
             <dt>

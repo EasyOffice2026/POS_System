@@ -13,6 +13,7 @@ import {
   modifierGroupSchema,
   modifierSchema,
   pageSchema,
+  promotionSchema,
   type putBranchOverrideRequestSchema,
   type PutRecipeRequest,
   recipeSchema,
@@ -21,6 +22,7 @@ import {
   type UpdateItemRequest,
   type UpdateModifierGroupRequest,
   type UpdateModifierRequest,
+  type updatePromotionRequestSchema,
 } from '@pos/shared';
 import { z } from 'zod';
 import { request } from '../../lib/api';
@@ -193,3 +195,24 @@ export const getRecipe = (owner: RecipeOwner) =>
 
 export const putRecipe = (owner: RecipeOwner, body: PutRecipeRequest) =>
   request(recipePath(owner), { method: 'PUT', body, schema: recipeSchema });
+
+// ---- promotions (docs/specs/021-promotions.md)
+
+export type PromotionInput = z.input<typeof updatePromotionRequestSchema>;
+
+export const promotionKeys = {
+  list: (brandId: string) => ['menu', brandId, 'promotions'] as const,
+};
+
+export async function listPromotions(brandId: string) {
+  const { data } = await request(`/menu/promotions${queryString({ brandId })}`, {
+    schema: listOf(promotionSchema),
+  });
+  return data;
+}
+
+export const createPromotion = (body: PromotionInput & { brandId: string }) =>
+  request('/menu/promotions', { method: 'POST', body, schema: promotionSchema });
+
+export const updatePromotion = (id: string, body: PromotionInput) =>
+  request(`/menu/promotions/${id}`, { method: 'PATCH', body, schema: promotionSchema });

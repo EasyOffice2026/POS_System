@@ -1,4 +1,7 @@
 import {
+  createPromotionRequestSchema,
+  promotionListQuerySchema,
+  updatePromotionRequestSchema,
   branchMenuQuerySchema,
   categoryListQuerySchema,
   comboListQuerySchema,
@@ -161,6 +164,33 @@ export function createMenuRouter({ service }: { service: MenuService }): Router 
     res.json(
       await service.modifiers.updateModifier(requestContext(req), id, input, requestMeta(req)),
     );
+  });
+
+  // ---- promotions (docs/specs/021-promotions.md)
+
+  const writePromotions = requirePermission('promotions:write');
+
+  router.get('/promotions', read, async (req, res) => {
+    const query = parseWith(promotionListQuerySchema, req.query);
+    res.json({ data: await service.promotions.list(requestContext(req), query) });
+  });
+
+  router.get('/promotions/:id', read, async (req, res) => {
+    const { id } = parseWith(idParamsSchema, req.params);
+    res.json(await service.promotions.get(requestContext(req), id));
+  });
+
+  router.post('/promotions', writePromotions, async (req, res) => {
+    const input = parseWith(createPromotionRequestSchema, req.body);
+    res
+      .status(201)
+      .json(await service.promotions.create(requestContext(req), input, requestMeta(req)));
+  });
+
+  router.patch('/promotions/:id', writePromotions, async (req, res) => {
+    const { id } = parseWith(idParamsSchema, req.params);
+    const input = parseWith(updatePromotionRequestSchema, req.body);
+    res.json(await service.promotions.update(requestContext(req), id, input, requestMeta(req)));
   });
 
   // ---- combos

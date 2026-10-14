@@ -120,6 +120,10 @@ const messageKeys = {
   INVOICE_NUMBER_INVALID: 'validation.INVOICE_NUMBER_INVALID',
   RANGE_TOO_LONG: 'validation.RANGE_TOO_LONG',
   RANGE_INVALID: 'validation.RANGE_INVALID',
+  PROMO_CODE_INVALID: 'validation.PROMO_CODE_INVALID',
+  PROMO_CODE_TAKEN: 'validation.PROMO_CODE_TAKEN',
+  TIME_INVALID: 'validation.TIME_INVALID',
+  DAYS_INVALID: 'validation.DAYS_INVALID',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;

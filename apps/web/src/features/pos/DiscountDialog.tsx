@@ -50,7 +50,12 @@ export function DiscountDialog({
   const [value, setValue] = useState(order.discount?.value ?? '');
   const [reason, setReason] = useState(order.discount?.reason ?? '');
 
-  const amount = amountOf(kind, value, order.subtotal);
+  // The discount is worked out on what is left after the promotions (spec 021, rule 6).
+  const amount = amountOf(
+    kind,
+    value,
+    fromMils(toMils(order.subtotal) - toMils(order.promotionDiscount)),
+  );
   const ready = amount !== null && reason.trim() !== '';
 
   function onSubmit(event: FormEvent) {

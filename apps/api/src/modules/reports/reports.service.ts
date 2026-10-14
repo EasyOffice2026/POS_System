@@ -69,7 +69,13 @@ export function createReportsService() {
         by: ['businessDate'],
         where: { ...inBranches, ...paidOrder },
         _count: { _all: true },
-        _sum: { subtotal: true, discountAmount: true, total: true, refunded: true },
+        _sum: {
+          subtotal: true,
+          promotionDiscount: true,
+          discountAmount: true,
+          total: true,
+          refunded: true,
+        },
       });
       const voidedOrders = await db.order.count({
         where: { ...inBranches, businessDate, status: 'voided' },
@@ -84,7 +90,7 @@ export function createReportsService() {
       for (const row of byDay) {
         orders += row._count._all;
         gross += mils(row._sum.subtotal);
-        discounts += mils(row._sum.discountAmount);
+        discounts += mils(row._sum.discountAmount) + mils(row._sum.promotionDiscount);
         net += mils(row._sum.total);
         refunds += mils(row._sum.refunded);
       }

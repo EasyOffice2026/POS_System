@@ -72,6 +72,7 @@ const tenantModels: Record<string, ModelRule> = {
   SupplierPrice: { brand: 'brandId', brandWide: true },
   PurchaseOrder: { brand: 'brandId', branch: 'branchId' },
   PurchaseOrderLine: { brand: 'brandId', branch: 'branchId' },
+  Promotion: { brand: 'brandId', brandWide: true },
 };
 
 // Reference data every signed-in person may read. Never writable through this client.

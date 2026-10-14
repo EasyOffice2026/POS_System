@@ -106,3 +106,10 @@ export const refundOrder = (orderId: string, body: RefundRequestInput, approval?
     body: { ...body, ...withApproval(approval) },
     ...asOrder,
   });
+
+// A promotion code on the order (docs/specs/021-promotions.md).
+export const setPromoCode = (orderId: string, code: string) =>
+  request(`/orders/${orderId}/promo-code`, { method: 'PUT', body: { code }, ...asOrder });
+
+export const removePromoCode = (orderId: string) =>
+  request(`/orders/${orderId}/promo-code`, { method: 'DELETE', ...asOrder });

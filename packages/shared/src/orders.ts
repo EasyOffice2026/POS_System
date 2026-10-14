@@ -3,6 +3,7 @@ import { localizedTextSchema } from './localized';
 import { CURRENCY, formatMoney, priceSchema, toMils } from './money';
 import { CASH, paymentMethodKeySchema } from './settings';
 import { cursorQuerySchema } from './pagination';
+import { appliedPromotionSchema } from './promotions';
 
 // Orders at a branch: dishes and combos copied from the branch menu with their prices, sent to the
 // kitchen, discounted or voided with a manager's approval. See docs/specs/005-orders.md. A problem
@@ -148,6 +149,10 @@ const orderFields = {
   note: z.string().nullable(),
   currency: z.literal(CURRENCY),
   subtotal: z.string(),
+  // What promotions took off, before the manual discount (docs/specs/021-promotions.md).
+  promoCode: z.string().nullable(),
+  promotionDiscount: z.string(),
+  promotions: z.array(appliedPromotionSchema),
   discount: orderDiscountSchema.nullable(),
   total: z.string(),
   openedById: z.uuid(),

@@ -1,5 +1,6 @@
 import {
   CURRENCY,
+  appliedPromotionSchema,
   localizedTextSchema,
   type Order,
   orderComboChoiceSchema,
@@ -36,6 +37,7 @@ export type OrderTx = Pick<
   | 'menuCategory'
   | 'shift'
   | 'refund'
+  | 'promotion'
   | 'recipeLine'
   | 'branchStock'
   | 'stockMovement'
@@ -52,6 +54,9 @@ export const isUniqueViolation = (error: unknown) =>
 
 export const isNotFound = (error: unknown) =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025';
+
+// What the promotions took off, as stored on the order when it was last worked out.
+const appliedListSchema = z.array(appliedPromotionSchema);
 
 const detailsSchema = z.object({
   modifiers: z.array(orderModifierSchema).default([]),
@@ -96,6 +101,9 @@ function orderFields(row: OrderRow) {
     note: row.note,
     currency: CURRENCY,
     subtotal: row.subtotal.toFixed(3),
+    promoCode: row.promoCode,
+    promotionDiscount: row.promotionDiscount.toFixed(3),
+    promotions: appliedListSchema.safeParse(row.promotions).data ?? [],
     discount:
       row.discountKind && row.discountValue
         ? {
@@ -164,18 +172,21 @@ export function toSummary(row: OrderRow, lineCount: number): OrderSummary {
   return { ...orderFields(row), lineCount };
 }
 
-// The totals of an order from its lines: the subtotal of the lines that are not voided, the
-// discount worked out again on it, and what is left. See docs/specs/005-orders.md, rules 9 and 10.
-export function totalsOf(order: OrderRow, lines: LineRow[]) {
+// The totals of an order from its lines: the subtotal of the lines that are not voided, less what
+// the promotions took off, less the manual discount worked out again on what is left. See
+// docs/specs/005-orders.md, rules 9 and 10, and docs/specs/021-promotions.md, rule 6.
+export function totalsOf(order: OrderRow, lines: LineRow[], promotionDiscount = 0) {
   const subtotal = lines
     .filter((line) => line.status !== 'voided')
     .reduce((sum, line) => sum + mils(line.lineTotal), 0);
+  const promotions = Math.min(promotionDiscount, subtotal);
+  const base = subtotal - promotions;
 
   let discount = 0;
   if (order.discountKind === 'percent' && order.discountValue) {
-    discount = percentOfMils(subtotal, order.discountValue.toFixed(2));
+    discount = percentOfMils(base, order.discountValue.toFixed(2));
   } else if (order.discountKind === 'amount' && order.discountValue) {
-    discount = Math.min(mils(order.discountValue), subtotal);
+    discount = Math.min(mils(order.discountValue), base);
   }
-  return { subtotal, discount, total: subtotal - discount };
+  return { subtotal, promotions, discount, total: base - discount };
 }

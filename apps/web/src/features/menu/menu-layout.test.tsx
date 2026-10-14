@@ -83,6 +83,7 @@ describe('the menu area for a group admin', () => {
       `/admin/menu/items?brandId=${ids.burger}`,
       `/admin/menu/categories?brandId=${ids.burger}`,
       `/admin/menu/combos?brandId=${ids.burger}`,
+      `/admin/menu/promotions?brandId=${ids.burger}`,
       `/admin/menu/preview?brandId=${ids.burger}`,
     ]);
   });
@@ -123,6 +124,7 @@ describe('the menu area for a group admin', () => {
       '/admin/menu/items',
       '/admin/menu/categories',
       '/admin/menu/combos',
+      '/admin/menu/promotions',
       '/admin/menu/preview',
     ]);
   });

@@ -110,7 +110,8 @@
     "inventory_write": "Change the stock",
     "ingredients_write": "Change the ingredients",
     "suppliers_write": "Change the suppliers",
-    "reports_read": "See the reports"
+    "reports_read": "See the reports",
+    "promotions_write": "Change the promotions"
   },
   "users": {
     "title": "Users",
@@ -299,7 +300,11 @@
     "RECEIPT_EMPTY": "Type at least one quantity that arrived.",
     "INVOICE_NUMBER_INVALID": "An invoice number can have up to 50 characters.",
     "RANGE_TOO_LONG": "Choose a period of at most 92 days.",
-    "RANGE_INVALID": "The last day cannot be before the first."
+    "RANGE_INVALID": "The last day cannot be before the first.",
+    "PROMO_CODE_INVALID": "This code is not valid here today.",
+    "PROMO_CODE_TAKEN": "Another promotion of the brand has this code.",
+    "TIME_INVALID": "Type both times, as HH:MM, and not the same.",
+    "DAYS_INVALID": "Choose each day once."
   },
   "rolesPage": {
     "title": "Roles",
@@ -377,7 +382,9 @@
       "inventory_purchase_order_updated": "Purchase order changed",
       "inventory_purchase_order_sent": "Purchase order sent",
       "inventory_purchase_order_cancelled": "Purchase order cancelled",
-      "inventory_purchase_order_received": "Purchase order received"
+      "inventory_purchase_order_received": "Purchase order received",
+      "menu_promotion_created": "Promotion added",
+      "menu_promotion_updated": "Promotion changed"
     }
   },
   "notFound": {
@@ -511,7 +518,8 @@
       "items": "Items",
       "categories": "Categories",
       "combos": "Combos",
-      "preview": "Branch menu"
+      "preview": "Branch menu",
+      "promotions": "Promotions"
     },
     "categories": {
       "intro": "Categories group the items on the terminals. Drag a category, or use its arrows, to change the order the terminals show.",
@@ -738,6 +746,54 @@
       "quantityInvalid": "Type a quantity above 0, with up to 3 decimals.",
       "saved": "Recipe saved.",
       "close": "Close"
+    },
+    "promotions": {
+      "intro": "Discounts the POS applies by itself: a happy hour, buy 2 get 1, or a code a customer gives. Each dish gets at most one promotion, tried in this order.",
+      "add": "Add a promotion",
+      "edit": "Edit",
+      "editFor": "Edit {{name}}",
+      "empty": "No promotion yet.",
+      "kind": "What it gives",
+      "kinds": {
+        "percent_off": "A percentage off",
+        "buy_get": "Buy some, get some free",
+        "amount_off": "An amount off the order"
+      },
+      "percent": "Percentage off",
+      "amount": "Amount off",
+      "buy": "Buy",
+      "get": "Get free",
+      "appliesTo": "On",
+      "scopes": {
+        "all": "Every dish",
+        "categories": "Some categories",
+        "items": "Some dishes"
+      },
+      "categories": "Categories",
+      "items": "Dishes",
+      "branches": "Branches",
+      "branchesHint": "None chosen means every branch.",
+      "days": "Days",
+      "daysHint": "None chosen means every day.",
+      "startTime": "From (time)",
+      "endTime": "To (time)",
+      "startsOn": "First day",
+      "endsOn": "Last day",
+      "code": "Code (optional)",
+      "codeHint": "With a code, it applies only when the cashier types it.",
+      "active": "Active",
+      "gives": {
+        "percent_off": "{{value}}% off",
+        "amount_off": "{{value}} KWD off",
+        "buy_get": "Buy {{buy}}, get {{get}} free"
+      },
+      "on": {
+        "all": "every dish",
+        "categories_one": "{{count}} category",
+        "categories_other": "{{count}} categories",
+        "items_one": "{{count}} dish",
+        "items_other": "{{count}} dishes"
+      }
     }
   },
   "weekdaysShort": {
@@ -963,6 +1019,15 @@
       "method": "Given back",
       "reason": "Reason",
       "confirm": "Give the refund"
+    },
+    "promo": {
+      "title": "Promotion code",
+      "code": "Code",
+      "apply": "Apply",
+      "add": "Promo code",
+      "typed": "Code",
+      "remove": "Remove",
+      "removeFor": "Remove the code {{code}}"
     }
   },
   "kds": {
