@@ -48,6 +48,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (production && values.PASSWORD_HASH_PROFILE !== 'standard') {
     throw new Error('PASSWORD_HASH_PROFILE must be "standard" in production.');
   }
+  // The development secret is in the code for everyone to read; anyone could sign tokens with it.
+  if (production && values.JWT_ACCESS_SECRET === DEV_JWT_SECRET) {
+    throw new Error('JWT_ACCESS_SECRET must be a secret of your own in production.');
+  }
 
   return {
     nodeEnv: values.NODE_ENV,
