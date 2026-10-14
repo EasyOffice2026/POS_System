@@ -16,6 +16,7 @@ export * from './orders';
 export * from './pagination';
 export * from './purchase-orders';
 export * from './recipes';
+export * from './reports';
 export * from './refunds';
 export * from './search';
 export * from './settings';

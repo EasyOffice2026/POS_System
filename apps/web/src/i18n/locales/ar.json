@@ -37,7 +37,8 @@
     "kds": "شاشة المطبخ",
     "settings": "الإعدادات",
     "shifts": "الورديات",
-    "inventory": "المخزون"
+    "inventory": "المخزون",
+    "reports": "التقارير"
   },
   "language": {
     "switchTo": "تغيير اللغة",
@@ -112,7 +113,8 @@
     "inventory_read": "رؤية المخزون",
     "inventory_write": "تغيير المخزون",
     "ingredients_write": "تغيير المكونات",
-    "suppliers_write": "تغيير الموردين"
+    "suppliers_write": "تغيير الموردين",
+    "reports_read": "عرض التقارير"
   },
   "users": {
     "title": "المستخدمون",
@@ -299,7 +301,9 @@
     "DATE_INVALID": "اختر يومًا.",
     "ORDER_NOT_SENT": "يُستلم الأمر المُرسل فقط، ومرة واحدة.",
     "RECEIPT_EMPTY": "اكتب كمية واحدة على الأقل وصلت.",
-    "INVOICE_NUMBER_INVALID": "يمكن أن يضم رقم الفاتورة حتى 50 حرفًا."
+    "INVOICE_NUMBER_INVALID": "يمكن أن يضم رقم الفاتورة حتى 50 حرفًا.",
+    "RANGE_TOO_LONG": "اختر فترة لا تزيد على 92 يومًا.",
+    "RANGE_INVALID": "لا يمكن أن يسبق اليوم الأخير اليوم الأول."
   },
   "rolesPage": {
     "title": "الأدوار",
@@ -1395,5 +1399,48 @@
     "seeAll": "عرض الكل",
     "seeMore": "عرض {{count}} أخرى",
     "seeAllFor": "عرض كل المخزون المنخفض في {{name}}"
+  },
+  "reports": {
+    "title": "التقارير",
+    "brand": "العلامة التجارية",
+    "branch": "الفرع",
+    "allBranches": "كل الفروع",
+    "from": "من",
+    "to": "إلى",
+    "quick": "فترات سريعة",
+    "presets": {
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "week": "آخر 7 أيام",
+      "month": "هذا الشهر"
+    },
+    "period": "من {{from}} إلى {{to}}",
+    "summary": "الملخص",
+    "orders": "الطلبات",
+    "grossSales": "إجمالي المبيعات",
+    "discounts": "الخصومات",
+    "netSales": "صافي المبيعات",
+    "refunds": "المبالغ المستردة",
+    "netAfterRefunds": "الصافي بعد الاسترداد",
+    "averageOrder": "متوسط الطلب",
+    "voidedOrders": "الطلبات الملغاة",
+    "byDay": "حسب اليوم",
+    "day": "اليوم",
+    "byPayment": "حسب طريقة الدفع",
+    "method": "طريقة الدفع",
+    "payments": "الدفعات",
+    "amount": "المبلغ",
+    "byItem": "حسب الصنف",
+    "item": "الصنف",
+    "quantity": "الكمية",
+    "sales": "المبيعات",
+    "foodCost": "تكلفة الطعام",
+    "foodCostPercent": "نسبة تكلفة الطعام",
+    "combo": "وجبة",
+    "byCategory": "حسب الفئة",
+    "category": "الفئة",
+    "combos": "الوجبات",
+    "nothing": "لا مبيعات في هذه الفترة.",
+    "downloadCsv": "تنزيل CSV"
   }
 }
