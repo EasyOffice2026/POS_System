@@ -98,6 +98,11 @@ export function AdminLayout() {
             {t('nav.reports')}
           </NavLink>
         )}
+        {can('customers:read') && (
+          <NavLink to="/admin/customers" className={linkClass}>
+            {t('nav.customers')}
+          </NavLink>
+        )}
         {can('settings:write') && (
           <NavLink to="/admin/settings" className={linkClass}>
             {t('nav.settings')}

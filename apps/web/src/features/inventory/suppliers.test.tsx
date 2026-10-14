@@ -110,7 +110,7 @@ describe('the suppliers', () => {
     await user.type(screen.getByLabelText('Phone'), 'call me');
     await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(screen.getByLabelText('Phone')).toHaveAccessibleDescription(
-      'Type a phone number with digits, spaces, + and - only.',
+      'Type a whole phone number, like 9999 1234 or +965 9999 1234.',
     );
 
     await user.clear(screen.getByLabelText('Phone'));

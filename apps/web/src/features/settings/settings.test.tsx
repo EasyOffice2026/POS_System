@@ -104,6 +104,47 @@ describe('the settings page', () => {
     expect(api.count(SAVE)).toBe(0);
   });
 
+  it('switches loyalty points on with their rules, and refuses a bad rate first', async () => {
+    const api = settingsApi({ [SAVE]: (request) => json(request.body) });
+    const user = userEvent.setup();
+    renderApp('/admin/settings');
+
+    const section = within(await screen.findByRole('region', { name: 'Loyalty points' }));
+    expect(
+      section.getByRole('checkbox', { name: 'Customers earn and spend points' }),
+    ).not.toBeChecked();
+    expect(section.getByLabelText('Points per KWD')).toHaveValue('1');
+    expect(section.getByLabelText('Value of a point (KWD)')).toHaveValue('0.010');
+    expect(section.getByLabelText('Fewest points to spend')).toHaveValue('100');
+
+    await user.click(section.getByRole('checkbox', { name: 'Customers earn and spend points' }));
+    await user.clear(section.getByLabelText('Points per KWD'));
+    await user.type(section.getByLabelText('Points per KWD'), '1.5');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(section.getByLabelText('Points per KWD')).toHaveAccessibleDescription(
+      'Points earned for each dinar paid, rounded down. Type a whole number from 0 to 1000.',
+    );
+    expect(api.count(SAVE)).toBe(0);
+
+    await user.clear(section.getByLabelText('Points per KWD'));
+    await user.type(section.getByLabelText('Points per KWD'), '2');
+    await user.clear(section.getByLabelText('Value of a point (KWD)'));
+    await user.type(section.getByLabelText('Value of a point (KWD)'), '0.005');
+    await user.clear(section.getByLabelText('Fewest points to spend'));
+    await user.type(section.getByLabelText('Fewest points to spend'), '٥٠');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('The settings were saved.');
+    expect(
+      (api.calls.find((call) => call.key === SAVE)?.body as { loyalty: unknown }).loyalty,
+    ).toEqual({
+      enabled: true,
+      pointsPerKwd: 2,
+      pointValue: '0.005',
+      minRedeem: 50,
+    });
+  });
+
   it('lets a group admin pick the brand', async () => {
     const api = settingsApi(
       {

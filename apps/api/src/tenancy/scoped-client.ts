@@ -73,6 +73,9 @@ const tenantModels: Record<string, ModelRule> = {
   PurchaseOrder: { brand: 'brandId', branch: 'branchId' },
   PurchaseOrderLine: { brand: 'brandId', branch: 'branchId' },
   Promotion: { brand: 'brandId', brandWide: true },
+  // A customer belongs to the brand and is the same at every branch; a cashier adds them too.
+  Customer: { brand: 'brandId' },
+  LoyaltyEntry: { brand: 'brandId' },
 };
 
 // Reference data every signed-in person may read. Never writable through this client.

@@ -36,6 +36,12 @@ export function Receipt({ order, terminal, cashier }: ReceiptProps) {
           {formatDateTime(order.paidAt ?? order.updatedAt, i18n.language)}
         </p>
         <p className="text-xs text-slate-600">{t('pos.receipt.cashier', { name: cashier })}</p>
+        {order.customer && (
+          <p className="text-xs text-slate-600">
+            {t('pos.receipt.customer')} {order.customer.name && <bdi>{order.customer.name}</bdi>}{' '}
+            <bdi dir="ltr">{order.customer.phone}</bdi>
+          </p>
+        )}
       </div>
 
       <ul className="space-y-1 border-y border-dashed border-slate-300 py-2">
@@ -85,6 +91,14 @@ export function Receipt({ order, terminal, cashier }: ReceiptProps) {
             </dd>
           </div>
         )}
+        {order.pointsRedeemed > 0 && (
+          <div className={row}>
+            <dt>{t('pos.points.row', { count: order.pointsRedeemed })}</dt>
+            <dd>
+              − <Price value={order.pointsDiscount} />
+            </dd>
+          </div>
+        )}
         <div className={`${row} text-base font-semibold`}>
           <dt>{t('pos.order.total')}</dt>
           <dd>
@@ -121,6 +135,21 @@ export function Receipt({ order, terminal, cashier }: ReceiptProps) {
               </dd>
             </div>
           )}
+        </dl>
+      )}
+
+      {order.customer && (order.pointsEarned > 0 || order.pointsRedeemed > 0) && (
+        <dl className="space-y-1 border-t border-dashed border-slate-300 pt-2 text-xs">
+          {order.pointsEarned > 0 && (
+            <div className={row}>
+              <dt>{t('pos.points.earned')}</dt>
+              <dd>{t('pos.customer.points', { count: order.pointsEarned })}</dd>
+            </div>
+          )}
+          <div className={row}>
+            <dt>{t('pos.points.newBalance')}</dt>
+            <dd>{t('pos.customer.points', { count: order.customer.points })}</dd>
+          </div>
         </dl>
       )}
 

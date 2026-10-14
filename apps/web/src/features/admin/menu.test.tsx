@@ -47,6 +47,7 @@ describe('the main menu shows each person only what they may open', () => {
       'Inventory',
       'Shifts',
       'Reports',
+      'Customers',
       'Settings',
       'Audit log',
     ]);
@@ -65,6 +66,7 @@ describe('the main menu shows each person only what they may open', () => {
       'Inventory',
       'Shifts',
       'Reports',
+      'Customers',
       'Settings',
       'Audit log',
     ]);

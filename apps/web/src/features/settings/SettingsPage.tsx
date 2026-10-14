@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { BilingualNameFields } from '../../components/BilingualNameFields';
 import {
+  fieldAttributes,
   fieldClass,
   FormField,
   primaryButtonClass,
@@ -46,7 +47,18 @@ interface FormState {
   voidRule: VoidRule;
   doneBy: TicketDoneBy;
   stations: StationRow[];
+  // The loyalty rules as typed (spec 022).
+  loyaltyOn: boolean;
+  pointsPerKwd: string;
+  pointValue: string;
+  minRedeem: string;
 }
+
+// A whole number as typed; anything else is left for the rules to refuse.
+const wholeNumber = (text: string) => {
+  const typed = normalizeNumberInput(text).trim();
+  return /^\d+$/.test(typed) ? Number(typed) : Number.NaN;
+};
 
 function toForm(settings: BrandSettings): FormState {
   return {
@@ -56,6 +68,10 @@ function toForm(settings: BrandSettings): FormState {
     voidRule: settings.voidNeedsManager,
     doneBy: settings.ticketDoneBy,
     stations: settings.kitchenStations.map((station) => ({ ...station })),
+    loyaltyOn: settings.loyalty.enabled,
+    pointsPerKwd: String(settings.loyalty.pointsPerKwd),
+    pointValue: settings.loyalty.pointValue,
+    minRedeem: String(settings.loyalty.minRedeem),
   };
 }
 
@@ -72,6 +88,12 @@ function toRequest(form: FormState): BrandSettingsRequest {
     kitchenStations: form.stations.map((station) =>
       station.id ? { id: station.id, name: station.name } : { name: station.name },
     ),
+    loyalty: {
+      enabled: form.loyaltyOn,
+      pointsPerKwd: wholeNumber(form.pointsPerKwd),
+      pointValue: normalizeNumberInput(form.pointValue).trim(),
+      minRedeem: wholeNumber(form.minRedeem),
+    },
   };
 }
 
@@ -371,6 +393,80 @@ function SettingsForm({ brandId, settings }: { brandId: string; settings: BrandS
           >
             {t('settings.kitchen.addStation')}
           </button>
+        </div>
+      </section>
+
+      <section className={sectionClass} aria-labelledby="settings-loyalty">
+        <h2 id="settings-loyalty" className="text-lg font-semibold">
+          {t('settings.loyalty.title')}
+        </h2>
+        <p className="text-sm text-slate-600">{t('settings.loyalty.intro')}</p>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={form.loyaltyOn}
+            onChange={(event) => change({ loyaltyOn: event.target.checked })}
+          />
+          {t('settings.loyalty.enabled')}
+        </label>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <FormField
+            id="loyalty-rate"
+            label={t('settings.loyalty.pointsPerKwd')}
+            hint={t('settings.loyalty.pointsPerKwdHint')}
+            error={error('loyalty.pointsPerKwd')}
+          >
+            <input
+              {...fieldAttributes('loyalty-rate', {
+                hint: true,
+                error: Boolean(error('loyalty.pointsPerKwd')),
+              })}
+              type="text"
+              inputMode="numeric"
+              dir="ltr"
+              value={form.pointsPerKwd}
+              onChange={(event) => change({ pointsPerKwd: event.target.value })}
+              className={fieldClass}
+            />
+          </FormField>
+          <FormField
+            id="loyalty-value"
+            label={t('settings.loyalty.pointValue')}
+            hint={t('settings.loyalty.pointValueHint')}
+            error={error('loyalty.pointValue')}
+          >
+            <input
+              {...fieldAttributes('loyalty-value', {
+                hint: true,
+                error: Boolean(error('loyalty.pointValue')),
+              })}
+              type="text"
+              inputMode="decimal"
+              dir="ltr"
+              value={form.pointValue}
+              onChange={(event) => change({ pointValue: event.target.value })}
+              className={fieldClass}
+            />
+          </FormField>
+          <FormField
+            id="loyalty-min"
+            label={t('settings.loyalty.minRedeem')}
+            hint={t('settings.loyalty.minRedeemHint')}
+            error={error('loyalty.minRedeem')}
+          >
+            <input
+              {...fieldAttributes('loyalty-min', {
+                hint: true,
+                error: Boolean(error('loyalty.minRedeem')),
+              })}
+              type="text"
+              inputMode="numeric"
+              dir="ltr"
+              value={form.minRedeem}
+              onChange={(event) => change({ minRedeem: event.target.value })}
+              className={fieldClass}
+            />
+          </FormField>
         </div>
       </section>
 

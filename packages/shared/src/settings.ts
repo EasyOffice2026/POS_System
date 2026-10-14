@@ -64,6 +64,36 @@ const percentSchema = z
   .refine((value) => Number(value) <= 100, 'PERCENT_INVALID')
   .transform((value) => Number(value).toFixed(2));
 
+// The loyalty rules of a brand (docs/specs/022-loyalty.md): points earned per KWD paid, what a
+// point is worth when spent, and the fewest that can be spent at once.
+export const loyaltySettingsSchema = z.strictObject({
+  enabled: z.boolean(),
+  pointsPerKwd: z
+    .number({ error: 'POINTS_RATE_INVALID' })
+    .int('POINTS_RATE_INVALID')
+    .min(0, 'POINTS_RATE_INVALID')
+    .max(1000, 'POINTS_RATE_INVALID'),
+  pointValue: z
+    .string({ error: 'PRICE_INVALID' })
+    .trim()
+    .regex(/^\d{1,3}(\.\d{1,3})?$/, 'PRICE_INVALID')
+    .refine((text) => Number(text) > 0, 'PRICE_INVALID')
+    .transform((text) => Number(text).toFixed(3)),
+  minRedeem: z
+    .number({ error: 'POINTS_MIN_INVALID' })
+    .int('POINTS_MIN_INVALID')
+    .min(1, 'POINTS_MIN_INVALID')
+    .max(1_000_000, 'POINTS_MIN_INVALID'),
+});
+export type LoyaltySettings = z.infer<typeof loyaltySettingsSchema>;
+
+export const defaultLoyaltySettings: LoyaltySettings = {
+  enabled: false,
+  pointsPerKwd: 1,
+  pointValue: '0.010',
+  minRedeem: 100,
+};
+
 export const brandSettingsSchema = z.object({
   paymentMethods: z.array(paymentMethodSettingSchema),
   // The discount buttons on the POS, as percentages.
@@ -73,6 +103,7 @@ export const brandSettingsSchema = z.object({
   voidNeedsManager: voidRuleSchema,
   ticketDoneBy: ticketDoneBySchema,
   kitchenStations: z.array(kitchenStationSchema),
+  loyalty: loyaltySettingsSchema,
 });
 export type BrandSettings = z.infer<typeof brandSettingsSchema>;
 
@@ -83,6 +114,7 @@ export const defaultBrandSettings: BrandSettings = {
   voidNeedsManager: 'never',
   ticketDoneBy: 'kitchen',
   kitchenStations: [],
+  loyalty: defaultLoyaltySettings,
 };
 
 // The whole settings as a request. Unknown fields are refused.
@@ -109,6 +141,8 @@ export const brandSettingsRequestSchema = z
     kitchenStations: z
       .array(kitchenStationInputSchema)
       .max(MAX_KITCHEN_STATIONS, 'KITCHEN_STATIONS_TOO_MANY'),
+    // Left out by an older screen, it keeps the default.
+    loyalty: loyaltySettingsSchema.default(defaultLoyaltySettings),
   })
   .transform((settings) => ({
     ...settings,
@@ -160,6 +194,7 @@ export function parseBrandSettings(stored: unknown): BrandSettings {
       source.kitchenStations,
       defaultBrandSettings.kitchenStations,
     ),
+    loyalty: pick(brandSettingsSchema.shape.loyalty, source.loyalty, defaultLoyaltySettings),
   };
 }
 

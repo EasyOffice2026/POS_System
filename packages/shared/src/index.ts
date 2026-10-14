@@ -5,6 +5,7 @@ export * from './counts';
 export * from './branch-config';
 export * from './brands';
 export * from './credentials';
+export * from './customers';
 export * from './errors';
 export * from './health';
 export * from './inventory';

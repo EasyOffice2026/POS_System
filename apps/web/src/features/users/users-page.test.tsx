@@ -318,6 +318,7 @@ describe('the main menu', () => {
       'Inventory',
       'Shifts',
       'Reports',
+      'Customers',
       'Settings',
       'Audit log',
     ]);
