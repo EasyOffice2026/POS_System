@@ -37,7 +37,8 @@
     "kds": "Kitchen screen",
     "settings": "Settings",
     "shifts": "Shifts",
-    "inventory": "Inventory"
+    "inventory": "Inventory",
+    "reports": "Reports"
   },
   "language": {
     "switchTo": "Switch language",
@@ -108,7 +109,8 @@
     "inventory_read": "See the stock",
     "inventory_write": "Change the stock",
     "ingredients_write": "Change the ingredients",
-    "suppliers_write": "Change the suppliers"
+    "suppliers_write": "Change the suppliers",
+    "reports_read": "See the reports"
   },
   "users": {
     "title": "Users",
@@ -295,7 +297,9 @@
     "DATE_INVALID": "Choose a day.",
     "ORDER_NOT_SENT": "Only a sent order can be received, and only once.",
     "RECEIPT_EMPTY": "Type at least one quantity that arrived.",
-    "INVOICE_NUMBER_INVALID": "An invoice number can have up to 50 characters."
+    "INVOICE_NUMBER_INVALID": "An invoice number can have up to 50 characters.",
+    "RANGE_TOO_LONG": "Choose a period of at most 92 days.",
+    "RANGE_INVALID": "The last day cannot be before the first."
   },
   "rolesPage": {
     "title": "Roles",
@@ -1355,5 +1359,48 @@
     "seeAll": "See all",
     "seeMore": "See {{count}} more",
     "seeAllFor": "See all the low stock of {{name}}"
+  },
+  "reports": {
+    "title": "Reports",
+    "brand": "Brand",
+    "branch": "Branch",
+    "allBranches": "All branches",
+    "from": "From",
+    "to": "To",
+    "quick": "Quick periods",
+    "presets": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "week": "Last 7 days",
+      "month": "This month"
+    },
+    "period": "{{from}} to {{to}}",
+    "summary": "Summary",
+    "orders": "Orders",
+    "grossSales": "Gross sales",
+    "discounts": "Discounts",
+    "netSales": "Net sales",
+    "refunds": "Refunds",
+    "netAfterRefunds": "Net after refunds",
+    "averageOrder": "Average order",
+    "voidedOrders": "Voided orders",
+    "byDay": "By day",
+    "day": "Day",
+    "byPayment": "By payment method",
+    "method": "Payment method",
+    "payments": "Payments",
+    "amount": "Amount",
+    "byItem": "By item",
+    "item": "Item",
+    "quantity": "Quantity",
+    "sales": "Sales",
+    "foodCost": "Food cost",
+    "foodCostPercent": "Food cost %",
+    "combo": "Combo",
+    "byCategory": "By category",
+    "category": "Category",
+    "combos": "Combos",
+    "nothing": "Nothing sold in this period.",
+    "downloadCsv": "Download CSV"
   }
 }

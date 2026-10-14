@@ -118,6 +118,8 @@ const messageKeys = {
   ORDER_NOT_SENT: 'validation.ORDER_NOT_SENT',
   RECEIPT_EMPTY: 'validation.RECEIPT_EMPTY',
   INVOICE_NUMBER_INVALID: 'validation.INVOICE_NUMBER_INVALID',
+  RANGE_TOO_LONG: 'validation.RANGE_TOO_LONG',
+  RANGE_INVALID: 'validation.RANGE_INVALID',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;

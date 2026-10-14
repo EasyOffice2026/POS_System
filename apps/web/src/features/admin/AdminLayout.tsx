@@ -93,6 +93,11 @@ export function AdminLayout() {
             {t('nav.shifts')}
           </NavLink>
         )}
+        {can('reports:read') && (
+          <NavLink to="/admin/reports" className={linkClass}>
+            {t('nav.reports')}
+          </NavLink>
+        )}
         {can('settings:write') && (
           <NavLink to="/admin/settings" className={linkClass}>
             {t('nav.settings')}

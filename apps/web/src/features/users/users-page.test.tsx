@@ -317,6 +317,7 @@ describe('the main menu', () => {
       'Roles',
       'Inventory',
       'Shifts',
+      'Reports',
       'Settings',
       'Audit log',
     ]);

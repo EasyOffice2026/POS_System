@@ -20,6 +20,7 @@ import { ItemsPage } from '../features/menu/ItemsPage';
 import { MenuIndexRedirect, MenuLayout } from '../features/menu/MenuLayout';
 import { PosPage } from '../features/pos/PosPage';
 import { PosSetupPage } from '../features/pos/PosSetupPage';
+import { ReportsPage } from '../features/reports/ReportsPage';
 import { RolesPage } from '../features/roles/RolesPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { CountPage } from '../features/inventory/CountPage';
@@ -206,6 +207,14 @@ export const routes: RouteObject[] = [
               { path: 'purchase-orders', element: <PurchaseOrdersPage /> },
               { path: 'purchase-orders/:id', element: <PurchaseOrderPage /> },
             ],
+          },
+          {
+            path: 'reports',
+            element: (
+              <RequirePermission permission="reports:read">
+                <ReportsPage />
+              </RequirePermission>
+            ),
           },
           {
             path: 'shifts',
