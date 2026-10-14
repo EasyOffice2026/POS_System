@@ -6,6 +6,7 @@ import { localize } from '../../i18n/localize';
 import { useAuth } from '../auth/auth-context';
 import { StockAlertsPanel } from '../inventory/StockAlertsPanel';
 import { listBranches, listBrands } from './admin-api';
+import { GroupOverview } from './GroupOverview';
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -68,6 +69,9 @@ export function DashboardPage() {
   const canListBrands = user?.permissions.includes('brands:read') ?? false;
   const canListBranches = user?.permissions.includes('branches:read') ?? false;
   const canSeeStock = user?.permissions.includes('inventory:read') ?? false;
+  // Today's figures for the group and the brands (docs/specs/024-group-dashboard.md).
+  const canSeeOverview =
+    (user?.permissions.includes('reports:read') ?? false) && user?.scope !== 'BRANCH';
   const brands = useQuery({ queryKey: ['brands'], queryFn: listBrands, enabled: canListBrands });
 
   if (!user) return null;
@@ -81,6 +85,8 @@ export function DashboardPage() {
           {t('dashboard.role', { role: t(`roles.${user.role.key}`) })}
         </p>
       </div>
+
+      {canSeeOverview && <GroupOverview />}
 
       {canSeeStock && <StockAlertsPanel />}
 

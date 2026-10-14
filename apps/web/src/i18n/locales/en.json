@@ -1630,5 +1630,40 @@
     "pickHint": "Pick a table to change it.",
     "placeHint": "Tap an empty spot to move the table there, or use the arrow keys.",
     "saved": "The floor plan was saved."
+  },
+  "overview": {
+    "title": "Today",
+    "updated": "Updated at {{time}}. It refreshes every minute.",
+    "allBrands": "All brands",
+    "sales": "Sales",
+    "ordersLabel": "Orders",
+    "orders_one": "{{count}} order",
+    "orders_other": "{{count}} orders",
+    "average": "Average order",
+    "discounts": "Discounts",
+    "refunds": "Refunds",
+    "voided_one": "{{count}} order voided",
+    "voided_other": "{{count}} orders voided",
+    "onLastWeek": "on last week at this time",
+    "noLastWeek": "Nothing at this time last week",
+    "branches": "Branches",
+    "branch": "Branch",
+    "lastWeek": "Last week",
+    "open": "Open orders",
+    "tables": "Tables in use",
+    "shifts": "Open shifts",
+    "byHour": "Sales by hour",
+    "topItems": "Top dishes",
+    "noSales": "No sales yet today.",
+    "attention": {
+      "title": "Needs attention",
+      "none": "Nothing needs attention.",
+      "oldShift": "{{name}}'s shift is still open since {{since}}.",
+      "seeShifts": "See the shifts",
+      "voids_one": "{{count}} order voided today,",
+      "voids_other": "{{count}} orders voided today,",
+      "refunds_one": "{{count}} refund today,",
+      "refunds_other": "{{count}} refunds today,"
+    }
   }
 }

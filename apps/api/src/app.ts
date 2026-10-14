@@ -26,6 +26,7 @@ import { createMenuRouter } from './modules/menu/menu.router';
 import { createMenuService } from './modules/menu/menu.service';
 import { createOrdersRouter } from './modules/orders/orders.router';
 import { createOrdersService } from './modules/orders/orders.service';
+import { createOverviewService } from './modules/reports/overview.service';
 import { createReportsRouter } from './modules/reports/reports.router';
 import { createReportsService } from './modules/reports/reports.service';
 import { createCustomersRouter } from './modules/customers/customers.router';
@@ -122,7 +123,14 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
     }),
   );
   v1.use('/users', ...protectedRoutes, createUsersRouter({ service: usersService }));
-  v1.use('/reports', ...protectedRoutes, createReportsRouter({ service: createReportsService() }));
+  v1.use(
+    '/reports',
+    ...protectedRoutes,
+    createReportsRouter({
+      service: createReportsService(),
+      overview: createOverviewService({ now: now ?? (() => new Date()) }),
+    }),
+  );
   v1.use(
     '/customers',
     ...protectedRoutes,
