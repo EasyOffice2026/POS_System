@@ -1,46 +1,87 @@
 import { Navigate, type RouteObject } from 'react-router';
 import { AdminLayout } from '../features/admin/AdminLayout';
-import { DashboardPage } from '../features/admin/DashboardPage';
-import { AuditLogPage } from '../features/audit/AuditLogPage';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RequireAuth } from '../features/auth/RequireAuth';
 import { RequirePermission } from '../features/auth/RequirePermission';
-import { BranchesPage } from '../features/branches/BranchesPage';
-import { KdsPage } from '../features/kitchen/KdsPage';
-import { BranchFormPage } from '../features/branches/BranchFormPage';
-import { BranchPage } from '../features/branches/BranchPage';
-import { BrandFormPage } from '../features/brands/BrandFormPage';
-import { BrandsPage } from '../features/brands/BrandsPage';
-import { BranchMenuPreviewPage } from '../features/menu/BranchMenuPreviewPage';
-import { CategoriesPage } from '../features/menu/CategoriesPage';
-import { ComboPage } from '../features/menu/ComboPage';
-import { CombosPage } from '../features/menu/CombosPage';
-import { ItemPage } from '../features/menu/ItemPage';
-import { ItemsPage } from '../features/menu/ItemsPage';
-import { PromotionsPage } from '../features/menu/PromotionsPage';
-import { MenuIndexRedirect, MenuLayout } from '../features/menu/MenuLayout';
-import { PosPage } from '../features/pos/PosPage';
-import { PosSetupPage } from '../features/pos/PosSetupPage';
-import { ReportsPage } from '../features/reports/ReportsPage';
-import { CustomerPage } from '../features/customers/CustomerPage';
-import { CustomersPage } from '../features/customers/CustomersPage';
-import { RolesPage } from '../features/roles/RolesPage';
-import { SettingsPage } from '../features/settings/SettingsPage';
-import { CountPage } from '../features/inventory/CountPage';
-import { CountsPage } from '../features/inventory/CountsPage';
-import { IngredientsPage } from '../features/inventory/IngredientsPage';
-import { InventoryIndexRedirect, InventoryLayout } from '../features/inventory/InventoryLayout';
-import { MovementsPage } from '../features/inventory/MovementsPage';
-import { PurchaseOrderPage } from '../features/inventory/PurchaseOrderPage';
-import { PurchaseOrdersPage } from '../features/inventory/PurchaseOrdersPage';
-import { StockPage } from '../features/inventory/StockPage';
-import { SupplierPage } from '../features/inventory/SupplierPage';
-import { SuppliersPage } from '../features/inventory/SuppliersPage';
-import { TransfersPage } from '../features/inventory/TransfersPage';
-import { ShiftsPage } from '../features/shifts/ShiftsPage';
-import { UserFormPage } from '../features/users/UserFormPage';
-import { UsersPage } from '../features/users/UsersPage';
 import { NotFoundPage } from './NotFoundPage';
+import { lazyPage } from './lazy-page';
+
+// Every page but the sign-in is loaded the first time it is opened (Phase 6, step 1).
+const DashboardPage = lazyPage(() => import('../features/admin/DashboardPage'), 'DashboardPage');
+const AuditLogPage = lazyPage(() => import('../features/audit/AuditLogPage'), 'AuditLogPage');
+const BranchesPage = lazyPage(() => import('../features/branches/BranchesPage'), 'BranchesPage');
+const KdsPage = lazyPage(() => import('../features/kitchen/KdsPage'), 'KdsPage');
+const BranchFormPage = lazyPage(
+  () => import('../features/branches/BranchFormPage'),
+  'BranchFormPage',
+);
+const BranchPage = lazyPage(() => import('../features/branches/BranchPage'), 'BranchPage');
+const BrandFormPage = lazyPage(() => import('../features/brands/BrandFormPage'), 'BrandFormPage');
+const BrandsPage = lazyPage(() => import('../features/brands/BrandsPage'), 'BrandsPage');
+const BranchMenuPreviewPage = lazyPage(
+  () => import('../features/menu/BranchMenuPreviewPage'),
+  'BranchMenuPreviewPage',
+);
+const CategoriesPage = lazyPage(() => import('../features/menu/CategoriesPage'), 'CategoriesPage');
+const ComboPage = lazyPage(() => import('../features/menu/ComboPage'), 'ComboPage');
+const CombosPage = lazyPage(() => import('../features/menu/CombosPage'), 'CombosPage');
+const ItemPage = lazyPage(() => import('../features/menu/ItemPage'), 'ItemPage');
+const ItemsPage = lazyPage(() => import('../features/menu/ItemsPage'), 'ItemsPage');
+const PromotionsPage = lazyPage(() => import('../features/menu/PromotionsPage'), 'PromotionsPage');
+const MenuIndexRedirect = lazyPage(
+  () => import('../features/menu/MenuLayout'),
+  'MenuIndexRedirect',
+);
+const MenuLayout = lazyPage(() => import('../features/menu/MenuLayout'), 'MenuLayout');
+const PosPage = lazyPage(() => import('../features/pos/PosPage'), 'PosPage');
+const PosSetupPage = lazyPage(() => import('../features/pos/PosSetupPage'), 'PosSetupPage');
+const ReportsPage = lazyPage(() => import('../features/reports/ReportsPage'), 'ReportsPage');
+const CustomerPage = lazyPage(() => import('../features/customers/CustomerPage'), 'CustomerPage');
+const CustomersPage = lazyPage(
+  () => import('../features/customers/CustomersPage'),
+  'CustomersPage',
+);
+const RolesPage = lazyPage(() => import('../features/roles/RolesPage'), 'RolesPage');
+const SettingsPage = lazyPage(() => import('../features/settings/SettingsPage'), 'SettingsPage');
+const CountPage = lazyPage(() => import('../features/inventory/CountPage'), 'CountPage');
+const CountsPage = lazyPage(() => import('../features/inventory/CountsPage'), 'CountsPage');
+const IngredientsPage = lazyPage(
+  () => import('../features/inventory/IngredientsPage'),
+  'IngredientsPage',
+);
+const InventoryIndexRedirect = lazyPage(
+  () => import('../features/inventory/InventoryLayout'),
+  'InventoryIndexRedirect',
+);
+const InventoryLayout = lazyPage(
+  () => import('../features/inventory/InventoryLayout'),
+  'InventoryLayout',
+);
+const MovementsPage = lazyPage(
+  () => import('../features/inventory/MovementsPage'),
+  'MovementsPage',
+);
+const PurchaseOrderPage = lazyPage(
+  () => import('../features/inventory/PurchaseOrderPage'),
+  'PurchaseOrderPage',
+);
+const PurchaseOrdersPage = lazyPage(
+  () => import('../features/inventory/PurchaseOrdersPage'),
+  'PurchaseOrdersPage',
+);
+const StockPage = lazyPage(() => import('../features/inventory/StockPage'), 'StockPage');
+const SupplierPage = lazyPage(() => import('../features/inventory/SupplierPage'), 'SupplierPage');
+const SuppliersPage = lazyPage(
+  () => import('../features/inventory/SuppliersPage'),
+  'SuppliersPage',
+);
+const TransfersPage = lazyPage(
+  () => import('../features/inventory/TransfersPage'),
+  'TransfersPage',
+);
+const ShiftsPage = lazyPage(() => import('../features/shifts/ShiftsPage'), 'ShiftsPage');
+const UserFormPage = lazyPage(() => import('../features/users/UserFormPage'), 'UserFormPage');
+const UsersPage = lazyPage(() => import('../features/users/UsersPage'), 'UsersPage');
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
