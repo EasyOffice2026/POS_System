@@ -80,3 +80,72 @@ export const salesReportSchema = z.object({
   ),
 });
 export type SalesReport = z.infer<typeof salesReportSchema>;
+
+// ---------------------------------------------------------------------------------------------
+// Today's overview of the group, for the dashboard. See docs/specs/024-group-dashboard.md.
+
+export const overviewQuerySchema = z.object({
+  // A group admin may look at one brand; left out, every brand they see.
+  brandId: z.uuid().optional(),
+});
+export type OverviewQuery = z.infer<typeof overviewQuerySchema>;
+
+export const OVERVIEW_TOP_ITEMS = 10;
+
+export const overviewBranchSchema = z.object({
+  id: z.uuid(),
+  brandId: z.uuid(),
+  name: localizedTextSchema,
+  brandName: localizedTextSchema,
+  businessDate: z.iso.date(),
+  sales: z.string(),
+  orders: z.number().int(),
+  lastWeekSales: z.string(),
+  openOrders: z.number().int(),
+  openTotal: z.string(),
+  tablesInUse: z.number().int(),
+  tables: z.number().int(),
+  openShifts: z.number().int(),
+});
+export type OverviewBranch = z.infer<typeof overviewBranchSchema>;
+
+export const overviewAttentionKinds = ['old_shift', 'voids', 'refunds'] as const;
+
+export const overviewAttentionSchema = z.object({
+  kind: z.enum(overviewAttentionKinds),
+  branchId: z.uuid(),
+  count: z.number().int(),
+  amount: z.string(),
+  // The shift's cashier and when it was opened, for an old shift.
+  name: z.string().nullable(),
+  since: z.iso.datetime().nullable(),
+});
+export type OverviewAttention = z.infer<typeof overviewAttentionSchema>;
+
+export const overviewSchema = z.object({
+  generatedAt: z.iso.datetime(),
+  summary: z.object({
+    sales: z.string(),
+    orders: z.number().int(),
+    averageOrder: z.string(),
+    discounts: z.string(),
+    refunds: z.string(),
+    voidedOrders: z.number().int(),
+    lastWeekSales: z.string(),
+    lastWeekOrders: z.number().int(),
+  }),
+  branches: z.array(overviewBranchSchema),
+  // Hours 0 to 23 on each branch's clock.
+  hours: z.array(z.object({ hour: z.number().int(), sales: z.string(), orders: z.number().int() })),
+  topItems: z.array(
+    z.object({
+      kind: z.enum(['item', 'combo']),
+      id: z.uuid(),
+      name: localizedTextSchema,
+      quantity: z.number().int(),
+      sales: z.string(),
+    }),
+  ),
+  attention: z.array(overviewAttentionSchema),
+});
+export type Overview = z.infer<typeof overviewSchema>;

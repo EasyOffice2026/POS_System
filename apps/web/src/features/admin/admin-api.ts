@@ -1,6 +1,7 @@
-import { branchSchema, brandSchema, pageSchema } from '@pos/shared';
+import { branchSchema, brandSchema, overviewSchema, pageSchema } from '@pos/shared';
 import type { z } from 'zod';
 import { request } from '../../lib/api';
+import { queryString } from '../../lib/query-string';
 
 const PAGE_SIZE = 100;
 
@@ -23,3 +24,11 @@ export const listBrands = () => listAll('/brands', brandSchema);
 
 export const listBranches = (brandId: string) =>
   listAll(`/brands/${brandId}/branches`, branchSchema);
+
+// Today's overview of the group, for the dashboard (docs/specs/024-group-dashboard.md).
+export const overviewKeys = {
+  today: (brandId: string) => ['overview', brandId] as const,
+};
+
+export const getOverview = (brandId: string) =>
+  request(`/reports/overview${queryString({ brandId })}`, { schema: overviewSchema });
