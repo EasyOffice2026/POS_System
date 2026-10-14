@@ -7,6 +7,7 @@ import type { PrismaClient } from './lib/prisma';
 import { createTokenService } from './lib/tokens';
 import { authenticate, withTenant } from './middleware/authenticate';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
+import { type LogLine, requestLog, writeJsonLine } from './middleware/request-log';
 import { securityHeaders } from './middleware/security-headers';
 import { createAuditRouter } from './modules/audit/audit.router';
 import { createAuthRouter } from './modules/auth/auth.router';
@@ -14,7 +15,7 @@ import { createAuthService } from './modules/auth/auth.service';
 import { createBranchesRouter } from './modules/brands/branches.router';
 import { createBrandsRouter } from './modules/brands/brands.router';
 import { createBrandsService } from './modules/brands/brands.service';
-import { healthRouter } from './modules/health/health.router';
+import { createHealthRouter } from './modules/health/health.router';
 import { createInventoryRouter } from './modules/inventory/inventory.router';
 import { createInventoryService } from './modules/inventory/inventory.service';
 import { createCountsService } from './modules/inventory/counts.service';
@@ -49,13 +50,16 @@ export interface AppDeps {
   menuCache?: MenuCache;
   // Tests pass their own clock to open orders at a set time.
   now?: () => Date;
+  // Where the line of each request goes: standard output, or nowhere while testing.
+  log?: (line: LogLine) => void;
 }
 
-export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
+export function createApp({ prisma, config, hasher, menuCache, now, log }: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', config.trustProxy);
   app.use(securityHeaders({ https: config.refreshToken.cookieSecure }));
+  app.use(requestLog(log ?? (config.nodeEnv === 'test' ? () => {} : writeJsonLine)));
   app.use(express.json({ limit: '100kb' }));
 
   const tokens = createTokenService(config);
@@ -94,7 +98,7 @@ export function createApp({ prisma, config, hasher, menuCache, now }: AppDeps) {
   const shiftsService = createShiftsService({ prisma, now: now ?? (() => new Date()) });
 
   const v1 = express.Router();
-  v1.use('/health', healthRouter);
+  v1.use('/health', createHealthRouter({ prisma }));
   v1.use(
     '/auth',
     createAuthRouter({ service: authService, authenticate: authenticate(tokens), config }),
