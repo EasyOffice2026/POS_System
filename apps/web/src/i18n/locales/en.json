@@ -292,7 +292,10 @@
     "ORDER_TOO_LONG": "An order can have up to 200 ingredients.",
     "ORDER_NOT_DRAFT": "This order was sent already and cannot be changed.",
     "ORDER_CLOSED": "This order was received or cancelled already.",
-    "DATE_INVALID": "Choose a day."
+    "DATE_INVALID": "Choose a day.",
+    "ORDER_NOT_SENT": "Only a sent order can be received, and only once.",
+    "RECEIPT_EMPTY": "Type at least one quantity that arrived.",
+    "INVOICE_NUMBER_INVALID": "An invoice number can have up to 50 characters."
   },
   "rolesPage": {
     "title": "Roles",
@@ -369,7 +372,8 @@
       "inventory_purchase_order_created": "Purchase order created",
       "inventory_purchase_order_updated": "Purchase order changed",
       "inventory_purchase_order_sent": "Purchase order sent",
-      "inventory_purchase_order_cancelled": "Purchase order cancelled"
+      "inventory_purchase_order_cancelled": "Purchase order cancelled",
+      "inventory_purchase_order_received": "Purchase order received"
     }
   },
   "notFound": {
@@ -1321,9 +1325,22 @@
       "deliverTo": "Deliver to",
       "messages": {
         "saved": "Draft saved.",
-        "sent": "Order sent. Print it or share it with the supplier."
+        "sent": "Order sent. Print it or share it with the supplier.",
+        "received": "Goods received. The stock is updated."
       },
-      "noteHeading": "Note"
+      "noteHeading": "Note",
+      "receive": "Receive goods",
+      "receiveTitle": "Receive goods",
+      "receiveIntro": "Check the delivery against the order. Change a quantity or a price where the delivery or the invoice differs, then put it into stock.",
+      "ordered": "Ordered",
+      "receivedQuantity": "Received",
+      "orderedAt": "ordered at {{price}}",
+      "orderedTotal": "Ordered total",
+      "receivedTotal": "Received total",
+      "invoiceNumber": "Supplier's invoice number (optional)",
+      "invoice": "Invoice {{number}}",
+      "putIntoStock": "Put into stock",
+      "receivedBy": "Received by {{name}}, {{when}}"
     }
   },
   "alerts": {

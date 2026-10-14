@@ -7,6 +7,7 @@ import {
   type PurchaseOrder,
   type PurchaseOrderListQuery,
   type PurchaseOrderSummary,
+  type ReceivePurchaseOrderRequest,
   toMils,
   type UpdatePurchaseOrderRequest,
 } from '@pos/shared';
@@ -31,12 +32,14 @@ export interface PurchaseOrdersDeps {
   now: () => Date;
 }
 
+const mils = (value: Prisma.Decimal): number => toMils(value.toFixed(3));
 const iso = (value: Date | null) => (value ? value.toISOString() : null);
 const day = (value: Date | null) => (value ? value.toISOString().slice(0, 10) : null);
 
 const notDraft = () => errors.conflict('ORDER_NOT_DRAFT', 'Only a draft order can be changed');
 const closed = () =>
   errors.conflict('ORDER_CLOSED', 'This order was received or cancelled already');
+const notSent = () => errors.conflict('ORDER_NOT_SENT', 'Only a sent order can be received');
 
 type LineInput = CreatePurchaseOrderRequest['lines'][number];
 
@@ -59,6 +62,11 @@ function summaryOf(row: OrderRow, supplierName: string, lineCount: number): Purc
     cancelledByName: row.cancelledByName,
     cancelledAt: iso(row.cancelledAt),
     cancelReason: row.cancelReason,
+    receivedByName: row.receivedByName,
+    receivedAt: iso(row.receivedAt),
+    invoiceNumber: row.invoiceNumber,
+    receiveNote: row.receiveNote,
+    receivedTotal: row.receivedTotal?.toFixed(3) ?? null,
   };
 }
 
@@ -139,6 +147,9 @@ export function createPurchaseOrdersService({ prisma, now }: PurchaseOrdersDeps)
                 quantity: line.quantity.toFixed(3),
                 unitPrice: line.unitPrice.toFixed(3),
                 lineTotal: line.lineTotal.toFixed(3),
+                receivedQuantity: line.receivedQuantity?.toFixed(3) ?? null,
+                receivedPrice: line.receivedPrice?.toFixed(3) ?? null,
+                receivedTotal: line.receivedTotal?.toFixed(3) ?? null,
               },
             ]
           : [];
@@ -359,6 +370,106 @@ export function createPurchaseOrdersService({ prisma, now }: PurchaseOrdersDeps)
         'inventory.purchase_order.cancelled',
         row,
         { reason: input.reason },
+        meta,
+      );
+      return describe(db, row);
+    },
+
+    // Receives a sent order in one go and puts what arrived into the branch's stock.
+    // See docs/specs/019-goods-receipt.md.
+    async receive(
+      ctx: ActorContext,
+      id: string,
+      input: ReceivePurchaseOrderRequest,
+      meta: RequestMeta,
+    ): Promise<PurchaseOrder> {
+      const { auth, db } = ctx;
+      const order = await loadOrder(db, id);
+      if (order.status !== 'sent') throw notSent();
+      const lines = await db.purchaseOrderLine.findMany({ where: { orderId: id } });
+      const onOrder = new Set(lines.map((line) => line.ingredientId));
+      const missing = input.lines.findIndex((line) => !onOrder.has(line.ingredientId));
+      if (missing >= 0) throw invalid(`lines.${missing}.ingredientId`, 'INGREDIENT_NOT_FOUND');
+      const given = new Map(input.lines.map((line) => [line.ingredientId, line]));
+      const by = { id: auth.sub, name: await nameOf(auth.sub) };
+      const at = now();
+
+      // Each line of the order as received: left out is 0, and the order's price unless another
+      // was typed (rules 2 and 3).
+      const received = lines.map((line) => {
+        const typed = given.get(line.ingredientId);
+        const quantity = typed ? toMils(typed.quantity) : 0;
+        const price = typed?.unitPrice ? toMils(typed.unitPrice) : mils(line.unitPrice);
+        return { line, quantity, price, total: Math.round((quantity * price) / 1000) };
+      });
+      const total = received.reduce((sum, row) => sum + row.total, 0);
+      const differing = received.filter(
+        (row) => row.quantity !== mils(row.line.quantity) || row.price !== mils(row.line.unitPrice),
+      ).length;
+
+      const row = await db.$transaction(async (tx) => {
+        // The status guards against two people receiving the same delivery.
+        const changed = await tx.purchaseOrder.updateMany({
+          where: { id, status: 'sent' },
+          data: {
+            status: 'received',
+            receivedById: by.id,
+            receivedByName: by.name,
+            receivedAt: at,
+            invoiceNumber: input.invoiceNumber ?? null,
+            receiveNote: input.note ?? null,
+            receivedTotal: fromMils(total),
+          },
+        });
+        if (changed.count === 0) throw notSent();
+        for (const { line, quantity, price, total: lineTotal } of received) {
+          await tx.purchaseOrderLine.update({
+            where: { id: line.id },
+            data: {
+              receivedQuantity: fromMils(quantity),
+              receivedPrice: fromMils(price),
+              receivedTotal: fromMils(lineTotal),
+            },
+          });
+          if (quantity === 0) continue;
+          // The stock goes up by what arrived (rule 4).
+          const where = {
+            branchId_ingredientId: { branchId: order.branchId, ingredientId: line.ingredientId },
+          };
+          const stock = await tx.branchStock.upsert({
+            where,
+            create: {
+              branchId: order.branchId,
+              ingredientId: line.ingredientId,
+              brandId: order.brandId,
+            },
+            update: {},
+          });
+          const after = mils(stock.quantity) + quantity;
+          await tx.stockMovement.create({
+            data: {
+              brandId: order.brandId,
+              branchId: order.branchId,
+              ingredientId: line.ingredientId,
+              kind: 'received',
+              quantity: fromMils(quantity),
+              quantityAfter: fromMils(after),
+              note: `Purchase order ${order.number}`,
+              referenceId: id,
+              byId: by.id,
+              byName: by.name,
+              createdAt: at,
+            },
+          });
+          await tx.branchStock.update({ where, data: { quantity: fromMils(after) } });
+        }
+        return tx.purchaseOrder.findUniqueOrThrow({ where: { id } });
+      });
+      await auditOrder(
+        ctx,
+        'inventory.purchase_order.received',
+        row,
+        { receivedTotal: fromMils(total), differing },
         meta,
       );
       return describe(db, row);

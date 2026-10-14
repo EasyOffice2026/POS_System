@@ -35,6 +35,12 @@ export const purchaseOrderSummarySchema = z.object({
   cancelledByName: z.string().nullable(),
   cancelledAt: z.iso.datetime().nullable(),
   cancelReason: z.string().nullable(),
+  // Set when the goods are received (docs/specs/019-goods-receipt.md).
+  receivedByName: z.string().nullable(),
+  receivedAt: z.iso.datetime().nullable(),
+  invoiceNumber: z.string().nullable(),
+  receiveNote: z.string().nullable(),
+  receivedTotal: z.string().nullable(),
 });
 export type PurchaseOrderSummary = z.infer<typeof purchaseOrderSummarySchema>;
 
@@ -43,6 +49,9 @@ export const purchaseOrderLineSchema = z.object({
   quantity: z.string(),
   unitPrice: z.string(),
   lineTotal: z.string(),
+  receivedQuantity: z.string().nullable(),
+  receivedPrice: z.string().nullable(),
+  receivedTotal: z.string().nullable(),
 });
 export type PurchaseOrderLine = z.infer<typeof purchaseOrderLineSchema>;
 
@@ -117,3 +126,36 @@ export const cancelPurchaseOrderRequestSchema = z.strictObject({
     .max(200, 'NOTE_TOO_LONG'),
 });
 export type CancelPurchaseOrderRequest = z.infer<typeof cancelPurchaseOrderRequestSchema>;
+
+// What arrived for a sent order. A line of the order left out is received as 0.
+// See docs/specs/019-goods-receipt.md.
+export const receivePurchaseOrderRequestSchema = z.strictObject({
+  invoiceNumber: z
+    .string({ error: 'INVOICE_NUMBER_INVALID' })
+    .trim()
+    .max(50, 'INVOICE_NUMBER_INVALID')
+    .transform((text) => (text === '' ? null : text))
+    .optional(),
+  note: z
+    .string({ error: 'NOTE_INVALID' })
+    .trim()
+    .max(500, 'NOTE_TOO_LONG')
+    .transform((text) => (text === '' ? null : text))
+    .optional(),
+  lines: z
+    .array(
+      z.strictObject({
+        ingredientId: z.uuid({ error: 'INGREDIENT_REQUIRED' }),
+        quantity: quantitySchema,
+        // Left out, it is the price on the order.
+        unitPrice: priceSchema.nullable().optional(),
+      }),
+    )
+    .max(MAX_PURCHASE_ORDER_LINES, 'ORDER_TOO_LONG')
+    .refine(
+      (lines) => new Set(lines.map((line) => line.ingredientId)).size === lines.length,
+      'INGREDIENT_DUPLICATE',
+    )
+    .refine((lines) => lines.some((line) => Number(line.quantity) > 0), 'RECEIPT_EMPTY'),
+});
+export type ReceivePurchaseOrderRequest = z.infer<typeof receivePurchaseOrderRequestSchema>;

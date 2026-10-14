@@ -78,7 +78,22 @@ const draft: PurchaseOrder = {
   cancelledByName: null,
   cancelledAt: null,
   cancelReason: null,
-  lines: [{ ingredient: mozzarella, quantity: '10.000', unitPrice: '2.800', lineTotal: '28.000' }],
+  receivedByName: null,
+  receivedAt: null,
+  invoiceNumber: null,
+  receiveNote: null,
+  receivedTotal: null,
+  lines: [
+    {
+      ingredient: mozzarella,
+      quantity: '10.000',
+      unitPrice: '2.800',
+      lineTotal: '28.000',
+      receivedQuantity: null,
+      receivedPrice: null,
+      receivedTotal: null,
+    },
+  ],
 };
 const sent: PurchaseOrder = {
   ...draft,

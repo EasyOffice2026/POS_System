@@ -296,7 +296,10 @@
     "ORDER_TOO_LONG": "يمكن أن يضم الأمر حتى 200 مكوّن.",
     "ORDER_NOT_DRAFT": "تم إرسال هذا الأمر ولا يمكن تغييره.",
     "ORDER_CLOSED": "تم استلام هذا الأمر أو إلغاؤه من قبل.",
-    "DATE_INVALID": "اختر يومًا."
+    "DATE_INVALID": "اختر يومًا.",
+    "ORDER_NOT_SENT": "يُستلم الأمر المُرسل فقط، ومرة واحدة.",
+    "RECEIPT_EMPTY": "اكتب كمية واحدة على الأقل وصلت.",
+    "INVOICE_NUMBER_INVALID": "يمكن أن يضم رقم الفاتورة حتى 50 حرفًا."
   },
   "rolesPage": {
     "title": "الأدوار",
@@ -373,7 +376,8 @@
       "inventory_purchase_order_created": "إنشاء أمر شراء",
       "inventory_purchase_order_updated": "تغيير أمر شراء",
       "inventory_purchase_order_sent": "إرسال أمر شراء",
-      "inventory_purchase_order_cancelled": "إلغاء أمر شراء"
+      "inventory_purchase_order_cancelled": "إلغاء أمر شراء",
+      "inventory_purchase_order_received": "استلام أمر شراء"
     }
   },
   "notFound": {
@@ -1361,9 +1365,22 @@
       "deliverTo": "التسليم إلى",
       "messages": {
         "saved": "تم حفظ المسودة.",
-        "sent": "تم إرسال الأمر. اطبعه أو شاركه مع المورد."
+        "sent": "تم إرسال الأمر. اطبعه أو شاركه مع المورد.",
+        "received": "تم استلام البضاعة وتحديث المخزون."
       },
-      "noteHeading": "ملاحظة"
+      "noteHeading": "ملاحظة",
+      "receive": "استلام البضاعة",
+      "receiveTitle": "استلام البضاعة",
+      "receiveIntro": "طابق التوريد مع الأمر. غيّر الكمية أو السعر إذا اختلف التوريد أو الفاتورة، ثم أدخله إلى المخزون.",
+      "ordered": "المطلوب",
+      "receivedQuantity": "المستلم",
+      "orderedAt": "طُلب بسعر {{price}}",
+      "orderedTotal": "إجمالي المطلوب",
+      "receivedTotal": "إجمالي المستلم",
+      "invoiceNumber": "رقم فاتورة المورد (اختياري)",
+      "invoice": "الفاتورة {{number}}",
+      "putIntoStock": "إدخال إلى المخزون",
+      "receivedBy": "استلمه {{name}}، {{when}}"
     }
   },
   "alerts": {

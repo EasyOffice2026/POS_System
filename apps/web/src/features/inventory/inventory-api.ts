@@ -258,3 +258,18 @@ export const cancelPurchaseOrder = (id: string, reason: string) =>
     body: { reason },
     schema: purchaseOrderSchema,
   });
+
+// What arrived for a sent order (docs/specs/019-goods-receipt.md).
+export const receivePurchaseOrder = (
+  id: string,
+  body: {
+    invoiceNumber: string;
+    note: string;
+    lines: { ingredientId: string; quantity: string; unitPrice: string }[];
+  },
+) =>
+  request(`/inventory/purchase-orders/${id}/receive`, {
+    method: 'POST',
+    body,
+    schema: purchaseOrderSchema,
+  });
