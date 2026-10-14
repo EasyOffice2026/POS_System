@@ -936,6 +936,13 @@ model PurchaseOrder {
   cancelledByName String?             @map("cancelled_by_name")
   cancelledAt     DateTime?           @map("cancelled_at") @db.Timestamptz(3)
   cancelReason    String?             @map("cancel_reason")
+  // Set when the goods are received (docs/specs/019-goods-receipt.md).
+  receivedById    String?             @map("received_by_id") @db.Uuid
+  receivedByName  String?             @map("received_by_name")
+  receivedAt      DateTime?           @map("received_at") @db.Timestamptz(3)
+  invoiceNumber   String?             @map("invoice_number")
+  receiveNote     String?             @map("receive_note")
+  receivedTotal   Decimal?            @map("received_total") @db.Decimal(12, 3)
 
   branch   Branch              @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
   supplier Supplier            @relation(fields: [supplierId, brandId], references: [id, brandId], onDelete: Restrict)
@@ -949,14 +956,18 @@ model PurchaseOrder {
 
 // One ingredient of a purchase order, in the ingredient's unit.
 model PurchaseOrderLine {
-  id           String  @id @default(uuid(7)) @db.Uuid
-  orderId      String  @map("order_id") @db.Uuid
-  brandId      String  @map("brand_id") @db.Uuid
-  branchId     String  @map("branch_id") @db.Uuid
-  ingredientId String  @map("ingredient_id") @db.Uuid
-  quantity     Decimal @db.Decimal(15, 3)
-  unitPrice    Decimal @map("unit_price") @db.Decimal(12, 3)
-  lineTotal    Decimal @map("line_total") @db.Decimal(12, 3)
+  id               String   @id @default(uuid(7)) @db.Uuid
+  orderId          String   @map("order_id") @db.Uuid
+  brandId          String   @map("brand_id") @db.Uuid
+  branchId         String   @map("branch_id") @db.Uuid
+  ingredientId     String   @map("ingredient_id") @db.Uuid
+  quantity         Decimal  @db.Decimal(15, 3)
+  unitPrice        Decimal  @map("unit_price") @db.Decimal(12, 3)
+  lineTotal        Decimal  @map("line_total") @db.Decimal(12, 3)
+  // What arrived, at what price, once the order is received.
+  receivedQuantity Decimal? @map("received_quantity") @db.Decimal(15, 3)
+  receivedPrice    Decimal? @map("received_price") @db.Decimal(12, 3)
+  receivedTotal    Decimal? @map("received_total") @db.Decimal(12, 3)
 
   order      PurchaseOrder @relation(fields: [orderId, brandId], references: [id, brandId], onDelete: Restrict)
   ingredient Ingredient    @relation(fields: [ingredientId, brandId], references: [id, brandId], onDelete: Restrict)

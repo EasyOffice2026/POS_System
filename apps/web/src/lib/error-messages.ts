@@ -115,6 +115,9 @@ const messageKeys = {
   ORDER_NOT_DRAFT: 'validation.ORDER_NOT_DRAFT',
   ORDER_CLOSED: 'validation.ORDER_CLOSED',
   DATE_INVALID: 'validation.DATE_INVALID',
+  ORDER_NOT_SENT: 'validation.ORDER_NOT_SENT',
+  RECEIPT_EMPTY: 'validation.RECEIPT_EMPTY',
+  INVOICE_NUMBER_INVALID: 'validation.INVOICE_NUMBER_INVALID',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;
@@ -173,6 +176,7 @@ export function problemsFrom(error: unknown, options: { notFound?: string } = {}
     case 'COUNT_EMPTY':
     case 'ORDER_NOT_DRAFT':
     case 'ORDER_CLOSED':
+    case 'ORDER_NOT_SENT':
     case 'FORBIDDEN':
       return { fields: {}, form: error.code };
     case 'NOT_FOUND':

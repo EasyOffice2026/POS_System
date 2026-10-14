@@ -2,6 +2,7 @@ import {
   cancelPurchaseOrderRequestSchema,
   createPurchaseOrderRequestSchema,
   purchaseOrderListQuerySchema,
+  receivePurchaseOrderRequestSchema,
   updatePurchaseOrderRequestSchema,
   createSupplierRequestSchema,
   putSupplierPricesRequestSchema,
@@ -229,6 +230,13 @@ export function createInventoryRouter({
     const { id } = parseWith(idParams, req.params);
     const input = parseWith(cancelPurchaseOrderRequestSchema, req.body);
     res.json(await purchaseOrders.cancel(requestContext(req), id, input, requestMeta(req)));
+  });
+
+  // Receiving the goods (docs/specs/019-goods-receipt.md).
+  router.post('/purchase-orders/:id/receive', write, async (req, res) => {
+    const { id } = parseWith(idParams, req.params);
+    const input = parseWith(receivePurchaseOrderRequestSchema, req.body);
+    res.json(await purchaseOrders.receive(requestContext(req), id, input, requestMeta(req)));
   });
 
   return router;

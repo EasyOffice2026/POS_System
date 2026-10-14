@@ -36,6 +36,7 @@ import {
   updatePurchaseOrder,
 } from './inventory-api';
 import { useInventoryContext } from './InventoryLayout';
+import { ReceivedLines, ReceiveForm } from './PurchaseOrderReceipt';
 import { OrderStatusBadge } from './PurchaseOrdersPage';
 
 interface Line {
@@ -518,6 +519,7 @@ function OrderSheet({ order }: { order: PurchaseOrder }) {
   const { canMoveStock } = useInventoryContext();
   const [cancelling, setCancelling] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [receiving, setReceiving] = useState(false);
   const editable = canMoveStock && order.status === 'draft';
 
   return (
@@ -557,6 +559,25 @@ function OrderSheet({ order }: { order: PurchaseOrder }) {
             })}
           </li>
         )}
+        {order.receivedAt && (
+          <li>
+            {t('inventory.purchaseOrders.receivedBy', {
+              name: order.receivedByName ?? '–',
+              when: formatDateTime(order.receivedAt, i18n.language),
+            })}
+            {order.invoiceNumber && (
+              <>
+                {' · '}
+                {t('inventory.purchaseOrders.invoice', { number: order.invoiceNumber })}
+              </>
+            )}
+          </li>
+        )}
+        {order.receiveNote && (
+          <li>
+            <bdi>{order.receiveNote}</bdi>
+          </li>
+        )}
         {order.cancelledAt && (
           <li>
             {t('inventory.purchaseOrders.cancelledBy', {
@@ -573,7 +594,15 @@ function OrderSheet({ order }: { order: PurchaseOrder }) {
         </p>
       )}
 
-      {editable ? (
+      {receiving && order.status === 'sent' ? (
+        <ReceiveForm
+          order={order}
+          onDone={(message) => {
+            setReceiving(false);
+            setNotice(message);
+          }}
+        />
+      ) : editable ? (
         <OrderEditor
           branchId={order.branchId}
           supplierId={order.supplier.id}
@@ -582,7 +611,11 @@ function OrderSheet({ order }: { order: PurchaseOrder }) {
         />
       ) : (
         <>
-          <OrderLines order={order} />
+          {order.status === 'received' ? (
+            <ReceivedLines order={order} />
+          ) : (
+            <OrderLines order={order} />
+          )}
           {(order.expectedOn ?? order.note) && (
             <dl className="grid gap-3 text-sm sm:grid-cols-2">
               {order.expectedOn && (
@@ -616,8 +649,20 @@ function OrderSheet({ order }: { order: PurchaseOrder }) {
               </button>
             )}
             {order.status !== 'draft' && order.status !== 'cancelled' && (
-              <button type="button" onClick={() => window.print()} className={primaryButtonClass}>
+              <button type="button" onClick={() => window.print()} className={secondaryButtonClass}>
                 {t('inventory.purchaseOrders.print')}
+              </button>
+            )}
+            {canMoveStock && order.status === 'sent' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNotice(null);
+                  setReceiving(true);
+                }}
+                className={primaryButtonClass}
+              >
+                {t('inventory.purchaseOrders.receive')}
               </button>
             )}
           </div>

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   cancelPurchaseOrderRequestSchema,
   createPurchaseOrderRequestSchema,
+  receivePurchaseOrderRequestSchema,
   updatePurchaseOrderRequestSchema,
 } from './purchase-orders';
 
@@ -63,5 +64,32 @@ describe('a purchase order', () => {
     expect(codesOf(cancelPurchaseOrderRequestSchema.safeParse({ reason: ' ' }))).toEqual([
       'reason: NOTE_REQUIRED',
     ]);
+  });
+});
+
+describe('receiving a purchase order', () => {
+  it('takes quantities of 0 or more, and needs one above 0', () => {
+    expect(
+      receivePurchaseOrderRequestSchema.parse({
+        invoiceNumber: ' INV-5521 ',
+        lines: [
+          { ingredientId: cheese, quantity: '11.5', unitPrice: '2.9' },
+          { ingredientId: dairy, quantity: '0' },
+        ],
+      }),
+    ).toEqual({
+      invoiceNumber: 'INV-5521',
+      lines: [
+        { ingredientId: cheese, quantity: '11.500', unitPrice: '2.900' },
+        { ingredientId: dairy, quantity: '0.000' },
+      ],
+    });
+    expect(
+      codesOf(
+        receivePurchaseOrderRequestSchema.safeParse({
+          lines: [{ ingredientId: cheese, quantity: '0' }],
+        }),
+      ),
+    ).toEqual(['lines: RECEIPT_EMPTY']);
   });
 });
