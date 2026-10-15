@@ -12,6 +12,7 @@ import { createPasswordHasher, hashProfiles } from '../src/lib/password';
 import { createPrismaClient } from '../src/lib/prisma';
 import { syncSystemRoles } from '../src/lib/roles';
 import { demoStationIds, seedDemoMenus } from './demo-menu';
+import { seedDemoStock } from './demo-stock';
 
 if (process.env.NODE_ENV === 'production') {
   throw new Error('The demo seed must not run in production.');
@@ -325,6 +326,7 @@ try {
   }
 
   await seedDemoMenus(prisma, brandIds, branchIds);
+  await seedDemoStock(prisma, brandIds.pizza, [branchIds.pizzaMall, branchIds.pizzaDowntown]);
 
   // The floor plan of the Mall: six tables inside and four round ones on the terrace
   // (docs/specs/023-floor-plan.md). A table someone made with the same name is left alone.
