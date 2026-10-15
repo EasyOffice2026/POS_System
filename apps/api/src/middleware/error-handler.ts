@@ -41,6 +41,7 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
     return;
   }
 
-  console.error(err);
+  // The id ties this to the line of the request in the log (docs/deployment.md).
+  console.error(`Request ${String(res.locals.requestId ?? '-')} failed:`, err);
   res.status(500).json(apiError('INTERNAL_ERROR', 'Something went wrong'));
 };

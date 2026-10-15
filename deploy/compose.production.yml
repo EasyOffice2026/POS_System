@@ -1,0 +1,45 @@
+# An example of running the system on one server with Docker, against a hosted PostgreSQL such as
+# Supabase. See docs/deployment.md. Start it from the repository root:
+#   docker compose -f deploy/compose.production.yml --env-file deploy/.env.production up -d --build
+# deploy/.env.production holds DATABASE_URL and JWT_ACCESS_SECRET, and is never committed.
+name: pos-production
+
+services:
+  # Applies the database migrations, then stops. The API starts only when it succeeded.
+  migrate:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+      target: tools
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in deploy/.env.production}
+    restart: 'no'
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in deploy/.env.production}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set JWT_ACCESS_SECRET in deploy/.env.production}
+      # The HTTPS proxy in front of this server, then the web container: two hops to trust.
+      TRUST_PROXY: '2'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    environment:
+      API_URL: http://api:3000
+    # Only the HTTPS proxy of this server reaches it.
+    ports:
+      - '127.0.0.1:8080:8080'
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped

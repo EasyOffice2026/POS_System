@@ -51,3 +51,72 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  images:
+    name: Build and try the images
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # The images of docs/deployment.md, built and started against a real PostgreSQL: the
+    # migrations run, the API answers through the web container, and the web headers are sent.
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: pos
+          POSTGRES_PASSWORD: pos
+          POSTGRES_DB: pos
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pos -d pos"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://pos:pos@localhost:5432/pos?schema=pos
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build the images
+        run: |
+          docker build -f apps/api/Dockerfile --target tools -t pos-api-tools .
+          docker build -f apps/api/Dockerfile -t pos-api .
+          docker build -f apps/web/Dockerfile -t pos-web .
+
+      - name: Apply the migrations
+        run: docker run --rm --network host -e DATABASE_URL pos-api-tools
+
+      - name: Start the API and the web app
+        run: |
+          docker run -d --name api --network host -e NODE_ENV=production -e DATABASE_URL \
+            -e JWT_ACCESS_SECRET="$(openssl rand -base64 48)" -e TRUST_PROXY=1 pos-api
+          docker run -d --name web --network host -e API_URL=http://127.0.0.1:3000 pos-web
+          for attempt in $(seq 1 30); do
+            curl -sf http://localhost:8080/api/v1/health/ready > /dev/null && exit 0
+            sleep 2
+          done
+          exit 1
+
+      - name: Check the answers
+        run: |
+          set -e
+          # A page of the app, at an address only the app knows, with the security headers.
+          headers="$(curl -sf -D - -o page.html http://localhost:8080/admin/customers)"
+          echo "$headers" | grep -i "^content-security-policy: default-src 'self'"
+          echo "$headers" | grep -i "^x-frame-options: DENY"
+          echo "$headers" | grep -i "^cache-control: no-cache"
+          grep -q '<div id="root">' page.html
+          # A built file, kept for a year.
+          asset="$(grep -o '/assets/[^"]*\.js' page.html | head -n 1)"
+          curl -sf -D - -o /dev/null "http://localhost:8080$asset" | grep -i "immutable"
+          # The API, through the web container, with its own headers.
+          curl -sf http://localhost:8080/api/v1/health | grep -q '"status":"ok"'
+          curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/v1/brands | grep -q 401
+          # The API runs as an unprivileged user.
+          test "$(docker exec api whoami)" = node
+
+      - name: Show the logs
+        if: always()
+        run: |
+          docker logs api || true
+          docker logs web || true
