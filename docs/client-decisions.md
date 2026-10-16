@@ -23,7 +23,7 @@ The answers of Easy Office / Nexera to the questions of the specs and the launch
 | Dine-in            | Split bills and ordering on a tablet are wanted                                      | A later phase                                                                   |
 | Opening hours      | Special hours for Ramadan and holidays are needed                                    | To build before launch                                                          |
 | Roles              | Only the owner manages roles; nobody makes their own                                 | The built-in roles stay                                                         |
-| Passwords          | Everyone but the owner must change their password at the first sign-in               | To build before launch, with a way to change one's own password                 |
+| Passwords          | Everyone but the owner must change their password at the first sign-in               | Done: the change-password screen, forced at the first sign-in                   |
 | Stock deduction    | Two options: when the order is paid, or when the kitchen starts it                   | A brand setting, to build before launch                                         |
 | Refunds in reports | Counted on the day of the original sale                                              | Nothing to change                                                               |
 | Voids              | A message to the owner at every void, and a dashboard view of voids by reason        | To build before launch                                                          |
