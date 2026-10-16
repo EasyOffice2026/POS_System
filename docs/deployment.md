@@ -102,7 +102,7 @@ Vercel sets `NODE_ENV=production` itself. The region is `fra1` (Frankfurt) in `v
 **Steps.**
 
 1. Apply the migrations and make the first admin from a developer's machine, with `DATABASE_URL` set to the session pooler address of the live project (sections "First time", steps 3 and 4).
-2. In Vercel, import the repository, keep the root directory `./`, add the settings above, and deploy. Vercel builds both services from `vercel.json`; the API's build makes `apps/api/dist/vercel.js` with `npm run build:vercel`.
+2. In Vercel, import the repository, keep the root directory `./`, add the settings above, and deploy. Vercel builds both services from `vercel.json`; the API's build makes `apps/api/dist/vercel.js` with `npm run build:vercel`, and `apps/api/vercel-entry.mjs` (the entry file named in `vercel.json`, which Vercel wants to see before it builds) loads it.
 3. Open `https://<project>.vercel.app/api/v1/health/ready`: it must answer `{"status":"ok","service":"api"}`. Then sign in.
 4. Add the client's domain under Settings → Domains; Vercel issues the certificate.
 
