@@ -1201,7 +1201,10 @@
       "doneByCashier": "The cashier, on the POS, when the food is handed over",
       "stations": "Kitchen stations",
       "stationsHint": "One kitchen screen per station, for example Pizza and Drinks. Each menu category goes to a station. Leave empty for one screen.",
-      "addStation": "Add a station"
+      "addStation": "Add a station",
+      "deductAt": "When does stock go down?",
+      "deductAtPaid": "When the order is paid (the usual way for takeaway)",
+      "deductAtPreparing": "When the kitchen starts the ticket (for tables that pay at the end)"
     },
     "loyalty": {
       "title": "Loyalty points",

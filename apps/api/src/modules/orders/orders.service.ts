@@ -1145,10 +1145,9 @@ export function createOrdersService({
       if (before) return before;
 
       // Every way to pay must be cash or one of the brand's active methods (spec 009, rule 2).
+      const settings = await settingsOf(db, (await load(db, orderId)).brandId);
       const methods = new Map(
-        activePaymentMethods(await settingsOf(db, (await load(db, orderId)).brandId)).map(
-          (method) => [method.key, method.name],
-        ),
+        activePaymentMethods(settings).map((method) => [method.key, method.name]),
       );
       const unknown = input.tenders.findIndex(
         (tender) => tender.method !== CASH && !methods.has(tender.method),
@@ -1197,8 +1196,9 @@ export function createOrdersService({
           // What was not sent yet goes to the kitchen now (rule 5).
           const at = now();
           await sendPending(tx, order, at);
-          // The stock goes down by what was sold, in the same transaction (spec 013, rule 4).
-          await deductStock(tx, order, lines, by, at);
+          // The stock goes down by what was sold, in the same transaction (spec 013, rule 4),
+          // unless the brand takes it off when the kitchen starts each ticket instead.
+          if (settings.stockDeductAt === 'paid') await deductStock(tx, order, lines, by, at);
           await tx.payment.createMany({
             data: input.tenders.map((tender) => ({
               id: tender.id,

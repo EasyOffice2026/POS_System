@@ -59,6 +59,7 @@ describe('the settings page', () => {
     await user.click(
       screen.getByRole('radio', { name: 'Once the dish or the order was sent to the kitchen' }),
     );
+    await user.click(screen.getByRole('radio', { name: /When the kitchen starts the ticket/ }));
     await user.click(screen.getByRole('button', { name: 'Add a station' }));
     await user.type(field('station-0-name-en'), 'Pizza');
     await user.type(field('station-0-name-ar'), 'بيتزا');
@@ -69,6 +70,7 @@ describe('the settings page', () => {
       ...defaultBrandSettings,
       cashierDiscountLimit: '10',
       voidNeedsManager: 'after_send',
+      stockDeductAt: 'preparing',
       discountPresets: ['5', '10', '15', '20', '25', '50'],
       kitchenStations: [{ name: { en: 'Pizza', ar: 'بيتزا' } }],
     });

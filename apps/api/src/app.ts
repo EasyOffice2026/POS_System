@@ -103,7 +103,12 @@ export function createApp({ prisma, config, hasher, menuCache, now, log, mailer 
     deductStock: (tx, order, lines, by, at) =>
       inventoryService.sellForOrder(tx, order, lines, by, at),
   });
-  const kitchenService = createKitchenService({ now: now ?? (() => new Date()) });
+  const kitchenService = createKitchenService({
+    now: now ?? (() => new Date()),
+    prisma,
+    deductStock: (tx, order, lines, by, at) =>
+      inventoryService.sellForOrder(tx, order, lines, by, at),
+  });
   const shiftsService = createShiftsService({ prisma, now: now ?? (() => new Date()) });
 
   const v1 = express.Router();

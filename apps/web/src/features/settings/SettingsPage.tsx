@@ -4,6 +4,7 @@ import {
   brandSettingsRequestSchema,
   MAX_KITCHEN_STATIONS,
   MAX_PAYMENT_METHODS,
+  type StockDeductAt,
   type TicketDoneBy,
   type VoidRule,
 } from '@pos/shared';
@@ -46,6 +47,7 @@ interface FormState {
   cashierLimit: string;
   voidRule: VoidRule;
   doneBy: TicketDoneBy;
+  deductAt: StockDeductAt;
   stations: StationRow[];
   // The loyalty rules as typed (spec 022).
   // Who is told about voids, one address per line or comma (docs/client-decisions.md).
@@ -69,6 +71,7 @@ function toForm(settings: BrandSettings): FormState {
     cashierLimit: Number(settings.cashierDiscountLimit).toString(),
     voidRule: settings.voidNeedsManager,
     doneBy: settings.ticketDoneBy,
+    deductAt: settings.stockDeductAt,
     stations: settings.kitchenStations.map((station) => ({ ...station })),
     voidEmails: settings.alerts.voidEmails.join('\n'),
     loyaltyOn: settings.loyalty.enabled,
@@ -88,6 +91,7 @@ function toRequest(form: FormState): BrandSettingsRequest {
     cashierDiscountLimit: normalizeNumberInput(form.cashierLimit).trim(),
     voidNeedsManager: form.voidRule,
     ticketDoneBy: form.doneBy,
+    stockDeductAt: form.deductAt,
     kitchenStations: form.stations.map((station) =>
       station.id ? { id: station.id, name: station.name } : { name: station.name },
     ),
@@ -350,6 +354,26 @@ function SettingsForm({ brandId, settings }: { brandId: string; settings: BrandS
             form.doneBy,
             (doneBy) => change({ doneBy }),
             t('settings.kitchen.doneByCashier'),
+          )}
+        </fieldset>
+
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium text-slate-700">
+            {t('settings.kitchen.deductAt')}
+          </legend>
+          {radio(
+            'deductAt',
+            'paid',
+            form.deductAt,
+            (deductAt) => change({ deductAt }),
+            t('settings.kitchen.deductAtPaid'),
+          )}
+          {radio(
+            'deductAt',
+            'preparing',
+            form.deductAt,
+            (deductAt) => change({ deductAt }),
+            t('settings.kitchen.deductAtPreparing'),
           )}
         </fieldset>
 
