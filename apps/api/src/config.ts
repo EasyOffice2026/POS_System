@@ -13,7 +13,12 @@ export interface Config {
   trustProxy: number;
   passwordHashProfile: HashProfileName;
   accessToken: { secret: string; ttlSeconds: number };
-  refreshToken: { ttlDays: number; cookieName: string; cookieSecure: boolean };
+  refreshToken: {
+    ttlDays: number;
+    pinSessionHours: number;
+    cookieName: string;
+    cookieSecure: boolean;
+  };
   // Failed sign-in or refresh requests allowed per IP address in the window.
   authRateLimit: { windowMs: number; max: number };
   // How long the menu of a branch is kept if nothing changes it (it is also cleared by every change).
@@ -36,6 +41,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       .min(60)
       .default(15 * 60),
     REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).default(7),
+    // How long a till stays signed in with a PIN before it asks for it again (the client: a day).
+    PIN_SESSION_HOURS: z.coerce.number().int().min(1).default(24),
     AUTH_RATE_LIMIT_MAX: z.coerce.number().int().min(1).default(30),
     MENU_CACHE_TTL_SECONDS: z.coerce
       .number()
@@ -62,6 +69,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     accessToken: { secret: values.JWT_ACCESS_SECRET, ttlSeconds: values.ACCESS_TOKEN_TTL_SECONDS },
     refreshToken: {
       ttlDays: values.REFRESH_TOKEN_TTL_DAYS,
+      pinSessionHours: values.PIN_SESSION_HOURS,
       cookieName: 'pos_refresh',
       cookieSecure: production,
     },

@@ -602,6 +602,30 @@ describe('POST /auth/refresh', () => {
     expect((await refreshWith(refreshTokenOf(first) ?? '')).status).toBe(401);
   });
 
+  it('ends a PIN session a day after it began, however often it refreshes', async () => {
+    const day = 24 * 60 * 60 * 1000;
+    const started = Date.now();
+    const first = await pinLogin(world.branch.id, '1001', '1234');
+    const [firstRow] = await prisma.refreshToken.findMany();
+    expect(firstRow?.expiresAt.getTime()).toBeGreaterThan(started + day - 60_000);
+    expect(firstRow?.expiresAt.getTime()).toBeLessThan(started + day + 60_000);
+
+    expect((await refreshWith(refreshTokenOf(first) ?? '')).status).toBe(200);
+    const rows = await prisma.refreshToken.findMany({ orderBy: { createdAt: 'asc' } });
+    expect(rows[1]?.expiresAt.getTime()).toBe(firstRow?.expiresAt.getTime());
+
+    // A password session in the back office is extended at every refresh instead.
+    const manager = await passwordLogin('manager@pos.local');
+    const [before] = await prisma.refreshToken.findMany({ where: { branchId: null } });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await refreshWith(refreshTokenOf(manager) ?? '');
+    const after = await prisma.refreshToken.findMany({
+      where: { branchId: null },
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(after[1]?.expiresAt.getTime()).toBeGreaterThan(before?.expiresAt.getTime() ?? 0);
+  });
+
   it('clears the cookie when it refuses', async () => {
     const res = await refreshWith('not-a-real-token');
 

@@ -147,14 +147,22 @@ export function createAuthService({ prisma, hasher, tokens, config }: AuthDeps) 
     return Boolean(branch?.isActive && branch.brand.isActive);
   }
 
+  // A PIN session on a till ends a set time after it began, however often it is refreshed, so a
+  // till that nobody signed out asks for the PIN again (the client: once a day). A password
+  // session is extended at every refresh.
+  const pinSessionEnd = (from: Date) =>
+    new Date(from.getTime() + config.refreshToken.pinSessionHours * 60 * 60 * 1000);
+
   async function issueRefreshToken(
     userId: string,
     familyId: string,
     branchId: string | null,
     meta: RequestMeta,
+    endsAt?: Date,
   ) {
     const { token, hash } = generateRefreshToken();
-    const expiresAt = new Date(Date.now() + config.refreshToken.ttlDays * 24 * 60 * 60 * 1000);
+    const expiresAt =
+      endsAt ?? new Date(Date.now() + config.refreshToken.ttlDays * 24 * 60 * 60 * 1000);
     await prisma.refreshToken.create({
       data: { userId, familyId, tokenHash: hash, branchId, expiresAt, ...meta },
     });
@@ -249,7 +257,13 @@ export function createAuthService({ prisma, hasher, tokens, config }: AuthDeps) 
         where: { id: user.id },
         data: { failedLoginAttempts: 0, lockedUntil: null, lastLoginAt: now },
       });
-      const issued = await issueRefreshToken(user.id, randomUUID(), sessionBranchId, meta);
+      const issued = await issueRefreshToken(
+        user.id,
+        randomUUID(),
+        sessionBranchId,
+        meta,
+        sessionBranchId ? pinSessionEnd(now) : undefined,
+      );
       await audit({ action: 'auth.login.success', ...who, metadata: { type: input.type } }, meta);
 
       return {
@@ -298,7 +312,13 @@ export function createAuthService({ prisma, hasher, tokens, config }: AuthDeps) 
       });
       if (retired.count !== 1) return reuse();
 
-      const next = await issueRefreshToken(record.userId, record.familyId, record.branchId, meta);
+      const next = await issueRefreshToken(
+        record.userId,
+        record.familyId,
+        record.branchId,
+        meta,
+        record.branchId ? record.expiresAt : undefined,
+      );
       return {
         session: await buildSession(record.user, record.branchId),
         refreshToken: next.token,

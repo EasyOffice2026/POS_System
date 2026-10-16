@@ -67,5 +67,5 @@ The Mall branch manager now has staff code `1003` and PIN `5824`, so approvals c
 ## Open questions
 
 1. Should the screen lock itself after some minutes without use? After how long?
-2. Which void reasons should the list offer? The list here is a first guess: customer changed mind, wrong item, too long to wait, quality problem, other.
+2. ~~Which void reasons should the list offer?~~ Answered 16 October 2026: late order, order is not right, food quality is not good, order is wrong, and a free reason.
 3. Should the discount buttons be the same at every brand, or set per brand?

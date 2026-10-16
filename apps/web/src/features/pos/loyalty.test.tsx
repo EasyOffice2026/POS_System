@@ -60,7 +60,10 @@ const onOrder = { id: sara.id, name: sara.name, phone: sara.phone, points: sara.
 const withSara: Order = { ...open, customer: onOrder };
 const spent: Order = { ...withSara, pointsRedeemed: 200, pointsDiscount: '2.000', total: '8.000' };
 
-const loyaltyOn = brandSettings({ loyalty: { ...defaultLoyaltySettings, enabled: true } });
+// A point worth 10 fils keeps the arithmetic of this test simple.
+const loyaltyOn = brandSettings({
+  loyalty: { ...defaultLoyaltySettings, enabled: true, pointValue: '0.010' },
+});
 
 // The order as the server has it now: what a write answers is what GET answers next.
 let current: Order = open;

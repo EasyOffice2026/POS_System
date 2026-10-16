@@ -90,7 +90,8 @@ export type LoyaltySettings = z.infer<typeof loyaltySettingsSchema>;
 export const defaultLoyaltySettings: LoyaltySettings = {
   enabled: false,
   pointsPerKwd: 1,
-  pointValue: '0.010',
+  // The client's rule: a point for each KWD paid, worth 75 fils when spent.
+  pointValue: '0.075',
   minRedeem: 100,
 };
 

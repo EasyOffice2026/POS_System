@@ -275,7 +275,7 @@ describe('taking an order', () => {
         }
         return json(
           order({
-            lines: [{ ...sent, status: 'voided', voidReason: 'Wrong item' }],
+            lines: [{ ...sent, status: 'voided', voidReason: 'Order is wrong' }],
           }),
         );
       },
@@ -289,7 +289,7 @@ describe('taking an order', () => {
     await user.click(await screen.findByRole('button', { name: 'Void Cola' }));
 
     const reasons = screen.getByRole('dialog', { name: 'Void Cola × 1' });
-    await user.click(within(reasons).getByRole('radio', { name: 'Wrong item' }));
+    await user.click(within(reasons).getByRole('radio', { name: 'Order is wrong' }));
     await user.click(within(reasons).getByRole('button', { name: 'Void' }));
 
     const approval = await screen.findByRole('dialog', { name: 'A manager must approve' });
@@ -303,13 +303,13 @@ describe('taking an order', () => {
     await user.type(within(approval).getByLabelText('PIN'), '5824');
     await user.click(within(approval).getByRole('button', { name: 'Approve' }));
 
-    expect(await screen.findByText('Voided: Wrong item')).toBeVisible();
+    expect(await screen.findByText('Voided: Order is wrong')).toBeVisible();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const bodies = api.calls.filter((call) => call.key === VOID_COLA).map((call) => call.body);
     expect(bodies).toEqual([
-      { reason: 'Wrong item' },
-      { reason: 'Wrong item', approval: { staffCode: '1003', pin: '1111' } },
-      { reason: 'Wrong item', approval: { staffCode: '1003', pin: '5824' } },
+      { reason: 'Order is wrong' },
+      { reason: 'Order is wrong', approval: { staffCode: '1003', pin: '1111' } },
+      { reason: 'Order is wrong', approval: { staffCode: '1003', pin: '5824' } },
     ]);
   });
 
