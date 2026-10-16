@@ -25,6 +25,8 @@ export interface Config {
   menuCacheTtlSeconds: number;
   // The email account alerts go out from (smtp://user:password@host:port), and the sender shown.
   mail: { smtpUrl: string | undefined; from: string | undefined };
+  // Supabase Storage for photos: the project address, its service role key, and the bucket.
+  storage: { supabaseUrl: string | undefined; serviceRoleKey: string | undefined; bucket: string };
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -48,6 +50,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     AUTH_RATE_LIMIT_MAX: z.coerce.number().int().min(1).default(30),
     SMTP_URL: z.string().url().optional(),
     ALERT_FROM: z.string().min(3).optional(),
+    SUPABASE_URL: z.string().url().optional(),
+    SUPABASE_SERVICE_ROLE_KEY: z.string().min(20).optional(),
+    STORAGE_BUCKET: z.string().min(1).default('pos-images'),
     MENU_CACHE_TTL_SECONDS: z.coerce
       .number()
       .int()
@@ -80,5 +85,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     authRateLimit: { windowMs: 15 * 60 * 1000, max: values.AUTH_RATE_LIMIT_MAX },
     menuCacheTtlSeconds: values.MENU_CACHE_TTL_SECONDS,
     mail: { smtpUrl: values.SMTP_URL, from: values.ALERT_FROM },
+    storage: {
+      supabaseUrl: values.SUPABASE_URL,
+      serviceRoleKey: values.SUPABASE_SERVICE_ROLE_KEY,
+      bucket: values.STORAGE_BUCKET,
+    },
   };
 }

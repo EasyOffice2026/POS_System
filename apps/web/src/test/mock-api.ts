@@ -5,6 +5,7 @@ export interface MockRequest {
   method: string;
   body: unknown;
   authorization: string | null;
+  contentType: string | null;
 }
 
 export type MockHandler = (request: MockRequest) => Response | Promise<Response>;
@@ -20,7 +21,13 @@ export function mockApi(handlers: Record<string, MockHandler>) {
     const method = init?.method ?? 'GET';
     const headers = new Headers(init?.headers);
     const body = typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : undefined;
-    const request: MockRequest = { url, method, body, authorization: headers.get('Authorization') };
+    const request: MockRequest = {
+      url,
+      method,
+      body,
+      authorization: headers.get('Authorization'),
+      contentType: headers.get('Content-Type'),
+    };
     const key = `${method} ${url.pathname}`;
 
     calls.push({ ...request, key });

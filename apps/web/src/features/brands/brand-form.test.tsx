@@ -18,6 +18,7 @@ const LIST = 'GET /api/v1/brands';
 const CREATE = 'POST /api/v1/brands';
 const one = (id: string) => `GET /api/v1/brands/${id}`;
 const patch = (id: string) => `PATCH /api/v1/brands/${id}`;
+const UPLOAD = 'POST /api/v1/uploads/images';
 
 const noodles = {
   ...pizzaBrand,
@@ -50,6 +51,41 @@ async function fillNames(user: User, en = 'Noodle House', ar = 'بيت النو�
   await user.type(await screen.findByLabelText('Name (English)'), en);
   await user.type(screen.getByLabelText('Name (Arabic)'), ar);
 }
+
+describe('the logo', () => {
+  it('cannot be uploaded before the brand is saved', async () => {
+    createApi();
+    renderApp('/admin/brands/new');
+
+    expect(await screen.findByLabelText('Logo link')).toHaveAccessibleDescription(
+      'A link to a picture. Save the brand first to upload a file.',
+    );
+    expect(screen.queryByLabelText('Upload a photo')).not.toBeInTheDocument();
+  });
+
+  it('is uploaded for the brand being edited', async () => {
+    const user = userEvent.setup();
+    const api = editApi(pizzaBrand, {
+      [UPLOAD]: () => json({ url: 'https://files.test/pizza/logo/l.webp' }, 201),
+    });
+    renderApp(`/admin/brands/${pizzaBrand.id}`);
+
+    await user.upload(
+      await screen.findByLabelText('Upload a photo'),
+      new File(['x'], 'logo.webp', { type: 'image/webp' }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Logo link')).toHaveValue(
+        'https://files.test/pizza/logo/l.webp',
+      ),
+    );
+    const call = api.calls.find((item) => item.key === UPLOAD);
+    expect(call?.url.searchParams.get('kind')).toBe('logo');
+    expect(call?.url.searchParams.get('brandId')).toBe(pizzaBrand.id);
+    expect(call?.contentType).toBe('image/webp');
+  });
+});
 
 describe('creating a brand', () => {
   it('sends both names, and goes back to the list with a notice', async () => {

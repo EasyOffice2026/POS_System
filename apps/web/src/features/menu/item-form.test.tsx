@@ -34,6 +34,7 @@ const CATEGORIES = 'GET /api/v1/menu/categories';
 const CREATE = 'POST /api/v1/menu/items';
 const one = (id: string) => `GET /api/v1/menu/items/${id}`;
 const patch = (id: string) => `PATCH /api/v1/menu/items/${id}`;
+const UPLOAD = 'POST /api/v1/uploads/images';
 
 const categories = [pizzasCategory, sidesCategory, drinksCategory];
 const created = itemDetail({
@@ -126,6 +127,55 @@ describe('creating an item', () => {
       description: { en: 'Fresh vegetables', ar: 'خضار طازجة' },
       imageUrl: 'https://cdn.example.com/veggie.png',
     });
+  });
+
+  it('uploads a photo and fills the image link with its address', async () => {
+    const user = userEvent.setup();
+    const mock = createApi(undefined, {
+      [UPLOAD]: () => json({ url: 'https://files.test/pizza/item/a.png' }, 201),
+    });
+    renderApp(`/admin/menu/items/new?brandId=${ids.pizza}`);
+    await fillBasics(user);
+
+    const file = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], 'veggie.png', {
+      type: 'image/png',
+    });
+    await user.upload(screen.getByLabelText('Upload a photo'), file);
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Image link')).toHaveValue(
+        'https://files.test/pizza/item/a.png',
+      ),
+    );
+    const call = mock.calls.find((item) => item.key === UPLOAD);
+    expect(call?.url.searchParams.get('kind')).toBe('item');
+    expect(call?.url.searchParams.get('brandId')).toBe(ids.pizza);
+    expect(call?.contentType).toBe('image/png');
+    expect(screen.getByRole('presentation', { hidden: true })).toHaveAttribute(
+      'src',
+      'https://files.test/pizza/item/a.png',
+    );
+  });
+
+  it('refuses a file that is not a photo before sending it, and explains a server without storage', async () => {
+    // applyAccept off: the browser's own file filter must not hide the check of the field.
+    const user = userEvent.setup({ applyAccept: false });
+    const mock = createApi(undefined, {
+      [UPLOAD]: () => errorResponse(409, 'STORAGE_NOT_SET_UP'),
+    });
+    renderApp(`/admin/menu/items/new?brandId=${ids.pizza}`);
+    await fillBasics(user);
+
+    const input = screen.getByLabelText('Upload a photo');
+    await user.upload(input, new File(['<svg/>'], 'v.svg', { type: 'image/svg+xml' }));
+    expect(await screen.findByText('Choose a JPEG, PNG or WebP file.')).toBeInTheDocument();
+    expect(mock.count(UPLOAD)).toBe(0);
+
+    await user.upload(input, new File(['x'], 'v.png', { type: 'image/png' }));
+    expect(
+      await screen.findByText('Photo storage is not set up on this server. Paste a link instead.'),
+    ).toBeInTheDocument();
+    expect(mock.count(UPLOAD)).toBe(1);
   });
 
   it('asks for both descriptions when only one is written', async () => {

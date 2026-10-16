@@ -11,6 +11,7 @@ import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { BilingualNameFields } from '../../components/BilingualNameFields';
+import { ImageField } from '../../components/ImageField';
 import {
   FormField,
   fieldAttributes,
@@ -278,23 +279,17 @@ export function ItemDetailsForm({
         />
       </FormField>
 
-      <FormField
+      <ImageField
         id="item-image"
         label={t('menu.item.form.imageUrl')}
         hint={t('menu.item.form.imageUrlHint')}
         error={error('imageUrl')}
-      >
-        <input
-          {...fieldAttributes('item-image', { hint: true, error: Boolean(problems.imageUrl) })}
-          type="url"
-          dir="ltr"
-          autoComplete="off"
-          value={form.imageUrl}
-          disabled={readOnly}
-          onChange={(event) => set('imageUrl', event.target.value)}
-          className={fieldClass}
-        />
-      </FormField>
+        value={form.imageUrl}
+        disabled={readOnly}
+        kind="item"
+        brandId={brandId}
+        onChange={(url) => set('imageUrl', url)}
+      />
 
       {!existing && (
         <div>
