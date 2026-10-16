@@ -21,14 +21,14 @@ CI builds the three images on every pull request, applies the migrations to a re
 
 ## Settings
 
-| Setting                                                                                              | Where      | Value                                                                                                                                                                                              |
-| ---------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                                                                                       | API, tools | The Session pooler address of Supabase with `?schema=pos&sslmode=require&uselibpqcompat=true` (see the README), and `&connection_limit=<n>` below the plan's limit. A secret.                      |
-| `JWT_ACCESS_SECRET`                                                                                  | API        | A long random value of your own: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`. The API refuses the development one. Changing it signs everybody out. A secret. |
-| `NODE_ENV`                                                                                           | API        | `production`: secure cookie, strict hashing, HTTPS header.                                                                                                                                         |
-| `TRUST_PROXY`                                                                                        | API        | How many proxies stand between the browser and the API, for the right addresses in the audit log: 2 with a proxy in front of the web container.                                                    |
-| `API_URL`                                                                                            | Web        | Where nginx finds the API: `http://api:3000` with the example below.                                                                                                                               |
-| `PASSWORD_HASH_PROFILE`, `ACCESS_TOKEN_TTL_SECONDS`, `REFRESH_TOKEN_TTL_DAYS`, `AUTH_RATE_LIMIT_MAX` | API        | Leave the defaults unless there is a reason.                                                                                                                                                       |
+| Setting                                                                                                                   | Where      | Value                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                                                                                            | API, tools | The Session pooler address of Supabase with `?schema=pos&sslmode=require&uselibpqcompat=true` (see the README), and `&connection_limit=<n>` below the plan's limit. A secret.                      |
+| `JWT_ACCESS_SECRET`                                                                                                       | API        | A long random value of your own: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`. The API refuses the development one. Changing it signs everybody out. A secret. |
+| `NODE_ENV`                                                                                                                | API        | `production`: secure cookie, strict hashing, HTTPS header.                                                                                                                                         |
+| `TRUST_PROXY`                                                                                                             | API        | How many proxies stand between the browser and the API, for the right addresses in the audit log: 2 with a proxy in front of the web container.                                                    |
+| `API_URL`                                                                                                                 | Web        | Where nginx finds the API: `http://api:3000` with the example below.                                                                                                                               |
+| `PASSWORD_HASH_PROFILE`, `ACCESS_TOKEN_TTL_SECONDS`, `REFRESH_TOKEN_TTL_DAYS`, `PIN_SESSION_HOURS`, `AUTH_RATE_LIMIT_MAX` | API        | Leave the defaults unless there is a reason (a till asks for the PIN again after `PIN_SESSION_HOURS`, 24).                                                                                         |
 
 Secrets live in the host's secret settings or in `deploy/.env.production` on the server, never in the repository (`.env.*` files are ignored by git).
 
@@ -72,9 +72,39 @@ To go back, start the images of the previous version. Migrations are not undone 
 
 The database is the only thing to back up; the images can be built again from git. Supabase backs up every day on its paid plans, and point-in-time recovery (to any second of the last days) is an add-on. Before launch, decide the plan, and try one restore into a spare project, so it is known to work and how long it takes.
 
+## Vercel
+
+The system can also run on Vercel instead of a server, with the database still on Supabase. `vercel.json` at the root sets it up as two services: the API as a Node function and the web app as a static site, with `/api/...` sent to the API and everything else to the web app. The print bridge is not deployed there; it runs on the shop computer next to the printer.
+
+**How it differs from a server.** Vercel runs the API as copies that start on demand and may run side by side, with no shared memory between them. Three things follow:
+
+- **Database connections.** Each copy opens its own. Use Supabase's **transaction pooler** address (port 6543, "Transaction" in the Connect dialog), not the session pooler, and add `&connection_limit=1`. The migrations keep using the session pooler address from a developer's machine, as before.
+- **Menu changes** reach a copy within `MENU_CACHE_TTL_SECONDS`; set it to `30` instead of the default 300.
+- **The limit on failed sign-ins** is counted per copy, so it is weaker than on one server. The lock of an account after five wrong tries is in the database and works the same.
+
+**Settings** (Vercel → Project → Settings → Environment Variables, for Production and Preview):
+
+| Name                     | Value                                                                                                                                                       |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`           | `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres?schema=pos&sslmode=require&uselibpqcompat=true&connection_limit=1` |
+| `JWT_ACCESS_SECRET`      | A long random value of your own (see Settings above)                                                                                                        |
+| `TRUST_PROXY`            | `1`                                                                                                                                                         |
+| `MENU_CACHE_TTL_SECONDS` | `30`                                                                                                                                                        |
+
+Vercel sets `NODE_ENV=production` itself. The region is `fra1` (Frankfurt) in `vercel.json`, next to Supabase's eu-central-1; check it also under Settings → Functions → Region, since the dashboard wins. The plan must be Pro: the Hobby plan is for personal use only.
+
+**Steps.**
+
+1. Apply the migrations and make the first admin from a developer's machine, with `DATABASE_URL` set to the session pooler address of the live project (sections "First time", steps 3 and 4).
+2. In Vercel, import the repository, keep the root directory `./`, add the settings above, and deploy. Vercel builds both services from `vercel.json`; the API's build makes `apps/api/dist/vercel.js` with `npm run build:vercel`.
+3. Open `https://<project>.vercel.app/api/v1/health/ready`: it must answer `{"status":"ok","service":"api"}`. Then sign in.
+4. Add the client's domain under Settings → Domains; Vercel issues the certificate.
+
+**Not yet tried on Vercel itself.** The entry file (`apps/api/src/vercel.ts`) is tested, and its bundle was run as a function on a developer's machine, but the first deploy to Vercel may still need a small change: the keys of `vercel.json` services (`runtime`, `entrypoint`, `buildCommand`) follow Vercel's import screen and documentation, and whether Vercel hands the API the full path `/api/v1/...` or strips `/api` is handled either way in the entry file. If the first deploy fails, send the build log to the development team.
+
 ## Still to decide
 
-1. **Where it runs:** a server with Docker (the example above), or a service that runs containers (Google Cloud Run, AWS App Runner, Azure Container Apps, Fly.io and the like). Both use the same images.
+1. **Where it runs:** Vercel (chosen on 16 October 2026, section "Vercel"), with the server images above kept as the alternative.
 2. **The address** (for example `pos.nexerakw.com`) and who manages its HTTPS certificate.
 3. **The Supabase plan:** connections, storage, daily backups and point-in-time recovery.
 4. **Where the logs go and who gets the alerts.**
