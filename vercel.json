@@ -6,7 +6,7 @@
       "root": "apps/api",
       "runtime": "node",
       "buildCommand": "npm run build:vercel",
-      "entrypoint": "dist/vercel.js"
+      "entrypoint": "vercel-entry.mjs"
     },
     "web": {
       "root": "apps/web",
