@@ -1,4 +1,15 @@
 {
+  "image": {
+    "upload": "Upload a photo",
+    "uploading": "Uploading…",
+    "uploadHint": "JPEG, PNG or WebP, up to 5 MB.",
+    "errors": {
+      "type": "Choose a JPEG, PNG or WebP file.",
+      "size": "The file is larger than 5 MB.",
+      "notSetUp": "Photo storage is not set up on this server. Paste a link instead.",
+      "failed": "The upload failed. Try again."
+    }
+  },
   "app": {
     "name": "POS System"
   },
@@ -467,7 +478,8 @@
     },
     "form": {
       "logoUrl": "Logo link",
-      "logoUrlHint": "A link to a picture. Uploading a file comes later.",
+      "logoUrlHint": "A link to a picture, or upload a file.",
+      "logoUrlHintNew": "A link to a picture. Save the brand first to upload a file.",
       "active": "Active",
       "activeHint": "Leave this off to set the brand up before it opens."
     },
@@ -644,7 +656,7 @@
         "basePrice": "Price",
         "basePriceHint": "The price at every branch, unless a branch sets its own.",
         "imageUrl": "Image link",
-        "imageUrlHint": "A link to a picture. Uploading a file comes later.",
+        "imageUrlHint": "A link to a picture, or upload a file.",
         "active": "Active",
         "activeHint": "Leave this off to set the item up before it is sold."
       },

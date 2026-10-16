@@ -9,13 +9,8 @@ import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { BilingualNameFields } from '../../components/BilingualNameFields';
-import {
-  FormField,
-  fieldAttributes,
-  fieldClass,
-  primaryButtonClass,
-  secondaryButtonClass,
-} from '../../components/form';
+import { ImageField } from '../../components/ImageField';
+import { primaryButtonClass, secondaryButtonClass } from '../../components/form';
 import { fieldsFromIssues, messageFor, problemsFrom } from '../../lib/error-messages';
 import { type CreateBrandInput, createBrand, updateBrand } from './brands-api';
 
@@ -132,22 +127,17 @@ export function BrandForm({ existing }: { existing: Brand | null }) {
         errors={{ en: error('name.en'), ar: error('name.ar') }}
       />
 
-      <FormField
+      <ImageField
         id="brand-logo"
         label={t('brands.form.logoUrl')}
-        hint={t('brands.form.logoUrlHint')}
+        hint={t(existing ? 'brands.form.logoUrlHint' : 'brands.form.logoUrlHintNew')}
         error={error('logoUrl')}
-      >
-        <input
-          {...fieldAttributes('brand-logo', { hint: true, error: Boolean(problems.logoUrl) })}
-          type="url"
-          dir="ltr"
-          autoComplete="off"
-          value={form.logoUrl}
-          onChange={(event) => set('logoUrl', event.target.value)}
-          className={fieldClass}
-        />
-      </FormField>
+        value={form.logoUrl}
+        kind="logo"
+        brandId={existing?.id}
+        canUpload={existing !== null}
+        onChange={(url) => set('logoUrl', url)}
+      />
 
       {!existing && (
         <div>

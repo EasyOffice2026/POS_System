@@ -3,6 +3,7 @@ import express from 'express';
 import type { Config } from './config';
 import { createMailer, type Mailer } from './lib/mailer';
 import { createMemoryMenuCache, type MenuCache } from './lib/menu-cache';
+import { createSupabaseStorage, type Storage } from './lib/storage';
 import { createPasswordHasher, hashProfiles, type PasswordHasher } from './lib/password';
 import type { PrismaClient } from './lib/prisma';
 import { createTokenService } from './lib/tokens';
@@ -42,6 +43,7 @@ import { createShiftsRouter } from './modules/shifts/shifts.router';
 import { createShiftsService } from './modules/shifts/shifts.service';
 import { createUsersRouter } from './modules/users/users.router';
 import { createUsersService } from './modules/users/users.service';
+import { createUploadsRouter } from './modules/uploads/uploads.router';
 
 export interface AppDeps {
   prisma: PrismaClient;
@@ -56,9 +58,20 @@ export interface AppDeps {
   log?: (line: LogLine) => void;
   // Tests pass their own mailer to see what would be sent.
   mailer?: Mailer;
+  // Tests pass their own storage to see what would be kept.
+  storage?: Storage;
 }
 
-export function createApp({ prisma, config, hasher, menuCache, now, log, mailer }: AppDeps) {
+export function createApp({
+  prisma,
+  config,
+  hasher,
+  menuCache,
+  now,
+  log,
+  mailer,
+  storage,
+}: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', config.trustProxy);
@@ -157,6 +170,11 @@ export function createApp({ prisma, config, hasher, menuCache, now, log, mailer 
     createCustomersRouter({
       service: createCustomersService({ prisma, now: now ?? (() => new Date()) }),
     }),
+  );
+  v1.use(
+    '/uploads',
+    ...protectedRoutes,
+    createUploadsRouter({ storage: storage ?? createSupabaseStorage(config.storage) }),
   );
   v1.use('/roles', ...protectedRoutes, createRolesRouter());
   v1.use('/audit-logs', ...protectedRoutes, createAuditRouter());
