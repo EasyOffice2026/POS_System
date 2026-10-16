@@ -83,6 +83,10 @@ describe('POST /users', () => {
       .post('/api/v1/auth/login')
       .send({ type: 'password', email: 'boss@x.io', password: 'a long enough password' });
     expect(signedIn.status).toBe(200);
+    // A password a manager chose is changed at the first sign-in.
+    expect((signedIn.body as { user: { mustChangePassword: boolean } }).user).toMatchObject({
+      mustChangePassword: true,
+    });
   });
 
   it('lets a group admin create another group admin, with no brand', async () => {

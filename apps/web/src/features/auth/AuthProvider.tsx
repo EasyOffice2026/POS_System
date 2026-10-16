@@ -1,4 +1,4 @@
-import { type LoginRequest, sessionResponseSchema } from '@pos/shared';
+import { type ChangePasswordRequest, type LoginRequest, sessionResponseSchema } from '@pos/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   type ReactNode,
@@ -38,6 +38,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStore.set(next);
   }, []);
 
+  const changePassword = useCallback(async (input: ChangePasswordRequest) => {
+    const next = await request('/auth/password', {
+      method: 'POST',
+      body: input,
+      schema: sessionResponseSchema,
+    });
+    sessionStore.set(next);
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await requestNoContent('/auth/logout');
@@ -53,8 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const status: AuthStatus = session ? 'authenticated' : restored ? 'anonymous' : 'loading';
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user: session?.user ?? null, login, logout }),
-    [status, session, login, logout],
+    () => ({ status, user: session?.user ?? null, login, logout, changePassword }),
+    [status, session, login, logout, changePassword],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

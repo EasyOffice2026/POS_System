@@ -15,6 +15,7 @@ const actionKeys = {
   'auth.login.blocked': 'audit.actions.auth_login_blocked',
   'auth.logout': 'audit.actions.auth_logout',
   'auth.refresh.reuse_detected': 'audit.actions.auth_refresh_reuse_detected',
+  'auth.password_changed': 'audit.actions.auth_password_changed',
   'user.created': 'audit.actions.user_created',
   'user.updated': 'audit.actions.user_updated',
   'user.credentials_reset': 'audit.actions.user_credentials_reset',

@@ -1,4 +1,4 @@
-import type { AuthUser, LoginRequest } from '@pos/shared';
+import type { AuthUser, ChangePasswordRequest, LoginRequest } from '@pos/shared';
 import { createContext, useContext } from 'react';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
@@ -8,6 +8,8 @@ export interface AuthContextValue {
   user: AuthUser | null;
   login: (input: LoginRequest) => Promise<void>;
   logout: () => Promise<void>;
+  // Changes the own password; the session is renewed.
+  changePassword: (input: ChangePasswordRequest) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

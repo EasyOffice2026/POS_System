@@ -7,6 +7,10 @@ import { NotFoundPage } from './NotFoundPage';
 import { lazyPage } from './lazy-page';
 
 // Every page but the sign-in is loaded the first time it is opened (Phase 6, step 1).
+const ChangePasswordPage = lazyPage(
+  () => import('../features/auth/ChangePasswordPage'),
+  'ChangePasswordPage',
+);
 const DashboardPage = lazyPage(() => import('../features/admin/DashboardPage'), 'DashboardPage');
 const AuditLogPage = lazyPage(() => import('../features/audit/AuditLogPage'), 'AuditLogPage');
 const BranchesPage = lazyPage(() => import('../features/branches/BranchesPage'), 'BranchesPage');
@@ -91,6 +95,7 @@ export const routes: RouteObject[] = [
   {
     element: <RequireAuth />,
     children: [
+      { path: '/change-password', element: <ChangePasswordPage /> },
       {
         path: '/pos/setup',
         element: (

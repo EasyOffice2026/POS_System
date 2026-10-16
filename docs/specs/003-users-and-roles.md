@@ -82,7 +82,7 @@ Each one is covered by an automated test: the API tests in `apps/api/src/modules
 
 ## Open questions
 
-1. Should people be able to change their own password, and should there be a "forgot password" email? That needs an email provider, which is not chosen yet.
+1. ~~Should people be able to change their own password, and should there be a "forgot password" email?~~ Answered 16 October 2026: a person changes their own password at any time (`POST /auth/password`, the "Change password" link); every other session of theirs ends. A "forgot password" email waits for the email setup.
 2. Should group admins and brand managers use a second factor?
-3. Should a new password or PIN have to be changed at the first sign-in?
+3. ~~Should a new password or PIN have to be changed at the first sign-in?~~ Answered 16 October 2026: a password a manager gave (at creation or at a reset) must be changed at the first sign-in, except for the owner (group admin); PINs are not changed by the cashier.
 4. The proposal mentions a permission matrix. Should brands be able to create their own roles and edit permissions, or are the seven built-in roles enough for launch?

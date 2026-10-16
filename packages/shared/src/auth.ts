@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { permissionSchema, roleKeySchema, roleScopeSchema } from './access';
+import { passwordSchema } from './credentials';
 import { languageSchema } from './localized';
 
 export const loginRequestSchema = z.discriminatedUnion('type', [
@@ -28,9 +29,24 @@ export const authUserSchema = z.object({
   branchIds: z.array(z.uuid()),
   permissions: z.array(permissionSchema),
   preferredLang: languageSchema,
+  // A password given by a manager must be changed at the first sign-in; the owner is exempt
+  // (docs/client-decisions.md).
+  mustChangePassword: z.boolean(),
 });
 
 export type AuthUser = z.infer<typeof authUserSchema>;
+
+// A signed-in person changes their own password: the current one proves it is them.
+export const changePasswordRequestSchema = z
+  .strictObject({
+    currentPassword: z.string().min(1, 'PASSWORD_WRONG').max(256, 'PASSWORD_WRONG'),
+    newPassword: passwordSchema,
+  })
+  .refine((input) => input.currentPassword !== input.newPassword, {
+    path: ['newPassword'],
+    message: 'PASSWORD_SAME',
+  });
+export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;
 
 // Returned by login and refresh. The refresh token travels in an httpOnly cookie.
 export const sessionResponseSchema = z.object({

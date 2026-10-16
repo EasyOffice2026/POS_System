@@ -61,6 +61,17 @@
       "RATE_LIMITED": "Too many attempts. Wait a few minutes and try again.",
       "network": "Cannot reach the server. Check your connection and try again.",
       "unknown": "Something went wrong. Try again."
+    },
+    "changePassword": {
+      "title": "Change your password",
+      "forced": "The password you were given is for the first sign-in only. Choose your own to continue.",
+      "intro": "Choose a new password for your account.",
+      "link": "Change password",
+      "current": "Current password",
+      "next": "New password",
+      "hint": "At least 10 characters.",
+      "again": "New password again",
+      "submit": "Change password"
     }
   },
   "dashboard": {
@@ -332,7 +343,10 @@
     "TABLES_TOO_MANY": "A branch has at most 200 tables.",
     "TABLE_NOT_FOUND": "This table is not in use at this branch.",
     "TABLE_IN_USE": "A table with an open order must stay in use. Pay or move its order first.",
-    "TABLE_TAKEN": "Another order is open at this table."
+    "TABLE_TAKEN": "Another order is open at this table.",
+    "PASSWORD_WRONG": "The current password is not right.",
+    "PASSWORD_SAME": "Choose a password different from the current one.",
+    "PASSWORD_MISMATCH": "The two new passwords are not the same."
   },
   "rolesPage": {
     "title": "Roles",
@@ -416,7 +430,8 @@
       "customer_created": "Customer added",
       "customer_updated": "Customer changed",
       "customer_points_adjusted": "Points given or taken",
-      "branch_tables_updated": "Floor plan changed"
+      "branch_tables_updated": "Floor plan changed",
+      "auth_password_changed": "Password changed"
     }
   },
   "notFound": {
