@@ -27,7 +27,9 @@ const ranges = (...pairs: [string, string][]) => ({
 });
 
 const withHours = (days: Partial<OpeningHours>) =>
-  branchDetail({ config: { openingHours: week(days), printers: [], dayEndsAt: '00:00' } });
+  branchDetail({
+    config: { openingHours: week(days), printers: [], dayEndsAt: '00:00', specialHours: [] },
+  });
 
 function openHours(branch = branchDetail(), extra: Record<string, MockHandler> = {}) {
   const api = mockApi({
@@ -201,6 +203,7 @@ describe('saving the opening hours', () => {
     expect(bodyOf(api)).toEqual({
       config: {
         dayEndsAt: '00:00',
+        specialHours: [],
         openingHours: week({ sunday: ranges(['09:00', '17:00']), friday: { kind: 'all_day' } }),
       },
     });
@@ -216,7 +219,9 @@ describe('saving the opening hours', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await screen.findByRole('status');
-    expect(bodyOf(api)).toEqual({ config: { openingHours: closedWeek(), dayEndsAt: '00:00' } });
+    expect(bodyOf(api)).toEqual({
+      config: { openingHours: closedWeek(), dayEndsAt: '00:00', specialHours: [] },
+    });
   });
 
   it('shows the hours the way the server kept them, the ranges in the order of the clock', async () => {
@@ -419,5 +424,71 @@ describe('the opening hours in Arabic', () => {
     await waitFor(() =>
       expect(screen.getByText('يجب أن يختلف وقت الإغلاق عن وقت الافتتاح.')).toBeInTheDocument(),
     );
+  });
+});
+
+describe('the special hours of a branch', () => {
+  it('add a period for Ramadan with evening hours, and refuse a period that ends before it starts', async () => {
+    const user = userEvent.setup();
+    const api = openHours(branchDetail(), {
+      [patch]: ({ body }) => {
+        const special = (body as { config: { specialHours: unknown[] } }).config.specialHours;
+        return json(
+          branchDetail({
+            config: {
+              openingHours: closedWeek(),
+              printers: [],
+              dayEndsAt: '00:00',
+              specialHours: special.map((period, index) => ({
+                ...(period as object),
+                id: `01990000-0000-7000-8000-00000000a00${index + 1}`,
+              })) as never,
+            },
+          }),
+        );
+      },
+    });
+
+    await user.click(await screen.findByRole('button', { name: 'Add a period' }));
+    await user.type(screen.getByLabelText('Name'), 'Ramadan');
+    fireEvent.change(screen.getByLabelText('First day'), { target: { value: '2027-03-01' } });
+    fireEvent.change(screen.getByLabelText('Last day'), { target: { value: '2027-02-08' } });
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(screen.getByLabelText('Last day')).toHaveAccessibleDescription(
+      'The last day is before the first day.',
+    );
+    expect(bodyOf(api)).toBeUndefined();
+
+    fireEvent.change(screen.getByLabelText('Last day'), { target: { value: '2027-03-30' } });
+    const period = within(screen.getByRole('listitem', { name: 'Ramadan' }));
+    await user.selectOptions(period.getByRole('combobox'), 'ranges');
+    setTime('Opens', '19:00');
+    setTime('Closes', '02:00');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Opening hours saved.');
+    expect(bodyOf(api)).toEqual({
+      config: {
+        openingHours: closedWeek(),
+        dayEndsAt: '00:00',
+        specialHours: [
+          {
+            name: 'Ramadan',
+            from: '2027-03-01',
+            to: '2027-03-30',
+            hours: ranges(['19:00', '02:00']),
+          },
+        ],
+      },
+    });
+    // Saved, the period keeps the id the server gave it.
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(api.count(patch)).toBe(2));
+    const sent = (
+      api.calls.filter((call) => call.key === patch)[1]?.body as {
+        config: { specialHours: { id?: string }[] };
+      }
+    ).config.specialHours;
+    expect(sent[0]?.id).toBe('01990000-0000-7000-8000-00000000a001');
   });
 });

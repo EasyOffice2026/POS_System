@@ -34,6 +34,7 @@ export const groupAdmin: AuthUser = {
   branchIds: [],
   permissions: [...permissions],
   preferredLang: 'en',
+  mustChangePassword: false,
 };
 
 export const brandManager: AuthUser = {
@@ -46,6 +47,7 @@ export const brandManager: AuthUser = {
   branchIds: [],
   permissions: ['brands:read', 'branches:read', 'menu:read'],
   preferredLang: 'en',
+  mustChangePassword: false,
 };
 
 export const branchManager: AuthUser = {
@@ -58,6 +60,7 @@ export const branchManager: AuthUser = {
   branchIds: [ids.pizzaMall],
   permissions: ['branches:read', 'users:read', 'menu:read'],
   preferredLang: 'en',
+  mustChangePassword: false,
 };
 
 export const cashier: AuthUser = {
@@ -70,6 +73,7 @@ export const cashier: AuthUser = {
   branchIds: [ids.pizzaMall],
   permissions: ['menu:read'],
   preferredLang: 'en',
+  mustChangePassword: false,
 };
 
 export function sessionFor(user: AuthUser, accessToken = 'access-token-1'): SessionResponse {
@@ -240,7 +244,7 @@ export const kitchenStaff: AuthUser = {
 export function branchDetail(overrides: Partial<BranchDetail> = {}): BranchDetail {
   return {
     ...pizzaMall,
-    config: { openingHours: closedWeek(), printers: [], dayEndsAt: '00:00' },
+    config: { openingHours: closedWeek(), printers: [], dayEndsAt: '00:00', specialHours: [] },
     ...overrides,
   };
 }

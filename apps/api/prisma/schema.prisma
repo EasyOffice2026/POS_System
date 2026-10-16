@@ -109,6 +109,8 @@ model User {
   // Counts failed sign-ins in a row. Reset by a successful sign-in.
   failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
   lockedUntil         DateTime? @map("locked_until") @db.Timestamptz(3)
+  // A password given by a manager is changed at the first sign-in (docs/client-decisions.md).
+  mustChangePassword  Boolean   @default(false) @map("must_change_password")
   lastLoginAt         DateTime? @map("last_login_at") @db.Timestamptz(3)
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)

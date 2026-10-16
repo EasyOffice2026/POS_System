@@ -287,6 +287,38 @@ export function GroupOverview() {
           </div>
 
           <div className={cardClass}>
+            <h3 className="mb-3 text-base font-semibold">{t('overview.voids.title')}</h3>
+            {data.voids.length === 0 ? (
+              <p className="text-sm text-slate-500">{t('overview.voids.none')}</p>
+            ) : (
+              <table className="w-full text-sm" aria-label={t('overview.voids.title')}>
+                <thead className="text-xs text-slate-600">
+                  <tr>
+                    <th className="py-1 text-start font-medium">{t('overview.voids.reason')}</th>
+                    <th className="py-1 text-end font-medium">{t('overview.voids.orders')}</th>
+                    <th className="py-1 text-end font-medium">{t('overview.voids.lines')}</th>
+                    <th className="py-1 text-end font-medium">{t('overview.voids.amount')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.voids.map((row) => (
+                    <tr key={row.reason} className="border-t border-slate-100">
+                      <td className="py-1">
+                        {row.reason ? <bdi>{row.reason}</bdi> : t('overview.voids.noReason')}
+                      </td>
+                      <td className="py-1 text-end">{row.orders}</td>
+                      <td className="py-1 text-end">{row.lines}</td>
+                      <td className="py-1 text-end">
+                        <Price value={row.amount} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div className={cardClass}>
             <h3 className="mb-3 text-base font-semibold">{t('overview.attention.title')}</h3>
             {data.attention.length === 0 ? (
               <p className="text-sm text-slate-500">{t('overview.attention.none')}</p>

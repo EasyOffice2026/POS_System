@@ -108,6 +108,41 @@ export function createOverviewService({ now }: { now: () => Date }) {
         _sum: { total: true },
       });
 
+      // Today's voids by reason: whole orders, and single dishes of orders that went on.
+      const voidedByReason = await db.order.groupBy({
+        by: ['voidReason'],
+        where: { ...todayWhere, status: 'voided' },
+        _count: { _all: true },
+        _sum: { total: true },
+      });
+      const voidedLines = await db.orderLine.groupBy({
+        by: ['voidReason'],
+        where: { branchId: { in: branchIds }, status: 'voided', order: todayWhere },
+        _count: { _all: true },
+        _sum: { lineTotal: true },
+      });
+      const byReason = new Map<string, { orders: number; lines: number; amount: number }>();
+      const reasonRow = (reason: string | null) => {
+        const key = reason ?? '';
+        const row = byReason.get(key) ?? { orders: 0, lines: 0, amount: 0 };
+        byReason.set(key, row);
+        return row;
+      };
+      for (const row of voidedByReason) {
+        const total = reasonRow(row.voidReason);
+        total.orders += row._count._all;
+        total.amount += mils(row._sum.total);
+      }
+      for (const row of voidedLines) {
+        const total = reasonRow(row.voidReason);
+        total.lines += row._count._all;
+        total.amount += mils(row._sum.lineTotal);
+      }
+      const voids = [...byReason.entries()]
+        .map(([reason, total]) => ({ reason, ...total }))
+        .sort((a, b) => b.amount - a.amount || b.orders + b.lines - (a.orders + a.lines))
+        .map((row) => ({ ...row, amount: fromMils(row.amount) }));
+
       // What is open now (rule 5).
       const open = await db.order.groupBy({
         by: ['branchId'],
@@ -302,6 +337,7 @@ export function createOverviewService({ now }: { now: () => Date }) {
           sales: fromMils(row.sales),
         })),
         attention,
+        voids,
       };
     },
   };

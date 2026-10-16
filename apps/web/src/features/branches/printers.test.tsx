@@ -22,7 +22,9 @@ const one = `GET /api/v1/branches/${pizzaMall.id}`;
 const patch = `PATCH /api/v1/branches/${pizzaMall.id}`;
 
 const withPrinters = (...printers: Printer[]) =>
-  branchDetail({ config: { openingHours: closedWeek(), printers, dayEndsAt: '00:00' } });
+  branchDetail({
+    config: { openingHours: closedWeek(), printers, dayEndsAt: '00:00', specialHours: [] },
+  });
 
 const directory: Record<string, MockHandler> = {
   'GET /api/v1/brands': () => json(page([pizzaBrand, burgerBrand])),

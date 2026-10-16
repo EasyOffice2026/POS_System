@@ -8,12 +8,23 @@ import {
 } from '@pos/shared';
 import type { KitchenTicket as TicketRow, Prisma } from '../../generated/prisma/client';
 import { errors } from '../../lib/http-errors';
+import type { PrismaClient } from '../../lib/prisma';
 import type { ActorContext } from '../../middleware/authenticate';
 import type { ScopedClient } from '../../tenancy/scoped-client';
 import { toOrderLine } from '../orders/orders.common';
 
 export interface KitchenDeps {
   now: () => Date;
+  prisma: PrismaClient;
+  // Takes the ingredients of a ticket's dishes off the branch's stock, for brands that do it when
+  // the kitchen starts (spec 013; docs/client-decisions.md).
+  deductStock: (
+    tx: Pick<ScopedClient, 'recipeLine' | 'branchStock' | 'stockMovement'>,
+    order: { id: string; number: number; brandId: string; branchId: string },
+    lines: { itemId: string | null; quantity: number; status: string; details: unknown }[],
+    by: { id: string; name: string | null },
+    at: Date,
+  ) => Promise<void>;
 }
 
 const iso = (value: Date | null) => (value ? value.toISOString() : null);
@@ -34,7 +45,7 @@ function timesOf(to: TicketStatus, at: Date): Prisma.KitchenTicketUpdateManyMuta
 }
 
 // The kitchen display of a branch. See docs/specs/008-kitchen-display.md.
-export function createKitchenService({ now }: KitchenDeps) {
+export function createKitchenService({ now, prisma, deductStock }: KitchenDeps) {
   // The tickets with their order and their lines, in the order given.
   async function describe(db: ScopedClient, rows: TicketRow[]): Promise<KitchenTicket[]> {
     if (rows.length === 0) return [];
@@ -133,9 +144,36 @@ export function createKitchenService({ now }: KitchenDeps) {
         if (!cashierMay) throw errors.forbidden();
       }
 
-      const moved = await db.kitchenTicket.updateMany({
-        where: { id, status: input.from },
-        data: { status: input.to, ...timesOf(input.to, now()) },
+      // A brand that takes stock off when the kitchen starts a dish does it as the ticket starts,
+      // in the same transaction, so a ticket started on two screens at once takes it off once
+      // (docs/client-decisions.md, "Stock deduction").
+      const starts = input.from === 'new' && input.to === 'preparing';
+      const deductsNow =
+        starts &&
+        parseBrandSettings((await db.brand.findUnique({ where: { id: found.brandId } }))?.settings)
+          .stockDeductAt === 'preparing';
+      // The name goes on the stock movements; it is read before the transaction, since the
+      // database answers one request at a time while one is open.
+      const by = deductsNow
+        ? {
+            id: auth.sub,
+            name:
+              (await prisma.user.findUnique({ where: { id: auth.sub }, select: { name: true } }))
+                ?.name ?? null,
+          }
+        : null;
+      const at = now();
+      const moved = await db.$transaction(async (tx) => {
+        const result = await tx.kitchenTicket.updateMany({
+          where: { id, status: input.from },
+          data: { status: input.to, ...timesOf(input.to, at) },
+        });
+        if (result.count === 1 && by) {
+          const order = await tx.order.findUnique({ where: { id: found.orderId } });
+          const lines = await tx.orderLine.findMany({ where: { ticketId: id } });
+          if (order) await deductStock(tx, order, lines, by, at);
+        }
+        return result;
       });
       const row = await db.kitchenTicket.findUnique({ where: { id } });
       if (!row) throw errors.notFound('Ticket');

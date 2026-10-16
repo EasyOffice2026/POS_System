@@ -190,6 +190,97 @@ export const openingHoursSchema = z
   .transform(sortRanges);
 
 // ---------------------------------------------------------------------------------------------
+// Special hours: Ramadan, Eid and other days when the branch opens differently
+// (docs/client-decisions.md). A period names a run of dates and the hours of each of them.
+
+export const MAX_SPECIAL_PERIODS = 20;
+
+const dateField = z.iso.date({ error: 'DATE_INVALID' });
+
+const specialPeriodFields = {
+  name: z
+    .string({ error: 'SPECIAL_NAME_REQUIRED' })
+    .trim()
+    .min(1, 'SPECIAL_NAME_REQUIRED')
+    .max(40, 'SPECIAL_NAME_TOO_LONG'),
+  from: dateField,
+  to: dateField,
+  hours: dayHoursSchema,
+};
+
+export const specialPeriodSchema = z.strictObject({ id: z.uuid(), ...specialPeriodFields });
+export type SpecialPeriod = z.infer<typeof specialPeriodSchema>;
+
+export const specialPeriodInputSchema = z.strictObject({
+  id: z.uuid().optional(),
+  ...specialPeriodFields,
+});
+export type SpecialPeriodInput = z.input<typeof specialPeriodInputSchema>;
+
+// Two periods are never on the same date, each ends on or after its first day, and the ranges of
+// a period's day do not overlap. Periods come out in the order of the calendar.
+function checkPeriods<T extends { from: string; to: string; hours: DayHours }>(
+  periods: T[],
+  ctx: z.RefinementCtx,
+) {
+  periods.forEach((period, index) => {
+    if (period.to < period.from) {
+      ctx.addIssue({ code: 'custom', path: [index, 'to'], message: 'DATE_RANGE_INVALID' });
+    }
+    if (overlappingDays({ ...closedWeek(), sunday: period.hours }).length > 0) {
+      ctx.addIssue({ code: 'custom', path: [index, 'hours'], message: 'HOURS_OVERLAP' });
+    }
+    const clash = periods
+      .slice(0, index)
+      .some((other) => period.from <= other.to && other.from <= period.to);
+    if (clash) ctx.addIssue({ code: 'custom', path: [index], message: 'SPECIAL_OVERLAP' });
+  });
+}
+
+const sortPeriods = <T extends { from: string; hours: DayHours }>(periods: T[]) =>
+  [...periods]
+    .map((period) => ({
+      ...period,
+      hours: sortRanges({ ...closedWeek(), sunday: period.hours }).sunday,
+    }))
+    .sort((a, b) => a.from.localeCompare(b.from));
+
+export const specialHoursSchema = z
+  .array(specialPeriodSchema)
+  .max(MAX_SPECIAL_PERIODS, 'SPECIAL_TOO_MANY')
+  .superRefine(checkPeriods)
+  .transform(sortPeriods);
+export type SpecialHours = z.infer<typeof specialHoursSchema>;
+
+export const specialHoursInputSchema = z
+  .array(specialPeriodInputSchema)
+  .max(MAX_SPECIAL_PERIODS, 'SPECIAL_TOO_MANY')
+  .superRefine(checkPeriods)
+  .transform(sortPeriods);
+
+// The hours of a branch on a date: a special period's if one covers it, else the weekday's.
+export function hoursOnDate(
+  config: Pick<BranchConfig, 'openingHours' | 'specialHours'>,
+  date: string,
+  weekday: Weekday,
+): DayHours {
+  const special = config.specialHours.find((period) => period.from <= date && date <= period.to);
+  return special ? special.hours : config.openingHours[weekday];
+}
+
+// Whether the branch is open at a moment, on its own clock.
+export function isBranchOpenAt(
+  config: Pick<BranchConfig, 'openingHours' | 'specialHours'>,
+  at: Date,
+  timeZone: string,
+): boolean {
+  const date = businessDateOn(at, timeZone, '00:00');
+  const { weekday, minuteOfDay } = localTimeIn(at, timeZone);
+  const hours = hoursOnDate(config, date, weekday);
+  return isOpenAt({ ...closedWeek(), [weekday]: hours }, weekday, minuteOfDay);
+}
+
+// ---------------------------------------------------------------------------------------------
 // Printers
 
 export const MAX_PRINTERS = 20;
@@ -287,6 +378,7 @@ export const branchConfigSchema = z.object({
   openingHours: openingHoursSchema,
   printers: printerListSchema,
   dayEndsAt: dayEndSchema.default(DEFAULT_DAY_END),
+  specialHours: specialHoursSchema.default([]),
 });
 
 export type BranchConfig = z.infer<typeof branchConfigSchema>;
@@ -296,6 +388,7 @@ export const branchConfigChangeSchema = z.strictObject({
   openingHours: openingHoursSchema.optional(),
   printers: printerInputListSchema.optional(),
   dayEndsAt: dayEndSchema.optional(),
+  specialHours: specialHoursInputSchema.optional(),
 });
 
 // The day on the clock of a time zone, as YYYY-MM-DD, with the day ending at the hour given.
@@ -334,10 +427,12 @@ export function parseBranchConfig(stored: unknown): BranchConfig {
   const hours = openingHoursSchema.safeParse(source.openingHours);
   const printers = printerListSchema.safeParse(source.printers);
   const dayEnd = dayEndSchema.safeParse(source.dayEndsAt);
+  const special = specialHoursSchema.safeParse(source.specialHours);
 
   return {
     openingHours: hours.success ? hours.data : closedWeek(),
     printers: printers.success ? printers.data : [],
     dayEndsAt: dayEnd.success ? dayEnd.data : DEFAULT_DAY_END,
+    specialHours: special.success ? special.data : [],
   };
 }

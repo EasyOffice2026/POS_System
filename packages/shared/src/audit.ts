@@ -9,6 +9,7 @@ export const auditActions = [
   'auth.login.blocked',
   'auth.logout',
   'auth.refresh.reuse_detected',
+  'auth.password_changed',
   'user.created',
   'user.updated',
   'user.credentials_reset',

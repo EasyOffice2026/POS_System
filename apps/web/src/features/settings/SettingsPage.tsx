@@ -4,6 +4,7 @@ import {
   brandSettingsRequestSchema,
   MAX_KITCHEN_STATIONS,
   MAX_PAYMENT_METHODS,
+  type StockDeductAt,
   type TicketDoneBy,
   type VoidRule,
 } from '@pos/shared';
@@ -46,8 +47,11 @@ interface FormState {
   cashierLimit: string;
   voidRule: VoidRule;
   doneBy: TicketDoneBy;
+  deductAt: StockDeductAt;
   stations: StationRow[];
   // The loyalty rules as typed (spec 022).
+  // Who is told about voids, one address per line or comma (docs/client-decisions.md).
+  voidEmails: string;
   loyaltyOn: boolean;
   pointsPerKwd: string;
   pointValue: string;
@@ -67,7 +71,9 @@ function toForm(settings: BrandSettings): FormState {
     cashierLimit: Number(settings.cashierDiscountLimit).toString(),
     voidRule: settings.voidNeedsManager,
     doneBy: settings.ticketDoneBy,
+    deductAt: settings.stockDeductAt,
     stations: settings.kitchenStations.map((station) => ({ ...station })),
+    voidEmails: settings.alerts.voidEmails.join('\n'),
     loyaltyOn: settings.loyalty.enabled,
     pointsPerKwd: String(settings.loyalty.pointsPerKwd),
     pointValue: settings.loyalty.pointValue,
@@ -85,9 +91,16 @@ function toRequest(form: FormState): BrandSettingsRequest {
     cashierDiscountLimit: normalizeNumberInput(form.cashierLimit).trim(),
     voidNeedsManager: form.voidRule,
     ticketDoneBy: form.doneBy,
+    stockDeductAt: form.deductAt,
     kitchenStations: form.stations.map((station) =>
       station.id ? { id: station.id, name: station.name } : { name: station.name },
     ),
+    alerts: {
+      voidEmails: form.voidEmails
+        .split(/[\n,،;\s]+/)
+        .map((email) => email.trim())
+        .filter((email) => email !== ''),
+    },
     loyalty: {
       enabled: form.loyaltyOn,
       pointsPerKwd: wholeNumber(form.pointsPerKwd),
@@ -344,6 +357,26 @@ function SettingsForm({ brandId, settings }: { brandId: string; settings: BrandS
           )}
         </fieldset>
 
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium text-slate-700">
+            {t('settings.kitchen.deductAt')}
+          </legend>
+          {radio(
+            'deductAt',
+            'paid',
+            form.deductAt,
+            (deductAt) => change({ deductAt }),
+            t('settings.kitchen.deductAtPaid'),
+          )}
+          {radio(
+            'deductAt',
+            'preparing',
+            form.deductAt,
+            (deductAt) => change({ deductAt }),
+            t('settings.kitchen.deductAtPreparing'),
+          )}
+        </fieldset>
+
         <div className="space-y-2">
           <p className="text-sm font-medium text-slate-700">{t('settings.kitchen.stations')}</p>
           <p className="text-xs text-slate-500">{t('settings.kitchen.stationsHint')}</p>
@@ -468,6 +501,31 @@ function SettingsForm({ brandId, settings }: { brandId: string; settings: BrandS
             />
           </FormField>
         </div>
+      </section>
+
+      <section className={sectionClass} aria-labelledby="settings-alerts">
+        <h2 id="settings-alerts" className="text-lg font-semibold">
+          {t('settings.alerts.title')}
+        </h2>
+        <p className="text-sm text-slate-600">{t('settings.alerts.intro')}</p>
+        <FormField
+          id="void-emails"
+          label={t('settings.alerts.voidEmails')}
+          hint={t('settings.alerts.voidEmailsHint')}
+          error={error('alerts.voidEmails') ?? error('alerts.voidEmails.0')}
+        >
+          <textarea
+            {...fieldAttributes('void-emails', {
+              hint: true,
+              error: Boolean(error('alerts.voidEmails') ?? error('alerts.voidEmails.0')),
+            })}
+            dir="ltr"
+            rows={3}
+            value={form.voidEmails}
+            onChange={(event) => change({ voidEmails: event.target.value })}
+            className={fieldClass}
+          />
+        </FormField>
       </section>
 
       {formProblem && (

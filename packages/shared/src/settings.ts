@@ -95,6 +95,30 @@ export const defaultLoyaltySettings: LoyaltySettings = {
   minRedeem: 100,
 };
 
+// When the stock of a dish's ingredients goes down (docs/client-decisions.md): when the order is
+// paid, or when the kitchen starts the ticket the dish is on.
+export const stockDeductAtSchema = z.enum(['paid', 'preparing'], {
+  error: 'STOCK_DEDUCT_AT_INVALID',
+});
+export type StockDeductAt = z.infer<typeof stockDeductAtSchema>;
+
+// Who the brand tells about voids, by email (docs/client-decisions.md).
+export const MAX_ALERT_EMAILS = 10;
+export const alertSettingsSchema = z.strictObject({
+  voidEmails: z
+    .array(
+      z
+        .string({ error: 'EMAIL_INVALID' })
+        .trim()
+        .toLowerCase()
+        .pipe(z.email({ error: 'EMAIL_INVALID' })),
+    )
+    .max(MAX_ALERT_EMAILS, 'ALERT_EMAILS_TOO_MANY')
+    .transform((emails) => [...new Set(emails)]),
+});
+export type AlertSettings = z.infer<typeof alertSettingsSchema>;
+export const defaultAlertSettings: AlertSettings = { voidEmails: [] };
+
 export const brandSettingsSchema = z.object({
   paymentMethods: z.array(paymentMethodSettingSchema),
   // The discount buttons on the POS, as percentages.
@@ -105,6 +129,8 @@ export const brandSettingsSchema = z.object({
   ticketDoneBy: ticketDoneBySchema,
   kitchenStations: z.array(kitchenStationSchema),
   loyalty: loyaltySettingsSchema,
+  alerts: alertSettingsSchema,
+  stockDeductAt: stockDeductAtSchema,
 });
 export type BrandSettings = z.infer<typeof brandSettingsSchema>;
 
@@ -116,6 +142,8 @@ export const defaultBrandSettings: BrandSettings = {
   ticketDoneBy: 'kitchen',
   kitchenStations: [],
   loyalty: defaultLoyaltySettings,
+  alerts: defaultAlertSettings,
+  stockDeductAt: 'paid',
 };
 
 // The whole settings as a request. Unknown fields are refused.
@@ -144,6 +172,8 @@ export const brandSettingsRequestSchema = z
       .max(MAX_KITCHEN_STATIONS, 'KITCHEN_STATIONS_TOO_MANY'),
     // Left out by an older screen, it keeps the default.
     loyalty: loyaltySettingsSchema.default(defaultLoyaltySettings),
+    alerts: alertSettingsSchema.default(defaultAlertSettings),
+    stockDeductAt: stockDeductAtSchema.default('paid'),
   })
   .transform((settings) => ({
     ...settings,
@@ -196,6 +226,8 @@ export function parseBrandSettings(stored: unknown): BrandSettings {
       defaultBrandSettings.kitchenStations,
     ),
     loyalty: pick(brandSettingsSchema.shape.loyalty, source.loyalty, defaultLoyaltySettings),
+    alerts: pick(brandSettingsSchema.shape.alerts, source.alerts, defaultAlertSettings),
+    stockDeductAt: pick(brandSettingsSchema.shape.stockDeductAt, source.stockDeductAt, 'paid'),
   };
 }
 

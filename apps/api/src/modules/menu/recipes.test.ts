@@ -211,6 +211,57 @@ describe('paying an order', () => {
     expect(movements[0]?.quantityAfter.toFixed(3)).toBe('-0.240');
   });
 
+  it('takes the stock off when the kitchen starts the ticket instead, if the brand says so', async () => {
+    await prisma.brand.update({
+      where: { id: world.pizza.id },
+      data: { settings: { stockDeductAt: 'preparing' } },
+    });
+    await setRecipes(await asPizzaManager());
+    const api = await asCashier();
+    const opened = orderOf(await api.post(ORDERS, { branchId: world.mall.id, type: 'dine_in' }));
+    await api.post(`${ORDERS}/${opened.id}/lines`, {
+      kind: 'item',
+      itemId: world.items.margherita.id,
+      quantity: 2,
+      modifierIds: [extraCheese.id],
+    });
+    expect((await api.post(`${ORDERS}/${opened.id}/send`)).status).toBe(200);
+    // Sent, nothing moves yet.
+    expect(await stockAtMall()).toBeNull();
+
+    const kitchen = await asMallManager();
+    const tickets = (
+      (await kitchen.get(`/api/v1/kitchen/tickets?branchId=${world.mall.id}`)).body as {
+        data: { id: string }[];
+      }
+    ).data;
+    const ticketId = tickets[0]?.id ?? '';
+    const started = await kitchen.patch(`/api/v1/kitchen/tickets/${ticketId}`, {
+      from: 'new',
+      to: 'preparing',
+    });
+    expect(started.status).toBe(200);
+    expect((await stockAtMall())?.quantity.toFixed(3)).toBe('-0.240');
+    const movements = await movementsAtMall();
+    expect(movements).toHaveLength(1);
+    expect(movements[0]).toMatchObject({
+      kind: 'sold',
+      referenceId: opened.id,
+      byId: world.users.mallManager.id,
+      byName: world.users.mallManager.name,
+    });
+
+    // Moving on, and paying, take nothing off a second time.
+    await kitchen.patch(`/api/v1/kitchen/tickets/${ticketId}`, { from: 'preparing', to: 'ready' });
+    const open = orderOf(await api.get(`${ORDERS}/${opened.id}`));
+    const paid = await api.post(`${ORDERS}/${opened.id}/pay`, {
+      tenders: [{ id: randomUUID(), method: 'cash', amount: open.total, tendered: open.total }],
+    });
+    expect(paid.status).toBe(200);
+    expect((await stockAtMall())?.quantity.toFixed(3)).toBe('-0.240');
+    expect(await movementsAtMall()).toHaveLength(1);
+  });
+
   it('uses the recipes of the dishes chosen in a combo (criterion 2)', async () => {
     await setRecipes(await asPizzaManager());
     const combo = await prisma.combo.create({

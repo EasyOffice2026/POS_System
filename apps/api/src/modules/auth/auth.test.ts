@@ -63,6 +63,11 @@ beforeEach(async () => {
   });
 });
 
+const messagesOf = (res: request.Response) =>
+  (
+    (res.body as { error: { details?: { path: string; message: string }[] } }).error.details ?? []
+  ).map((detail) => `${detail.path}:${detail.message}`);
+
 const passwordLogin = (email: string, password = TEST_PASSWORD) =>
   request(app).post(LOGIN).send({ type: 'password', email, password });
 
@@ -624,6 +629,46 @@ describe('POST /auth/refresh', () => {
       orderBy: { createdAt: 'asc' },
     });
     expect(after[1]?.expiresAt.getTime()).toBeGreaterThan(before?.expiresAt.getTime() ?? 0);
+  });
+
+  it('lets a person change their own password, which ends their other sessions', async () => {
+    await prisma.user.update({
+      where: { email: 'manager@pos.local' },
+      data: { mustChangePassword: true },
+    });
+    const first = await passwordLogin('manager@pos.local');
+    expect((first.body as { user: { mustChangePassword: boolean } }).user.mustChangePassword).toBe(
+      true,
+    );
+    const token = (first.body as { accessToken: string }).accessToken;
+    const other = await passwordLogin('manager@pos.local');
+    const change = (body: object) =>
+      request(app).post('/api/v1/auth/password').set('Authorization', `Bearer ${token}`).send(body);
+
+    const wrong = await change({
+      currentPassword: 'not-it-at-all',
+      newPassword: 'Brand-new-pass-1',
+    });
+    expect(wrong.status).toBe(400);
+    expect(messagesOf(wrong)).toEqual(['currentPassword:PASSWORD_WRONG']);
+    const same = await change({ currentPassword: TEST_PASSWORD, newPassword: TEST_PASSWORD });
+    expect(messagesOf(same)).toEqual(['newPassword:PASSWORD_SAME']);
+    const short = await change({ currentPassword: TEST_PASSWORD, newPassword: 'short' });
+    expect(messagesOf(short)).toEqual(['newPassword:PASSWORD_TOO_SHORT']);
+
+    const done = await change({ currentPassword: TEST_PASSWORD, newPassword: 'Brand-new-pass-1' });
+    expect(done.status).toBe(200);
+    expect((done.body as { user: { mustChangePassword: boolean } }).user.mustChangePassword).toBe(
+      false,
+    );
+    expect(refreshTokenOf(done)).toBeTruthy();
+    // The other device is signed out; this one goes on with its new cookie.
+    expect((await refreshWith(refreshTokenOf(other) ?? '')).status).toBe(401);
+    expect((await refreshWith(refreshTokenOf(done) ?? '')).status).toBe(200);
+    expect((await passwordLogin('manager@pos.local')).status).toBe(401);
+    expect((await passwordLogin('manager@pos.local', 'Brand-new-pass-1')).status).toBe(200);
+    const actions = (await prisma.auditLog.findMany()).map((row) => row.action);
+    expect(actions).toContain('auth.password_changed');
   });
 
   it('clears the cookie when it refuses', async () => {

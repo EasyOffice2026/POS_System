@@ -1,0 +1,231 @@
+{
+  "$comment": "The menu of Mudawara (مدورة), taken from its ordering website on 16 October 2026. Prices in KWD. The photos are the website's stock placeholders, to be replaced by the brand's own. Import with: npm run menu:import -w @pos/api -- --brand Mudawara --file prisma/menus/mudawara.json",
+  "categories": [
+    {
+      "name": { "en": "Sandwiches", "ar": "سندويتشات" },
+      "items": [
+        {
+          "name": { "en": "Eggs with Cheese", "ar": "بيض بالجبن" },
+          "description": {
+            "en": "Fried or scrambled eggs served with melted cheese",
+            "ar": "بيض مقلي أو مخفوق مع جبن ذائب"
+          },
+          "price": "0.500",
+          "imageUrl": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800",
+          "modifierGroups": ["sandwichExtras", "sauces"]
+        },
+        {
+          "name": { "en": "Shakshuka with Cheese", "ar": "شكشوكة بالجبن" },
+          "description": {
+            "en": "Eggs cooked in a spicy tomato sauce with peppers and cheese",
+            "ar": "بيض مطبوخ بصوص طماطم حار مع الفلفل والجبن"
+          },
+          "price": "0.550",
+          "imageUrl": "https://images.unsplash.com/photo-1590412200988-a436970781fa?w=800",
+          "modifierGroups": ["sandwichExtras", "sauces"]
+        },
+        {
+          "name": { "en": "Liver with Cheese", "ar": "كبدة بالجبن" },
+          "description": {
+            "en": "Sautéed liver with spices, topped with slices of cheese",
+            "ar": "كبدة مقلية بالبهارات مع شرائح الجبن"
+          },
+          "price": "0.750",
+          "imageUrl": "https://images.unsplash.com/photo-1432139555190-58524dae6a55?w=800",
+          "modifierGroups": ["sandwichExtras", "sauces"]
+        },
+        {
+          "name": { "en": "Halloumi", "ar": "حلوم" },
+          "description": {
+            "en": "Grilled or fried halloumi cheese served as an appetizer or snack",
+            "ar": "جبن حلوم مشوي أو مقلي"
+          },
+          "price": "0.650",
+          "imageUrl": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=800"
+        },
+        {
+          "name": { "en": "Super MIX", "ar": "سوبر ميكس" },
+          "description": {
+            "en": "Falafel patties with added fillings, sauces, or extra veggies",
+            "ar": "أقراص فلافل مع حشوات وصوصات وخضار إضافية"
+          },
+          "price": "0.450",
+          "imageUrl": "https://images.unsplash.com/photo-1662116765994-1e4200c43589?w=800"
+        },
+        {
+          "name": { "en": "Chicken fillet", "ar": "فيليه دجاج" },
+          "price": "0.950",
+          "imageUrl": "https://images.unsplash.com/photo-1615297928064-24977384d0da?w=800"
+        },
+        {
+          "name": { "en": "TURKI", "ar": "تركي" },
+          "price": "0.750",
+          "imageUrl": "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=800"
+        }
+      ]
+    },
+    {
+      "name": { "en": "Boxes", "ar": "بوكسات" },
+      "items": [
+        {
+          "name": { "en": "Breakfast box (12 pieces)", "ar": "بوكس فطور (12 قطعة)" },
+          "description": {
+            "en": "2 eggs with cheese + 2 shakshuka + 2 halloumi + 2 mixed cheese + 2 mixed + 2 labneh thyme",
+            "ar": "2 بيض جبن + 2 شكشوكة + 2 حلوم + 2 مكس أجبان + 2 مشكل + 2 لبنة زعتر"
+          },
+          "price": "6.250",
+          "imageUrl": "https://images.unsplash.com/photo-1493770348161-369560ae357d?w=800"
+        },
+        {
+          "name": {
+            "en": "Dinner box (12 pieces + potatoes), 4 kinds",
+            "ar": "بوكس عشاء (12 قطعة + بطاطس) 4 أصناف"
+          },
+          "description": {
+            "en": "3 fajita + 3 beef shawarma + 3 chicken shawarma + 3 kebab",
+            "ar": "3 فاهيتا + 3 شاورما لحم + 3 شاورما دجاج + 3 كباب"
+          },
+          "price": "7.950",
+          "imageUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=800"
+        },
+        {
+          "name": {
+            "en": "Mudawara box of your choice (12 pieces + free fries)",
+            "ar": "بوكس مدورة على اختيارك (12 قطعة + بطاطس مجاناً)"
+          },
+          "price": "7.600",
+          "imageUrl": "https://images.unsplash.com/photo-1541518763669-27fef04b14ea?w=800",
+          "modifierGroups": ["boxPieces", "boxAddOns"]
+        },
+        {
+          "name": {
+            "en": "Dinner box (12 pieces + fries): 6 beef burgers + 6 chicken fillet",
+            "ar": "بوكس عشاء 12 قطعة + بطاطس: 6 برجر لحم + 6 فيليه دجاج"
+          },
+          "price": "10.850",
+          "imageUrl": "https://images.unsplash.com/photo-1521305916504-4a1121188589?w=800"
+        }
+      ]
+    },
+    {
+      "name": { "en": "Sides", "ar": "جانبيات" },
+      "items": [
+        {
+          "name": { "en": "Potato box", "ar": "بوكس بطاطس" },
+          "price": "0.750",
+          "imageUrl": "https://images.unsplash.com/photo-1518013431117-eb1465fa5752?w=800"
+        }
+      ]
+    },
+    {
+      "name": { "en": "Drinks", "ar": "مشروبات" },
+      "items": [
+        {
+          "name": { "en": "Matara Karak 1L", "ar": "مطارة كرك 1 لتر" },
+          "description": {
+            "en": "Black tea, condensed or regular milk, sugar, cardamom and cinnamon",
+            "ar": "شاي أسود، حليب مكثف أو عادي، سكر، هيل وقرفة"
+          },
+          "price": "4.500",
+          "imageUrl": "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=800"
+        },
+        {
+          "name": { "en": "Karak", "ar": "كرك" },
+          "price": "0.450",
+          "imageUrl": "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=800"
+        },
+        {
+          "name": { "en": "Tea", "ar": "شاي" },
+          "description": {
+            "en": "With sugar or milk as you like",
+            "ar": "مع سكر أو حليب حسب الرغبة"
+          },
+          "price": "0.350",
+          "imageUrl": "https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?w=800"
+        },
+        {
+          "name": { "en": "Orange juice", "ar": "عصير برتقال" },
+          "price": "0.850",
+          "imageUrl": "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=800"
+        },
+        {
+          "name": { "en": "Pepsi", "ar": "بيبسي" },
+          "price": "0.200",
+          "imageUrl": "https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=800"
+        }
+      ]
+    },
+    {
+      "name": { "en": "Khalia Mudawara", "ar": "خلية مدورة" },
+      "items": [
+        {
+          "name": { "en": "Khalia Classic", "ar": "خلية كلاسيك" },
+          "price": "2.500",
+          "imageUrl": "https://images.unsplash.com/photo-1519676867240-f03562e64548?w=800"
+        },
+        {
+          "name": { "en": "Khalia Cinnabon", "ar": "خلية سينابون" },
+          "price": "3.000",
+          "imageUrl": "https://images.unsplash.com/photo-1509365465985-25d11c17e812?w=800"
+        },
+        {
+          "name": { "en": "Khalia Sumo pecan", "ar": "خلية سومو بيكان" },
+          "price": "3.750",
+          "imageUrl": "https://images.unsplash.com/photo-1623334044303-241021148842?w=800"
+        },
+        {
+          "name": { "en": "Khalia Nutella thyme", "ar": "خلية نوتيلا وزعتر" },
+          "price": "3.500",
+          "imageUrl": "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=800"
+        },
+        {
+          "name": {
+            "en": "Khalia Kanafeh with pistachio Nutella",
+            "ar": "خلية كنافة بالنوتيلا والفستق"
+          },
+          "price": "3.750",
+          "imageUrl": "https://images.unsplash.com/photo-1519676867240-f03562e64548?w=800"
+        }
+      ]
+    }
+  ],
+  "modifierGroups": {
+    "sandwichExtras": {
+      "name": { "en": "Extras", "ar": "إضافات" },
+      "minSelect": 0,
+      "maxSelect": 2,
+      "modifiers": [
+        { "name": { "en": "Extra cheese", "ar": "جبن إضافي" }, "priceDelta": "0.150" },
+        { "name": { "en": "Extra veggies", "ar": "خضار إضافية" }, "priceDelta": "0.100" }
+      ]
+    },
+    "sauces": {
+      "name": { "en": "Sauce", "ar": "صوص" },
+      "minSelect": 0,
+      "maxSelect": 2,
+      "modifiers": [
+        { "name": { "en": "Garlic sauce", "ar": "صوص ثوم" }, "priceDelta": "0.100" },
+        { "name": { "en": "Hot sauce", "ar": "صوص حار" }, "priceDelta": "0.100" }
+      ]
+    },
+    "boxPieces": {
+      "name": { "en": "Choose your pieces", "ar": "اختر الأصناف" },
+      "minSelect": 1,
+      "maxSelect": 4,
+      "modifiers": [
+        { "name": { "en": "Beef shawarma", "ar": "شاورما لحم" }, "priceDelta": "0.000" },
+        { "name": { "en": "Chicken shawarma", "ar": "شاورما دجاج" }, "priceDelta": "0.000" },
+        { "name": { "en": "Fajita", "ar": "فاهيتا" }, "priceDelta": "0.000" },
+        { "name": { "en": "Kebab", "ar": "كباب" }, "priceDelta": "0.000" }
+      ]
+    },
+    "boxAddOns": {
+      "name": { "en": "Add-ons", "ar": "إضافات" },
+      "minSelect": 0,
+      "maxSelect": 1,
+      "modifiers": [
+        { "name": { "en": "Extra fries bucket", "ar": "بطاطس إضافية" }, "priceDelta": "0.750" }
+      ]
+    }
+  }
+}

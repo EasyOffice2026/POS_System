@@ -1,4 +1,4 @@
-import { apiError, loginRequestSchema } from '@pos/shared';
+import { apiError, changePasswordRequestSchema, loginRequestSchema } from '@pos/shared';
 import { parseCookie } from 'cookie';
 import { type CookieOptions, type Request, type RequestHandler, Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
@@ -69,6 +69,18 @@ export function createAuthRouter(deps: {
     await service.logout(readToken(req), requestMeta(req));
     res.clearCookie(cookie.cookieName, cookieOptions());
     res.status(204).end();
+  });
+
+  // A person changes their own password; the device gets a fresh session.
+  router.post('/password', authenticate, async (req, res) => {
+    if (!req.auth) throw errors.unauthenticated();
+    const input = parseWith(changePasswordRequestSchema, req.body);
+    const result = await service.changePassword(req.auth, input, requestMeta(req));
+    res.cookie(cookie.cookieName, result.refreshToken, {
+      ...cookieOptions(),
+      expires: result.refreshExpiresAt,
+    });
+    res.json(result.session);
   });
 
   router.get('/me', authenticate, async (req, res) => {

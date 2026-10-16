@@ -102,6 +102,6 @@ Each one is covered by an automated test: the API tests in `apps/api/src/modules
 
 1. Logo upload needs object storage, which is not chosen yet. Until then a logo can only be a link.
 2. Is the currency a setting of the brand or of the branch? The proposal assumes SAR.
-3. Does a branch need opening-hour exceptions such as holidays and Ramadan hours?
+3. ~~Does a branch need opening-hour exceptions such as holidays and Ramadan hours?~~ Answered 16 October 2026: yes. A branch has special periods (Branches → Opening hours → Special hours): a name, a first and a last day, and the hours of each of those days (closed, all day, or one range); periods never overlap, at most 20. On such a date they replace the weekday hours (, ).
 4. Should people of a deactivated brand still be able to sign in with a password? Today they can, so a manager can reach the brand and activate it again. Only PIN sign-in at its branches stops.
 5. The plan lists "branch overrides" for this module. Is anything meant besides per-branch menu prices and availability?

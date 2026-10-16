@@ -255,6 +255,8 @@ export function createUsersService({ prisma, hasher, revokeAllSessions }: UsersD
               preferredLang: input.preferredLang,
               passwordHash,
               pinHash,
+              // A password a manager chose is changed at the first sign-in; the owner is exempt.
+              mustChangePassword: passwordHash !== null && role.key !== 'group_admin',
             },
           });
           if (brandId && branchIds.length > 0) {
@@ -428,7 +430,10 @@ export function createUsersService({ prisma, hasher, revokeAllSessions }: UsersD
 
       await db.user.update({
         where: { id },
-        data: input.type === 'pin' ? { pinHash: hash } : { passwordHash: hash },
+        data:
+          input.type === 'pin'
+            ? { pinHash: hash }
+            : { passwordHash: hash, mustChangePassword: role?.key !== 'group_admin' },
       });
       // A new password or PIN ends the old sessions, in case somebody else had them.
       await revokeAllSessions(id);

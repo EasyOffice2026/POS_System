@@ -33,6 +33,7 @@ const PUBLIC = new Set([
 // The routes for anybody signed in, whatever their permissions, and why.
 const SIGNED_IN = new Map([
   ['GET /api/v1/auth/me', 'a person reads their own account'],
+  ['POST /api/v1/auth/password', 'a person changes their own password'],
   [
     'GET /api/v1/brands/:id/settings',
     'every terminal reads its brand settings; the scoped client limits it to the own brand',

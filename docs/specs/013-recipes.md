@@ -64,5 +64,5 @@ The stock itself is taken off by the system, under the name of the cashier who t
 
 ## Open questions
 
-1. Should the stock go down when the kitchen starts the dish, rather than at payment, for shops where tables pay at the end?
+1. ~~Should the stock go down when the kitchen starts the dish, rather than at payment, for shops where tables pay at the end?~~ Answered 16 October 2026: each brand chooses in Settings ("When does stock go down?"): when the order is paid (the default), or when the kitchen starts the ticket, in which case paying takes nothing off and a ticket the kitchen never starts takes nothing off either.
 2. Should a dish with no recipe be flagged on the menu, so nothing is forgotten?

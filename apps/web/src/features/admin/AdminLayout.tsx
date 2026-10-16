@@ -1,6 +1,6 @@
 import type { Permission } from '@pos/shared';
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet } from 'react-router';
+import { Link, NavLink, Outlet } from 'react-router';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { useAuth } from '../auth/auth-context';
 
@@ -29,6 +29,11 @@ export function AdminLayout() {
               </span>
               <span>{t(`roles.${user.role.key}`)}</span>
             </p>
+          )}
+          {user?.email && (
+            <Link to="/change-password" className="text-sm text-slate-700 underline">
+              {t('auth.changePassword.link')}
+            </Link>
           )}
           <LanguageSwitcher />
           <button

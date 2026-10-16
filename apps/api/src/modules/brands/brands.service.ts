@@ -303,15 +303,21 @@ export function createBrandsService({ prisma }: { prisma: PrismaClient }) {
 
       const openingHours = input.config?.openingHours ?? current.openingHours;
       const printers = input.config?.printers ? withIds(input.config.printers) : current.printers;
+      // Ramadan and holiday hours (docs/client-decisions.md); a new period gets its id here.
+      const specialHours = input.config?.specialHours
+        ? input.config.specialHours.map((period) => ({ ...period, id: period.id ?? randomUUID() }))
+        : current.specialHours;
       const hoursChanged = !isDeepStrictEqual(openingHours, current.openingHours);
       const printersChanged = !isDeepStrictEqual(printers, current.printers);
+      const specialChanged = !isDeepStrictEqual(specialHours, current.specialHours);
       if (hoursChanged) changed.push('openingHours');
       if (printersChanged) changed.push('printers');
+      if (specialChanged) changed.push('specialHours');
 
-      if (hoursChanged || printersChanged) {
+      if (hoursChanged || printersChanged || specialChanged) {
         // Keep any part of the configuration that this module does not know about.
         const stored = isRecord(target.config) ? target.config : {};
-        data.config = { ...stored, openingHours, printers };
+        data.config = { ...stored, openingHours, printers, specialHours };
       }
       if (changed.length === 0) return toBranchDetail(target);
 

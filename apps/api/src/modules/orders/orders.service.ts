@@ -10,6 +10,7 @@ import {
   CASH_NAME,
   type CreateOrderRequest,
   fromMils,
+  localizedTextSchema,
   MAX_ORDER_LINES,
   maxPointsFor,
   parseBranchConfig,
@@ -59,6 +60,7 @@ import {
 } from './orders.common';
 import { priceLine } from './pricing';
 import { toPromotion } from '../menu/promotions.service';
+import type { VoidEvent } from './void-alerts';
 
 export interface OrdersDeps {
   prisma: PrismaClient;
@@ -67,6 +69,8 @@ export interface OrdersDeps {
   loadMenu: (ctx: ActorContext, branchId: string) => Promise<BranchMenu>;
   now: () => Date;
   // Takes the ingredients of the paid lines off the branch's stock (spec 013, rule 4).
+  // Tells the brand's people about a void (docs/client-decisions.md).
+  notifyVoid: (event: VoidEvent) => Promise<void>;
   deductStock: (
     tx: OrderTx,
     order: OrderRow,
@@ -81,7 +85,14 @@ const tableTaken = () => errors.conflict('TABLE_TAKEN', 'Another order is open a
 const pointsNotEnough = () => errors.validation([{ path: 'points', message: 'POINTS_NOT_ENOUGH' }]);
 
 // Orders at a branch. See docs/specs/005-orders.md.
-export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock }: OrdersDeps) {
+export function createOrdersService({
+  prisma,
+  hasher,
+  loadMenu,
+  now,
+  deductStock,
+  notifyVoid,
+}: OrdersDeps) {
   const audit = (event: AuditEvent, meta: RequestMeta) =>
     writeAudit(prisma, { ...event, ip: meta.ip, userAgent: meta.userAgent });
   const approvals = createApprovals({ prisma, hasher, audit });
@@ -701,6 +712,19 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
         },
         meta,
       );
+      await notifyVoid({
+        kind: 'line',
+        brandId: order.brandId,
+        branchId: order.branchId,
+        orderNumber: order.number,
+        what: localizedTextSchema.safeParse(line.name).data ?? null,
+        quantity: line.quantity,
+        amount: line.lineTotal.toFixed(3),
+        reason: input.reason,
+        byId: auth.sub,
+        approvedById,
+        at: now(),
+      });
       return result;
     },
 
@@ -769,6 +793,19 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
         },
         meta,
       );
+      await notifyVoid({
+        kind: 'order',
+        brandId: order.brandId,
+        branchId: order.branchId,
+        orderNumber: order.number,
+        what: null,
+        quantity: null,
+        amount: result.order.total,
+        reason: input.reason,
+        byId: auth.sub,
+        approvedById,
+        at: now(),
+      });
       return result.order;
     },
 
@@ -1108,10 +1145,9 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
       if (before) return before;
 
       // Every way to pay must be cash or one of the brand's active methods (spec 009, rule 2).
+      const settings = await settingsOf(db, (await load(db, orderId)).brandId);
       const methods = new Map(
-        activePaymentMethods(await settingsOf(db, (await load(db, orderId)).brandId)).map(
-          (method) => [method.key, method.name],
-        ),
+        activePaymentMethods(settings).map((method) => [method.key, method.name]),
       );
       const unknown = input.tenders.findIndex(
         (tender) => tender.method !== CASH && !methods.has(tender.method),
@@ -1160,8 +1196,9 @@ export function createOrdersService({ prisma, hasher, loadMenu, now, deductStock
           // What was not sent yet goes to the kitchen now (rule 5).
           const at = now();
           await sendPending(tx, order, at);
-          // The stock goes down by what was sold, in the same transaction (spec 013, rule 4).
-          await deductStock(tx, order, lines, by, at);
+          // The stock goes down by what was sold, in the same transaction (spec 013, rule 4),
+          // unless the brand takes it off when the kitchen starts each ticket instead.
+          if (settings.stockDeductAt === 'paid') await deductStock(tx, order, lines, by, at);
           await tx.payment.createMany({
             data: input.tenders.map((tender) => ({
               id: tender.id,

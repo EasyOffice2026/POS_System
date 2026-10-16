@@ -1,5 +1,6 @@
 import {
   type AccessTokenClaims,
+  type ChangePasswordRequest,
   type AuthUser,
   type LoginRequest,
   type Permission,
@@ -83,6 +84,7 @@ function toAuthUser(user: UserWithAccess, claims: AccessTokenClaims): AuthUser {
     branchIds: claims.branchIds,
     permissions: claims.permissions,
     preferredLang: user.preferredLang,
+    mustChangePassword: user.mustChangePassword,
   };
 }
 
@@ -323,6 +325,42 @@ export function createAuthService({ prisma, hasher, tokens, config }: AuthDeps) 
         session: await buildSession(record.user, record.branchId),
         refreshToken: next.token,
         refreshExpiresAt: next.expiresAt,
+      };
+    },
+
+    // A person changes their own password. Every session of theirs ends, in case somebody else
+    // had one, and a fresh session comes back for the device they did it on.
+    async changePassword(
+      auth: AccessTokenClaims,
+      input: ChangePasswordRequest,
+      meta: RequestMeta,
+    ): Promise<IssuedSession> {
+      const user = await prisma.user.findUnique({ where: { id: auth.sub }, include: withAccess });
+      if (!user?.isActive) throw errors.unauthenticated();
+      const wrong = () =>
+        errors.validation([{ path: 'currentPassword', message: 'PASSWORD_WRONG' }]);
+      if (!user.passwordHash) throw wrong();
+      if (!(await hasher.verify(input.currentPassword, user.passwordHash))) throw wrong();
+
+      const passwordHash = await hasher.hash(input.newPassword);
+      const updated = await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash, mustChangePassword: false },
+        include: withAccess,
+      });
+      await prisma.refreshToken.updateMany({
+        where: { userId: user.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      await audit(
+        { action: 'auth.password_changed', userId: user.id, brandId: user.brandId },
+        meta,
+      );
+      const issued = await issueRefreshToken(user.id, randomUUID(), null, meta);
+      return {
+        session: await buildSession(updated, null),
+        refreshToken: issued.token,
+        refreshExpiresAt: issued.expiresAt,
       };
     },
 

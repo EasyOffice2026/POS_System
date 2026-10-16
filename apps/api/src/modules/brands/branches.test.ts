@@ -70,7 +70,7 @@ describe('POST /brands/:id/branches', () => {
       address: null,
       timezone: 'Asia/Kuwait',
       isActive: true,
-      config: { openingHours: closedWeek(), printers: [], dayEndsAt: '00:00' },
+      config: { openingHours: closedWeek(), printers: [], dayEndsAt: '00:00', specialHours: [] },
     });
 
     const list = pageSchema(branchSchema).parse((await api.get(branchesOf(world.pizza.id))).body);
@@ -251,6 +251,7 @@ describe('GET /branches/:id', () => {
       openingHours: closedWeek(),
       printers: [],
       dayEndsAt: '00:00',
+      specialHours: [],
     });
   });
 
@@ -354,6 +355,53 @@ describe('PATCH /branches/:id', () => {
 
     const [row] = await auditRows('branch.updated');
     expect(row?.metadata).toEqual({ changed: ['openingHours'] });
+  });
+
+  it('sets special hours for Ramadan and a holiday, in calendar order, with ids', async () => {
+    const api = await asPizzaManager();
+    const res = await api.patch(`${BRANCHES}/${world.mall.id}`, {
+      config: {
+        specialHours: [
+          { name: 'Eid', from: '2027-03-20', to: '2027-03-22', hours: { kind: 'closed' } },
+          {
+            name: 'Ramadan',
+            from: '2027-02-08',
+            to: '2027-03-09',
+            hours: ranges(['19:00', '02:00'], ['12:00', '16:00']),
+          },
+        ],
+      },
+    });
+    expect(res.status).toBe(200);
+    const special = branchDetailSchema.parse(res.body).config.specialHours;
+    expect(special.map((period) => [period.name, period.from, period.to])).toEqual([
+      ['Ramadan', '2027-02-08', '2027-03-09'],
+      ['Eid', '2027-03-20', '2027-03-22'],
+    ]);
+    expect(special[0]?.hours).toEqual(ranges(['12:00', '16:00'], ['19:00', '02:00']));
+    expect(special[0]?.id).toMatch(/^[0-9a-f-]{36}$/);
+    const [row] = await auditRows('branch.updated');
+    expect(row?.metadata).toEqual({ changed: ['specialHours'] });
+
+    // Sent back as they are, nothing changes; a period that overlaps another is refused.
+    const again = await api.patch(`${BRANCHES}/${world.mall.id}`, {
+      config: { specialHours: special },
+    });
+    expect(again.status).toBe(200);
+    expect((await auditRows('branch.updated')).length).toBe(1);
+    const clash = await api.patch(`${BRANCHES}/${world.mall.id}`, {
+      config: {
+        specialHours: [
+          ...special,
+          { name: 'Late Eid', from: '2027-03-22', to: '2027-03-21', hours: { kind: 'all_day' } },
+        ],
+      },
+    });
+    expect(clash.status).toBe(400);
+    expect(messagesOf(clash)).toEqual([
+      'config.specialHours.2.to:DATE_RANGE_INVALID',
+      'config.specialHours.2:SPECIAL_OVERLAP',
+    ]);
   });
 
   it('refuses opening hours that overlap, and names the day', async () => {
