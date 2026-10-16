@@ -76,6 +76,6 @@ An order in every answer now has `customer` (`{ id, name, phone, points }` or nu
 
 ## Open questions
 
-1. How many points per KWD, what is a point worth, and from how many can they be spent, for each brand?
+1. ~~How many points per KWD, what is a point worth, and from how many can they be spent, for each brand?~~ Answered 16 October 2026: 1 point per KWD paid, a point worth 75 fils; these are the defaults, and each brand can still change them in Settings. The fewest points to spend stays 100 until the client says otherwise.
 2. Should the customer agree, at the counter, to their phone being kept, and should they be able to ask for it to be removed?
 3. Should points be shared by all the brands of the group, with tiers and an SMS code, as the first plan says? That needs an SMS provider in Kuwait.

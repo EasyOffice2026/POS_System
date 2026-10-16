@@ -122,6 +122,6 @@ Errors use the standard body `{ "error": { "code", "message", "details" } }`. Co
 1. Is a time-boxed lock with escalation acceptable, or should a locked PIN stay locked until a manager unlocks it? An unlock action arrives with the Users and roles module.
 2. Should Marketing be a group-level role, since loyalty points are shared across brands?
 3. Confirm the permission matrix above.
-4. Should a POS terminal keep a session for 7 days, or end it with the shift?
+4. ~~Should a POS terminal keep a session for 7 days, or end it with the shift?~~ Answered 16 October 2026: a till stays signed in for 24 hours after the PIN sign-in, then asks for the PIN again (`PIN_SESSION_HOURS`); the team can sign it out earlier.
 5. How does a terminal learn its branch? Device pairing is designed in Phase 2. Until then the branch id is entered during setup.
 6. If sign-out cannot reach the server, the person is signed out on that device but their refresh cookie stays valid until it expires, and a reload could sign them back in. Is that acceptable on shared terminals, or should a terminal refuse to sign out while offline?

@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Dialog } from '../../components/Dialog';
 import { fieldClass, primaryButtonClass, secondaryButtonClass } from '../../components/form';
 
-// The usual reasons, in the language of the screen. The reason is stored as it was shown.
-const reasons = ['changedMind', 'wrongItem', 'tooLong', 'quality', 'other'] as const;
+// The client's reasons (16 October 2026), in the language of the screen, and a free one. The
+// reason is stored as it was shown, and the dashboard counts voids by it.
+const reasons = ['late', 'notRight', 'quality', 'wrong', 'other'] as const;
 type Reason = (typeof reasons)[number];
 
 interface VoidDialogProps {

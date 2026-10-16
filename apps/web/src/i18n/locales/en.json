@@ -938,10 +938,10 @@
       "otherReason": "The reason",
       "confirm": "Void",
       "reasons": {
-        "changedMind": "The customer changed their mind",
-        "wrongItem": "Wrong item",
-        "tooLong": "Took too long",
-        "quality": "Quality problem",
+        "late": "Late order",
+        "notRight": "Order is not right",
+        "quality": "Food quality is not good",
+        "wrong": "Order is wrong",
         "other": "Other"
       }
     },

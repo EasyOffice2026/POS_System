@@ -114,7 +114,7 @@ describe('the settings page', () => {
       section.getByRole('checkbox', { name: 'Customers earn and spend points' }),
     ).not.toBeChecked();
     expect(section.getByLabelText('Points per KWD')).toHaveValue('1');
-    expect(section.getByLabelText('Value of a point (KWD)')).toHaveValue('0.010');
+    expect(section.getByLabelText('Value of a point (KWD)')).toHaveValue('0.075');
     expect(section.getByLabelText('Fewest points to spend')).toHaveValue('100');
 
     await user.click(section.getByRole('checkbox', { name: 'Customers earn and spend points' }));
