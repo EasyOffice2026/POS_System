@@ -347,7 +347,12 @@
     "PASSWORD_WRONG": "The current password is not right.",
     "PASSWORD_SAME": "Choose a password different from the current one.",
     "PASSWORD_MISMATCH": "The two new passwords are not the same.",
-    "ALERT_EMAILS_TOO_MANY": "At most 10 addresses."
+    "ALERT_EMAILS_TOO_MANY": "At most 10 addresses.",
+    "SPECIAL_NAME_REQUIRED": "Give the period a name.",
+    "SPECIAL_NAME_TOO_LONG": "A period name has at most 40 characters.",
+    "SPECIAL_OVERLAP": "These dates overlap another period.",
+    "SPECIAL_TOO_MANY": "At most 20 periods.",
+    "DATE_RANGE_INVALID": "The last day is before the first day."
   },
   "rolesPage": {
     "title": "Roles",
@@ -536,7 +541,21 @@
     "copyToAll": "Copy to all days",
     "saved": "Opening hours saved.",
     "dayEndsAt": "The business day ends at",
-    "dayEndsAtHint": "Orders before this hour count for the day before, and the order numbers start again after it. 00:00 is midnight."
+    "dayEndsAtHint": "Orders before this hour count for the day before, and the order numbers start again after it. 00:00 is midnight.",
+    "special": {
+      "title": "Special hours (Ramadan, Eid, holidays)",
+      "intro": "On these dates the branch opens as set here instead of its usual hours.",
+      "none": "No special periods yet.",
+      "period": "Special period",
+      "name": "Name",
+      "from": "First day",
+      "to": "Last day",
+      "add": "Add a period",
+      "remove": "Remove",
+      "hours": "Hours",
+      "opens": "Opens",
+      "closes": "Closes"
+    }
   },
   "printers": {
     "intro": "Network printers at this branch. A branch can have several printers of each kind.",

@@ -1,23 +1,27 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEFAULT_PRINTER_PORT,
+  MAX_PRINTERS,
+  MAX_RANGES_PER_DAY,
   branchConfigChangeSchema,
   businessDateOn,
   closedWeek,
-  DEFAULT_PRINTER_PORT,
+  hoursOnDate,
+  isBranchOpenAt,
   isOpenAt,
   isOpenAtInstant,
   isPrinterHost,
   isTimeZone,
   localTimeIn,
-  MAX_PRINTERS,
-  MAX_RANGES_PER_DAY,
-  type OpeningHours,
   openingHoursSchema,
   overlappingDays,
   parseBranchConfig,
   printerInputListSchema,
   printerInputSchema,
   printerListSchema,
+  specialHoursSchema,
+  type DayHours,
+  type OpeningHours,
 } from './branch-config';
 
 // A week with every day closed, and the given days changed.
@@ -362,7 +366,12 @@ describe('printers', () => {
 
 describe('parseBranchConfig', () => {
   it('gives a branch that was never set up closed days and no printers', () => {
-    const expected = { openingHours: closedWeek(), printers: [], dayEndsAt: '00:00' };
+    const expected = {
+      openingHours: closedWeek(),
+      printers: [],
+      dayEndsAt: '00:00',
+      specialHours: [],
+    };
 
     expect(parseBranchConfig({})).toEqual(expected);
     expect(parseBranchConfig(null)).toEqual(expected);
@@ -384,7 +393,7 @@ describe('parseBranchConfig', () => {
       ],
     };
 
-    expect(parseBranchConfig(stored)).toEqual({ ...stored, dayEndsAt: '00:00' });
+    expect(parseBranchConfig(stored)).toEqual({ ...stored, dayEndsAt: '00:00', specialHours: [] });
   });
 
   it('falls back to the default for a part that cannot be read, and keeps the other part', () => {
@@ -402,6 +411,7 @@ describe('parseBranchConfig', () => {
       openingHours: closedWeek(),
       printers,
       dayEndsAt: '00:00',
+      specialHours: [],
     });
   });
 
@@ -410,6 +420,7 @@ describe('parseBranchConfig', () => {
       openingHours: closedWeek(),
       printers: [],
       dayEndsAt: '00:00',
+      specialHours: [],
     });
   });
 });
@@ -544,5 +555,58 @@ describe('businessDateOn', () => {
     expect(parseBranchConfig({ dayEndsAt: '04:00' }).dayEndsAt).toBe('04:00');
     expect(parseBranchConfig({ dayEndsAt: '4am' }).dayEndsAt).toBe('00:00');
     expect(parseBranchConfig(null).dayEndsAt).toBe('00:00');
+  });
+});
+
+describe('special hours', () => {
+  const closed: DayHours = { kind: 'closed' };
+  const evening: DayHours = { kind: 'ranges', ranges: [{ open: '19:00', close: '02:00' }] };
+  const ramadan = {
+    id: '01990000-0000-7000-8000-00000000a001',
+    name: 'Ramadan',
+    from: '2027-02-08',
+    to: '2027-03-09',
+    hours: evening,
+  };
+  const eid = {
+    id: '01990000-0000-7000-8000-00000000a002',
+    name: 'Eid',
+    from: '2027-03-10',
+    to: '2027-03-12',
+    hours: closed,
+  };
+
+  it('keep the periods in calendar order and refuse dates that overlap or run backwards', () => {
+    expect(specialHoursSchema.parse([eid, ramadan]).map((period) => period.name)).toEqual([
+      'Ramadan',
+      'Eid',
+    ]);
+    const result = specialHoursSchema.safeParse([
+      ramadan,
+      { ...eid, from: '2027-03-09' },
+      { ...eid, id: '01990000-0000-7000-8000-00000000a003', from: '2027-04-02', to: '2027-04-01' },
+    ]);
+    expect(result.success).toBe(false);
+    expect(
+      result.error?.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`),
+    ).toEqual(['1: SPECIAL_OVERLAP', '2.to: DATE_RANGE_INVALID']);
+  });
+
+  it('decide the hours of a date: the period that covers it, else the weekday', () => {
+    const config = {
+      openingHours: { ...closedWeek(), monday: { kind: 'all_day' as const } },
+      specialHours: [ramadan, eid],
+    };
+    expect(hoursOnDate(config, '2027-02-15', 'monday')).toEqual(evening);
+    expect(hoursOnDate(config, '2027-03-11', 'thursday')).toEqual(closed);
+    expect(hoursOnDate(config, '2027-03-15', 'monday')).toEqual({ kind: 'all_day' });
+    // Monday 15 February 2027 at 20:00 in Kuwait is in Ramadan: open by the evening hours.
+    expect(isBranchOpenAt(config, new Date('2027-02-15T17:00:00Z'), 'Asia/Kuwait')).toBe(true);
+    expect(isBranchOpenAt(config, new Date('2027-02-15T07:00:00Z'), 'Asia/Kuwait')).toBe(false);
+    expect(isBranchOpenAt(config, new Date('2027-03-15T07:00:00Z'), 'Asia/Kuwait')).toBe(true);
+  });
+
+  it('come back empty from a configuration that has none', () => {
+    expect(parseBranchConfig({}).specialHours).toEqual([]);
   });
 });
