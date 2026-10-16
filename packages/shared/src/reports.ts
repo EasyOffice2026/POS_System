@@ -147,5 +147,14 @@ export const overviewSchema = z.object({
     }),
   ),
   attention: z.array(overviewAttentionSchema),
+  // Today's voids by reason, orders and single dishes alike, the biggest amounts first.
+  voids: z.array(
+    z.object({
+      reason: z.string(),
+      orders: z.number().int(),
+      lines: z.number().int(),
+      amount: z.string(),
+    }),
+  ),
 });
 export type Overview = z.infer<typeof overviewSchema>;

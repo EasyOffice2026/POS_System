@@ -23,6 +23,8 @@ export interface Config {
   authRateLimit: { windowMs: number; max: number };
   // How long the menu of a branch is kept if nothing changes it (it is also cleared by every change).
   menuCacheTtlSeconds: number;
+  // The email account alerts go out from (smtp://user:password@host:port), and the sender shown.
+  mail: { smtpUrl: string | undefined; from: string | undefined };
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -44,6 +46,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     // How long a till stays signed in with a PIN before it asks for it again (the client: a day).
     PIN_SESSION_HOURS: z.coerce.number().int().min(1).default(24),
     AUTH_RATE_LIMIT_MAX: z.coerce.number().int().min(1).default(30),
+    SMTP_URL: z.string().url().optional(),
+    ALERT_FROM: z.string().min(3).optional(),
     MENU_CACHE_TTL_SECONDS: z.coerce
       .number()
       .int()
@@ -75,5 +79,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     },
     authRateLimit: { windowMs: 15 * 60 * 1000, max: values.AUTH_RATE_LIMIT_MAX },
     menuCacheTtlSeconds: values.MENU_CACHE_TTL_SECONDS,
+    mail: { smtpUrl: values.SMTP_URL, from: values.ALERT_FROM },
   };
 }

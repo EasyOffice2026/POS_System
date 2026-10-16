@@ -78,6 +78,10 @@ const overview = (overrides: Partial<Overview> = {}): Overview => ({
       sales: '25.000',
     },
   ],
+  voids: [
+    { reason: 'Order is wrong', orders: 1, lines: 2, amount: '14.000' },
+    { reason: '', orders: 0, lines: 1, amount: '2.000' },
+  ],
   attention: [
     {
       kind: 'old_shift',

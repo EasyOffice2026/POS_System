@@ -1,6 +1,7 @@
 import type { BranchMenu } from '@pos/shared';
 import express from 'express';
 import type { Config } from './config';
+import { createMailer, type Mailer } from './lib/mailer';
 import { createMemoryMenuCache, type MenuCache } from './lib/menu-cache';
 import { createPasswordHasher, hashProfiles, type PasswordHasher } from './lib/password';
 import type { PrismaClient } from './lib/prisma';
@@ -28,6 +29,7 @@ import { createMenuRouter } from './modules/menu/menu.router';
 import { createMenuService } from './modules/menu/menu.service';
 import { createOrdersRouter } from './modules/orders/orders.router';
 import { createOrdersService } from './modules/orders/orders.service';
+import { createVoidAlerts } from './modules/orders/void-alerts';
 import { createOverviewService } from './modules/reports/overview.service';
 import { createReportsRouter } from './modules/reports/reports.router';
 import { createReportsService } from './modules/reports/reports.service';
@@ -52,9 +54,11 @@ export interface AppDeps {
   now?: () => Date;
   // Where the line of each request goes: standard output, or nowhere while testing.
   log?: (line: LogLine) => void;
+  // Tests pass their own mailer to see what would be sent.
+  mailer?: Mailer;
 }
 
-export function createApp({ prisma, config, hasher, menuCache, now, log }: AppDeps) {
+export function createApp({ prisma, config, hasher, menuCache, now, log, mailer }: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', config.trustProxy);
@@ -84,8 +88,13 @@ export function createApp({ prisma, config, hasher, menuCache, now, log }: AppDe
     prisma,
     now: now ?? (() => new Date()),
   });
+  const voidAlerts = createVoidAlerts({
+    prisma,
+    mailer: mailer ?? createMailer(config.mail),
+  });
   const ordersService = createOrdersService({
     prisma,
+    notifyVoid: (event) => voidAlerts.send(event),
     hasher: passwordHasher,
     // The menu text was made by the menu service, so it has the shape of a branch menu.
     loadMenu: async (ctx, branchId) =>

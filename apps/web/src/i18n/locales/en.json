@@ -346,7 +346,8 @@
     "TABLE_TAKEN": "Another order is open at this table.",
     "PASSWORD_WRONG": "The current password is not right.",
     "PASSWORD_SAME": "Choose a password different from the current one.",
-    "PASSWORD_MISMATCH": "The two new passwords are not the same."
+    "PASSWORD_MISMATCH": "The two new passwords are not the same.",
+    "ALERT_EMAILS_TOO_MANY": "At most 10 addresses."
   },
   "rolesPage": {
     "title": "Roles",
@@ -1212,6 +1213,12 @@
       "pointValueHint": "For example 0.010: 100 points take 1.000 off.",
       "minRedeem": "Fewest points to spend",
       "minRedeemHint": "The least a customer can spend at once."
+    },
+    "alerts": {
+      "title": "Alerts",
+      "intro": "Who is told by email when something is voided on a till.",
+      "voidEmails": "Email addresses for void alerts",
+      "voidEmailsHint": "One per line. Leave empty to send none."
     }
   },
   "shifts": {
@@ -1679,6 +1686,15 @@
       "voids_other": "{{count}} orders voided today,",
       "refunds_one": "{{count}} refund today,",
       "refunds_other": "{{count}} refunds today,"
+    },
+    "voids": {
+      "title": "Voids today, by reason",
+      "none": "Nothing was voided today.",
+      "reason": "Reason",
+      "orders": "Orders",
+      "lines": "Dishes",
+      "amount": "Amount",
+      "noReason": "No reason given"
     }
   }
 }

@@ -25,6 +25,7 @@ No new permission. A group admin sees every brand, or picks one; a brand manager
 7. **Top dishes**: the ten dishes and combos sold most today across the branches shown, by quantity, with their sales before the order's discount.
 8. **Needs attention**: a shift still open that was opened on an earlier business day, and a branch with voids or refunds today, the largest first.
 9. The figures are read when asked; nothing is stored. The screen asks again every minute.
+10. **Voids by reason** (added 16 October 2026 at the client's request): today's voided orders and voided dishes, grouped by the reason given, with how many and how much, the biggest amounts first. Each void is also mailed to the addresses in the brand's settings (Settings → Alerts).
 
 ## API
 

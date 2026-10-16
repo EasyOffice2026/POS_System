@@ -48,6 +48,8 @@ interface FormState {
   doneBy: TicketDoneBy;
   stations: StationRow[];
   // The loyalty rules as typed (spec 022).
+  // Who is told about voids, one address per line or comma (docs/client-decisions.md).
+  voidEmails: string;
   loyaltyOn: boolean;
   pointsPerKwd: string;
   pointValue: string;
@@ -68,6 +70,7 @@ function toForm(settings: BrandSettings): FormState {
     voidRule: settings.voidNeedsManager,
     doneBy: settings.ticketDoneBy,
     stations: settings.kitchenStations.map((station) => ({ ...station })),
+    voidEmails: settings.alerts.voidEmails.join('\n'),
     loyaltyOn: settings.loyalty.enabled,
     pointsPerKwd: String(settings.loyalty.pointsPerKwd),
     pointValue: settings.loyalty.pointValue,
@@ -88,6 +91,12 @@ function toRequest(form: FormState): BrandSettingsRequest {
     kitchenStations: form.stations.map((station) =>
       station.id ? { id: station.id, name: station.name } : { name: station.name },
     ),
+    alerts: {
+      voidEmails: form.voidEmails
+        .split(/[\n,،;\s]+/)
+        .map((email) => email.trim())
+        .filter((email) => email !== ''),
+    },
     loyalty: {
       enabled: form.loyaltyOn,
       pointsPerKwd: wholeNumber(form.pointsPerKwd),
@@ -468,6 +477,31 @@ function SettingsForm({ brandId, settings }: { brandId: string; settings: BrandS
             />
           </FormField>
         </div>
+      </section>
+
+      <section className={sectionClass} aria-labelledby="settings-alerts">
+        <h2 id="settings-alerts" className="text-lg font-semibold">
+          {t('settings.alerts.title')}
+        </h2>
+        <p className="text-sm text-slate-600">{t('settings.alerts.intro')}</p>
+        <FormField
+          id="void-emails"
+          label={t('settings.alerts.voidEmails')}
+          hint={t('settings.alerts.voidEmailsHint')}
+          error={error('alerts.voidEmails') ?? error('alerts.voidEmails.0')}
+        >
+          <textarea
+            {...fieldAttributes('void-emails', {
+              hint: true,
+              error: Boolean(error('alerts.voidEmails') ?? error('alerts.voidEmails.0')),
+            })}
+            dir="ltr"
+            rows={3}
+            value={form.voidEmails}
+            onChange={(event) => change({ voidEmails: event.target.value })}
+            className={fieldClass}
+          />
+        </FormField>
       </section>
 
       {formProblem && (

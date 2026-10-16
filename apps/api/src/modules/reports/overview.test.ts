@@ -207,6 +207,7 @@ describe("today's overview", () => {
       ['refunds', world.downtown.id, 1, '2.000', null],
     ]);
     expect(overview.summary).toMatchObject({ refunds: '2.000', voidedOrders: 1 });
+    expect(overview.voids).toEqual([{ reason: 'Left', orders: 1, lines: 0, amount: '6.000' }]);
     expect(overview.branches.map((branch) => branch.openShifts)).toEqual([1, 1, 0]);
   });
 
