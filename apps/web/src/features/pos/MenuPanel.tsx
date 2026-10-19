@@ -97,7 +97,7 @@ export function MenuPanel({ menu, now, disabled, onPick }: MenuPanelProps) {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {items.map((item) => {
           const available = soldNow(item);
           return (
@@ -108,12 +108,17 @@ export function MenuPanel({ menu, now, disabled, onPick }: MenuPanelProps) {
               onClick={() => onPick({ kind: 'item', item })}
               className={tileClass}
             >
+              {/* Square, like the dish photos on the brand's website. */}
               {item.imageUrl && (
                 <img
                   src={item.imageUrl}
                   alt=""
                   loading="lazy"
-                  className="mb-2 h-24 w-full rounded-md object-cover"
+                  // A link that no longer works leaves the tile without a photo, not a broken one.
+                  onError={(event) => {
+                    event.currentTarget.hidden = true;
+                  }}
+                  className="mb-2 aspect-square w-full rounded-md object-cover"
                 />
               )}
               <span className="font-medium text-slate-900">
