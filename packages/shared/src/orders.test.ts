@@ -300,7 +300,9 @@ describe('payOrderRequestSchema', () => {
     ]);
     expect(
       codesOf(
-        payOrderRequestSchema.safeParse({ tenders: [{ id, method: 'Not a key!', amount: '1' }] }),
+        payOrderRequestSchema.safeParse({
+          tenders: [{ id, method: 'Not a key!', amount: '1', reference: '4821' }],
+        }),
       ),
     ).toEqual(['tenders.0.method: PAYMENT_METHOD_KEY_INVALID']);
   });
