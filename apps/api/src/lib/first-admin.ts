@@ -68,3 +68,50 @@ export async function createFirstAdmin(
 
   return { id: user.id, email, password };
 }
+
+export interface ResetAdmin {
+  id: string;
+  email: string;
+  // Shown once. Only its hash is stored.
+  password: string;
+}
+
+// Gives a group admin a new password that is made up on the spot, for when the owner is locked out
+// and nobody else can reset it from Users. Their sessions end and the lock-out is cleared.
+export async function resetAdminPassword(
+  prisma: PrismaClient,
+  hasher: PasswordHasher,
+  email: string,
+): Promise<ResetAdmin> {
+  const user = await prisma.user.findUnique({ where: { email }, include: { role: true } });
+  if (!user) throw new FirstAdminError(`There is no account with the email ${email}.`);
+  if (user.role.key !== 'group_admin') {
+    throw new FirstAdminError(
+      `${email} is not a group admin. A group admin resets other passwords under Users.`,
+    );
+  }
+
+  const password = generatePassword();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash: await hasher.hash(password),
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+      isActive: true,
+    },
+  });
+  await prisma.refreshToken.updateMany({
+    where: { userId: user.id, revokedAt: null },
+    data: { revokedAt: new Date() },
+  });
+
+  await writeAudit(prisma, {
+    action: 'user.credentials_reset',
+    entityType: 'user',
+    entityId: user.id,
+    metadata: { type: 'password', generated: true, source: 'admin:reset' },
+  });
+
+  return { id: user.id, email, password };
+}
