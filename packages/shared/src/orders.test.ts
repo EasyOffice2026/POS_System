@@ -245,7 +245,12 @@ describe('payOrderRequestSchema', () => {
     amount,
     tendered,
   });
-  const card = (amount: string, tenderId = other) => ({ id: tenderId, method: 'knet', amount });
+  const card = (amount: string, tenderId = other) => ({
+    id: tenderId,
+    method: 'knet',
+    amount,
+    reference: '4821',
+  });
 
   it('writes the amounts with 3 decimals and keeps the slip number', () => {
     const parsed = payOrderRequestSchema.parse({
@@ -255,6 +260,17 @@ describe('payOrderRequestSchema', () => {
       { id, method: 'cash', amount: '22.000', tendered: '50.500' },
       { id: other, method: 'knet', amount: '50.000', reference: '123456' },
     ]);
+  });
+
+  it('wants the slip number on every payment that is not cash', () => {
+    expect(
+      codesOf(payOrderRequestSchema.safeParse({ tenders: [{ ...card('5'), reference: ' ' }] })),
+    ).toEqual(['tenders.0.reference: PAYMENT_REFERENCE_REQUIRED']);
+    expect(
+      codesOf(
+        payOrderRequestSchema.safeParse({ tenders: [{ ...card('5'), reference: undefined }] }),
+      ),
+    ).toEqual(['tenders.0.reference: PAYMENT_REFERENCE_REQUIRED']);
   });
 
   it('allows no part, for an order that costs nothing', () => {
@@ -284,7 +300,9 @@ describe('payOrderRequestSchema', () => {
     ]);
     expect(
       codesOf(
-        payOrderRequestSchema.safeParse({ tenders: [{ id, method: 'Not a key!', amount: '1' }] }),
+        payOrderRequestSchema.safeParse({
+          tenders: [{ id, method: 'Not a key!', amount: '1', reference: '4821' }],
+        }),
       ),
     ).toEqual(['tenders.0.method: PAYMENT_METHOD_KEY_INVALID']);
   });

@@ -231,6 +231,21 @@ describe('taking an order', () => {
     });
   });
 
+  it('shows the photo of a dish on its tile', async () => {
+    saveTerminal(mall);
+    const menu = branchMenu();
+    const margherita = menu.categories[0]?.items[0];
+    if (margherita) margherita.imageUrl = 'https://files.test/pizza/item/margherita.png';
+    terminalApi({ [MENU]: () => json(menu) });
+    renderApp('/pos');
+
+    const tile = await screen.findByRole('button', { name: /Margherita/ });
+    expect(within(tile).getByRole('presentation', { hidden: true })).toHaveAttribute(
+      'src',
+      'https://files.test/pizza/item/margherita.png',
+    );
+  });
+
   it('says in words when a dish was switched off since the menu was loaded', async () => {
     saveTerminal(mall);
     nextIds(orderIds.first, lineIds.cola);

@@ -23,7 +23,7 @@ The cashier takes the money for an order in cash, by card, or both, sees the cha
 
 1. **One payment closes the order.** The cashier sends the whole payment at once: one or more parts ("tenders") that together pay the total exactly. An order is never half paid. This keeps the books simple until shifts and refunds exist.
 2. **Cash** may be more than its part: the customer hands over 100.000 for 72.000 and gets 28.000 back. At most one part is cash, so the change is never in doubt. What was handed over must be at least the part it pays.
-3. **Card** pays exactly its part, never more. The slip number is optional (up to 40 characters). There is no link to a card machine until a provider is chosen.
+3. **Card** pays exactly its part, never more. The slip or transaction number is required (up to 40 characters; `PAYMENT_REFERENCE_REQUIRED` without it), as the client asked on 19 October 2026. There is no link to a card machine until a provider is chosen.
 4. **What can be paid.** An open order with at least one line that is not voided. An order whose total is 0 (a 100% discount) is paid with no parts.
 5. **Lines not sent yet are sent** when the order is paid, at the same moment, so the kitchen gets everything that was sold.
 6. **After payment** nothing about the order can change: no lines, no discount, no void (`ORDER_NOT_OPEN`). Taking money back is the refunds epic.
@@ -53,7 +53,7 @@ The order in every answer now has `payments` (each with its method, amount, what
 
 ## Screens
 
-- **Pay** on the order screen (when the order has lines and nothing stops it) opens the payment dialog: the amount due; **Cash** with a number pad and buttons for the exact amount and common notes (10, 50, 100, 200, 500), showing the change; **Card** with an optional slip number; **Split** to pay part by card and the rest in cash.
+- **Pay** on the order screen (when the order has lines and nothing stops it) opens the payment dialog: the amount due; **Cash** with a number pad and buttons for the exact amount and common notes (10, 50, 100, 200, 500), showing the change; **Card** with the slip number, required; **Split** to pay part by card and the rest in cash.
 - After payment the **receipt** opens, with **Print** and **New order**.
 
 ## Acceptance criteria

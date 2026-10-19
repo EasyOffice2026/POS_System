@@ -60,7 +60,7 @@ async function paidOrder(api: Api, tenders: object[]) {
   return orderOf(res);
 }
 const cash25 = () => [{ id: randomUUID(), method: 'cash', amount: '25', tendered: '25' }];
-const knet25 = () => [{ id: randomUUID(), method: 'knet', amount: '25' }];
+const knet25 = () => [{ id: randomUUID(), method: 'knet', amount: '25', reference: 'K1' }];
 
 const refund = (api: Api, orderId: string, body: object) =>
   api.post(`${ORDERS}/${orderId}/refunds`, { id: randomUUID(), reason: 'Food came back', ...body });
