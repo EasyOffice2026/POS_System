@@ -197,7 +197,9 @@ describe('payment methods (criteria 1 and 2)', () => {
 
     for (const method of ['talabat', 'card']) {
       const res = await api.post(`${ORDERS}/${order.id}/pay`, {
-        tenders: [{ id: '01990000-0000-7000-8000-00000000b003', method, amount: '25' }],
+        tenders: [
+          { id: '01990000-0000-7000-8000-00000000b003', method, amount: '25', reference: 'K1' },
+        ],
       });
       expect(res.status).toBe(400);
       expect(errorOf(res).details).toEqual([

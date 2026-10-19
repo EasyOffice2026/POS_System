@@ -58,6 +58,8 @@ export function PaymentDialog({ order, settings, onPay, onCancel }: PaymentDialo
   if (mode !== 'cash' && !method) ready = false;
   if (mode === 'mixed' && (otherPart === null || otherPart <= 0 || otherPart > due)) ready = false;
   if (cashPart !== null && cashPart > 0 && (handed === null || handed < cashPart)) ready = false;
+  // A KNET or platform payment carries its slip or transaction number.
+  if (otherPart !== null && otherPart > 0 && reference.trim() === '') ready = false;
   const change = ready && cashPart && handed !== null ? handed - cashPart : 0;
 
   function tenders(): TenderInput[] {
@@ -67,7 +69,7 @@ export function PaymentDialog({ order, settings, onPay, onCancel }: PaymentDialo
         id: ids.other,
         method: method.key,
         amount: fromMils(otherPart),
-        ...(reference.trim() ? { reference: reference.trim() } : {}),
+        reference: reference.trim(),
       });
     }
     if (cashPart && cashPart > 0 && handed !== null) {
@@ -152,6 +154,7 @@ export function PaymentDialog({ order, settings, onPay, onCancel }: PaymentDialo
         dir="ltr"
         maxLength={40}
         autoComplete="off"
+        required
         value={reference}
         onChange={(event) => setReference(event.target.value)}
         className={fieldClass}

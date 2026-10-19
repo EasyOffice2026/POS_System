@@ -145,7 +145,7 @@ describe('paying an order', () => {
     const dialog = await openPayment(user);
     await user.click(within(dialog).getByRole('button', { name: 'Mixed' }));
     await user.type(within(dialog).getByLabelText('Amount by KNET'), '50');
-    await user.type(within(dialog).getByLabelText('Reference number (optional)'), '4821');
+    await user.type(within(dialog).getByLabelText('Reference number'), '4821');
     await user.click(within(dialog).getByRole('button', { name: 'Exact' }));
     expect(within(dialog).getByTestId('change-due')).toHaveTextContent('0.000');
     await user.click(within(dialog).getByRole('button', { name: 'Confirm payment' }));
@@ -167,11 +167,14 @@ describe('paying an order', () => {
     const dialog = await openPayment(user);
     await user.click(within(dialog).getByRole('button', { name: 'KNET' }));
     expect(within(dialog).queryByTestId('change-due')).not.toBeInTheDocument();
+    // Without the slip number the payment cannot be confirmed.
+    expect(within(dialog).getByRole('button', { name: 'Confirm payment' })).toBeDisabled();
+    await user.type(within(dialog).getByLabelText('Reference number'), '778899');
     await user.click(within(dialog).getByRole('button', { name: 'Confirm payment' }));
 
     expect(await screen.findByRole('dialog', { name: 'Receipt' })).toBeVisible();
     expect(api.calls.find((call) => call.key === PAY)?.body).toEqual({
-      tenders: [{ id: cardId, method: 'knet', amount: '72.000' }],
+      tenders: [{ id: cardId, method: 'knet', amount: '72.000', reference: '778899' }],
     });
   });
 

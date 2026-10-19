@@ -108,6 +108,14 @@ export function MenuPanel({ menu, now, disabled, onPick }: MenuPanelProps) {
               onClick={() => onPick({ kind: 'item', item })}
               className={tileClass}
             >
+              {item.imageUrl && (
+                <img
+                  src={item.imageUrl}
+                  alt=""
+                  loading="lazy"
+                  className="mb-2 h-24 w-full rounded-md object-cover"
+                />
+              )}
               <span className="font-medium text-slate-900">
                 {localize(item.name, i18n.language)}
               </span>

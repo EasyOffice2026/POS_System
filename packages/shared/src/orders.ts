@@ -354,8 +354,9 @@ const referenceField = z
   .max(40, 'PAYMENT_REFERENCE_TOO_LONG')
   .transform((text) => (text === '' ? null : text));
 
-// One part of a payment. Cash says what the customer handed over; any other way to pay may carry
-// a slip or transaction number.
+// One part of a payment. Cash says what the customer handed over; any other way to pay carries
+// the slip or transaction number of the card machine or the platform (the client wants it on
+// every KNET payment, docs/client-decisions.md).
 const tenderSchema = z
   .strictObject({
     id: z.uuid(),
@@ -369,8 +370,17 @@ const tenderSchema = z
       if (tender.tendered === undefined) {
         ctx.addIssue({ code: 'custom', path: ['tendered'], message: 'PAYMENT_TENDERED_REQUIRED' });
       }
-    } else if (tender.tendered !== undefined) {
-      ctx.addIssue({ code: 'custom', path: ['tendered'], message: 'PAYMENT_TENDERED_ONLY_CASH' });
+    } else {
+      if (tender.tendered !== undefined) {
+        ctx.addIssue({ code: 'custom', path: ['tendered'], message: 'PAYMENT_TENDERED_ONLY_CASH' });
+      }
+      if (!tender.reference) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['reference'],
+          message: 'PAYMENT_REFERENCE_REQUIRED',
+        });
+      }
     }
   });
 export type Tender = z.infer<typeof tenderSchema>;

@@ -43,11 +43,11 @@ const cash = (amount: string, tendered: string, id = randomUUID()) => ({
   amount,
   tendered,
 });
-const card = (amount: string, reference?: string, id = randomUUID()) => ({
+const card = (amount: string, reference = 'K1', id = randomUUID()) => ({
   id,
   method: 'knet',
   amount,
-  ...(reference === undefined ? {} : { reference }),
+  reference,
 });
 
 // An order of 72.000 at Pizza Mall: 50.000 and 30.000 with a 10% discount, nothing sent yet.

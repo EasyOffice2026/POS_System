@@ -75,6 +75,7 @@ const knet = (amount: string, n = 1) => ({
   id: `01990000-0000-7000-8000-00000000d${String(n).padStart(3, '0')}`,
   method: 'knet',
   amount,
+  reference: 'K1',
 });
 
 describe('POST /shifts', () => {
