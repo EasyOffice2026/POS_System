@@ -163,6 +163,7 @@ describe('the sales report', () => {
       netSales: '47.000',
       refunds: '0.000',
       netAfterRefunds: '47.000',
+      commissions: '0.000',
       averageOrder: '23.500',
       voidedOrders: 1,
     });

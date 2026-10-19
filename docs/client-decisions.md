@@ -2,6 +2,14 @@
 
 The answers of Easy Office / Nexera to the questions of the specs and the launch plan, with what was done about each. Newest first.
 
+## 20 October 2026
+
+| Topic               | Decision                                                                                                                                                 | Done                                                                                                                                                                                    |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Delivery platforms  | Talabat, Keeta and Jahez stay manual: the cashier types their orders. A restaurant that needs integration gets it through an integrator such as Grubtech | Nothing to build now; the orders are paid with the platform as the way to pay                                                                                                           |
+| Platform commission | Shown in the reports, with rates the owner can change as they are renegotiated                                                                           | Done: a commission rate on each way to pay (Settings), kept on every payment, with commission and net per way to pay in the sales report ([spec 025](specs/025-platform-commission.md)) |
+| Photos and KNET     | Photos on the till like the website; the KNET reference number required; a way back to the dashboard from the till and kitchen                           | Done                                                                                                                                                                                    |
+
 ## 16 October 2026
 
 | Topic              | Decision                                                                             | Done                                                                                                                                                                                              |

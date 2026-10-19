@@ -241,6 +241,9 @@ function Report({
         <Figure label={t('reports.netAfterRefunds')} tone="text-emerald-800">
           <Price value={summary.netAfterRefunds} />
         </Figure>
+        <Figure label={t('reports.commissions')} tone="text-amber-800">
+          <Price value={summary.commissions} />
+        </Figure>
         <Figure label={t('reports.averageOrder')}>
           <Price value={summary.averageOrder} />
         </Figure>
@@ -274,7 +277,39 @@ function Report({
         </table>
       </Section>
 
-      <Section title={t('reports.byPayment')}>
+      <Section
+        title={t('reports.byPayment')}
+        action={
+          report.payments.length > 0 && (
+            <button
+              type="button"
+              onClick={() =>
+                downloadCsv(`sales-by-payment-${report.from}-${report.to}.csv`, [
+                  [
+                    t('reports.method'),
+                    t('reports.payments'),
+                    t('reports.amount'),
+                    t('reports.refunds'),
+                    t('reports.commission'),
+                    t('reports.net'),
+                  ],
+                  ...report.payments.map((row) => [
+                    name(row.name),
+                    row.count,
+                    row.amount,
+                    row.refunds,
+                    row.commission,
+                    row.net,
+                  ]),
+                ])
+              }
+              className={secondaryButtonClass}
+            >
+              {t('reports.downloadCsv')}
+            </button>
+          )
+        }
+      >
         {report.payments.length === 0 ? (
           <p className="text-sm text-slate-500">{t('reports.nothing')}</p>
         ) : (
@@ -285,6 +320,8 @@ function Report({
                 <th className={`${th} text-end`}>{t('reports.payments')}</th>
                 <th className={`${th} text-end`}>{t('reports.amount')}</th>
                 <th className={`${th} text-end`}>{t('reports.refunds')}</th>
+                <th className={`${th} text-end`}>{t('reports.commission')}</th>
+                <th className={`${th} text-end`}>{t('reports.net')}</th>
               </tr>
             </thead>
             <tbody>
@@ -297,6 +334,12 @@ function Report({
                   </td>
                   <td className={`${td} text-end`}>
                     <Price value={row.refunds} />
+                  </td>
+                  <td className={`${td} text-end`}>
+                    <Price value={row.commission} />
+                  </td>
+                  <td className={`${td} text-end font-medium`}>
+                    <Price value={row.net} />
                   </td>
                 </tr>
               ))}

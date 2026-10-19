@@ -84,4 +84,4 @@ The branch configuration (spec 002) takes `dayEndsAt`. Categories (spec 004) tak
 ## Open questions
 
 1. Do Talabat, Keeta and Jahez orders need their own order type (with the platform's order number), or is paying with that method enough?
-2. Should the delivery platforms' commission be recorded, for the reports?
+2. Should the delivery platforms' commission be recorded, for the reports? **Yes** (20 October 2026): a rate per way to pay, see [spec 025](025-platform-commission.md).

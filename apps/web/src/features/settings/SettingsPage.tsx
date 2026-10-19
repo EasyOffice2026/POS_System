@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { BilingualNameFields } from '../../components/BilingualNameFields';
 import {
+  compactFieldClass,
   fieldAttributes,
   fieldClass,
   FormField,
@@ -31,6 +32,8 @@ interface MethodRow {
   key: string;
   name: { en: string; ar: string };
   isActive: boolean;
+  // The platform's share, in percent (docs/specs/025-platform-commission.md).
+  commissionRate: string;
   // A method that was saved keeps its key: payments point at it.
   saved: boolean;
 }
@@ -83,7 +86,12 @@ function toForm(settings: BrandSettings): FormState {
 
 function toRequest(form: FormState): BrandSettingsRequest {
   return {
-    paymentMethods: form.methods.map(({ key, name, isActive }) => ({ key, name, isActive })),
+    paymentMethods: form.methods.map(({ key, name, isActive, commissionRate }) => ({
+      key,
+      name,
+      isActive,
+      commissionRate: commissionRate.trim() === '' ? '0' : commissionRate.trim(),
+    })),
     discountPresets: form.presets
       .split(/[,،\s]+/)
       .map((preset) => normalizeNumberInput(preset).trim())
@@ -211,6 +219,32 @@ function SettingsForm({ brandId, settings }: { brandId: string; settings: BrandS
                     className={fieldClass}
                   />
                 </FormField>
+                <FormField
+                  id={`method-${index}-commission`}
+                  label={t('settings.payment.commission')}
+                  error={error(`paymentMethods.${index}.commissionRate`)}
+                >
+                  <input
+                    {...fieldAttributes(`method-${index}-commission`, {
+                      error: Boolean(error(`paymentMethods.${index}.commissionRate`)),
+                    })}
+                    type="text"
+                    inputMode="decimal"
+                    dir="ltr"
+                    autoComplete="off"
+                    value={method.commissionRate}
+                    onChange={(event) =>
+                      change({
+                        methods: form.methods.map((row, i) =>
+                          i === index
+                            ? { ...row, commissionRate: normalizeNumberInput(event.target.value) }
+                            : row,
+                        ),
+                      })
+                    }
+                    className={`${compactFieldClass} mt-1 block w-28`}
+                  />
+                </FormField>
                 <label className="flex items-center gap-2 pb-2 text-sm">
                   <input
                     type="checkbox"
@@ -256,7 +290,13 @@ function SettingsForm({ brandId, settings }: { brandId: string; settings: BrandS
             change({
               methods: [
                 ...form.methods,
-                { key: '', name: { en: '', ar: '' }, isActive: true, saved: false },
+                {
+                  key: '',
+                  name: { en: '', ar: '' },
+                  isActive: true,
+                  commissionRate: '0.00',
+                  saved: false,
+                },
               ],
             })
           }

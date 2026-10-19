@@ -8,6 +8,7 @@ import {
   businessDateOn,
   CASH,
   CASH_NAME,
+  commissionOf,
   type CreateOrderRequest,
   fromMils,
   localizedTextSchema,
@@ -1149,6 +1150,10 @@ export function createOrdersService({
       const methods = new Map(
         activePaymentMethods(settings).map((method) => [method.key, method.name]),
       );
+      // The rate of each way to pay, kept on its payments (spec 025, rule 2).
+      const rates = new Map(
+        activePaymentMethods(settings).map((method) => [method.key, method.commissionRate]),
+      );
       const unknown = input.tenders.findIndex(
         (tender) => tender.method !== CASH && !methods.has(tender.method),
       );
@@ -1214,6 +1219,11 @@ export function createOrdersService({
                   ? fromMils(toMils(tender.tendered ?? tender.amount) - toMils(tender.amount))
                   : '0',
               reference: tender.method === CASH ? null : (tender.reference ?? null),
+              commissionRate: tender.method === CASH ? '0' : (rates.get(tender.method) ?? '0'),
+              commission:
+                tender.method === CASH
+                  ? '0'
+                  : commissionOf(tender.amount, rates.get(tender.method) ?? '0'),
               takenById: auth.sub,
               shiftId: shift.id,
               createdAt: at,
@@ -1319,6 +1329,11 @@ export function createOrdersService({
               method: input.method,
               methodName,
               reason: input.reason,
+              // Given back at the rate kept on the payment of that way (spec 025, rule 3).
+              commission:
+                input.method === CASH || !paidWith
+                  ? '0'
+                  : commissionOf(input.amount, paidWith.commissionRate.toFixed(2)),
               refundedById: auth.sub,
               approvedById,
               createdAt: now(),

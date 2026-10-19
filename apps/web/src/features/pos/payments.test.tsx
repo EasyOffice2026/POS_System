@@ -68,8 +68,18 @@ function payApi(pay: MockHandler, current: () => Order = () => due72) {
       json(
         brandSettings({
           paymentMethods: [
-            { key: 'knet', name: { en: 'KNET', ar: 'كي نت' }, isActive: true },
-            { key: 'link', name: { en: 'Link', ar: 'لينك' }, isActive: true },
+            {
+              key: 'knet',
+              name: { en: 'KNET', ar: 'كي نت' },
+              isActive: true,
+              commissionRate: '0.00',
+            },
+            {
+              key: 'link',
+              name: { en: 'Link', ar: 'لينك' },
+              isActive: true,
+              commissionRate: '0.00',
+            },
           ],
         }),
       ),

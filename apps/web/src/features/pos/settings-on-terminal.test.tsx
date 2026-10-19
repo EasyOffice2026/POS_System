@@ -90,9 +90,24 @@ describe('the settings on the POS', () => {
     terminalApi(
       brandSettings({
         paymentMethods: [
-          { key: 'knet', name: { en: 'KNET', ar: 'كي نت' }, isActive: true },
-          { key: 'talabat', name: { en: 'Talabat', ar: 'طلبات' }, isActive: true },
-          { key: 'link', name: { en: 'Link', ar: 'لينك' }, isActive: false },
+          {
+            key: 'knet',
+            name: { en: 'KNET', ar: 'كي نت' },
+            isActive: true,
+            commissionRate: '0.00',
+          },
+          {
+            key: 'talabat',
+            name: { en: 'Talabat', ar: 'طلبات' },
+            isActive: true,
+            commissionRate: '0.00',
+          },
+          {
+            key: 'link',
+            name: { en: 'Link', ar: 'لينك' },
+            isActive: false,
+            commissionRate: '0.00',
+          },
         ],
       }),
     );

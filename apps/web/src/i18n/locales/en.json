@@ -279,6 +279,7 @@
     "PAYMENT_METHODS_TOO_MANY": "At most 20 ways to pay.",
     "DISCOUNT_PRESET_INVALID": "Each button is a percentage above 0, listed once.",
     "DISCOUNT_PRESETS_TOO_MANY": "At most 10 buttons.",
+    "COMMISSION_RATE_INVALID": "Type a commission from 0 to 100 percent, with up to two decimals.",
     "PERCENT_INVALID": "Type a percentage from 0 to 100.",
     "VOID_RULE_INVALID": "Choose one of the options.",
     "TICKET_DONE_BY_INVALID": "Choose one of the options.",
@@ -1207,10 +1208,11 @@
     "saved": "The settings were saved.",
     "payment": {
       "title": "Ways to pay",
-      "intro": "Cash is always there and is the only way that gives change. Add the others: KNET, Link, Talabat, Keeta, Jahez and so on.",
+      "intro": "Cash is always there and is the only way that gives change. Add the others: KNET, Link, Talabat, Keeta, Jahez and so on. The commission is the share a delivery platform keeps; a new rate counts for new payments only, so past reports keep the rate of their time.",
       "key": "Key",
       "keyHint": "Small letters, digits and underscores, for example knet. It cannot change later.",
       "active": "In use",
+      "commission": "Commission (%)",
       "add": "Add a way to pay"
     },
     "discounts": {
@@ -1605,6 +1607,7 @@
     "netSales": "Net sales",
     "refunds": "Refunds",
     "netAfterRefunds": "Net after refunds",
+    "commissions": "Platform commission",
     "averageOrder": "Average order",
     "voidedOrders": "Voided orders",
     "byDay": "By day",
@@ -1613,6 +1616,8 @@
     "method": "Payment method",
     "payments": "Payments",
     "amount": "Amount",
+    "commission": "Commission",
+    "net": "Net",
     "byItem": "By item",
     "item": "Item",
     "quantity": "Quantity",

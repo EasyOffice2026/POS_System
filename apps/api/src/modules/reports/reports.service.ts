@@ -117,12 +117,12 @@ export function createReportsService() {
         by: ['method'],
         where: paymentWhere,
         _count: { _all: true },
-        _sum: { amount: true },
+        _sum: { amount: true, commission: true },
       });
       const refunded = await db.refund.groupBy({
         by: ['method'],
         where: paymentWhere,
-        _sum: { amount: true },
+        _sum: { amount: true, commission: true },
       });
       const named = await db.payment.findMany({
         where: paymentWhere,
@@ -142,19 +142,35 @@ export function createReportsService() {
           localizedTextSchema.safeParse(row.methodName).data ?? { en: row.method, ar: row.method },
         ]),
       );
-      const refundOf = new Map(refunded.map((row) => [row.method, mils(row._sum.amount)]));
+      const refundOf = new Map(refunded.map((row) => [row.method, row]));
       const paidOf = new Map(paid.map((row) => [row.method, row]));
       const methods = [...new Set([...paidOf.keys(), ...refundOf.keys()])];
+      // Commission charged on the payments, less what refunds gave back (spec 025, rules 3-4).
+      let commissions = 0;
       const payments = methods
-        .map((method) => ({
-          method,
-          name: nameOf.get(method) ?? { en: method, ar: method },
-          count: paidOf.get(method)?._count._all ?? 0,
-          amount: mils(paidOf.get(method)?._sum.amount),
-          refunds: refundOf.get(method) ?? 0,
-        }))
+        .map((method) => {
+          const amount = mils(paidOf.get(method)?._sum.amount);
+          const refunds = mils(refundOf.get(method)?._sum.amount);
+          const commission =
+            mils(paidOf.get(method)?._sum.commission) - mils(refundOf.get(method)?._sum.commission);
+          commissions += commission;
+          return {
+            method,
+            name: nameOf.get(method) ?? { en: method, ar: method },
+            count: paidOf.get(method)?._count._all ?? 0,
+            amount,
+            refunds,
+            commission,
+          };
+        })
         .sort((a, b) => b.amount - a.amount || a.method.localeCompare(b.method))
-        .map((row) => ({ ...row, amount: fromMils(row.amount), refunds: fromMils(row.refunds) }));
+        .map((row) => ({
+          ...row,
+          amount: fromMils(row.amount),
+          refunds: fromMils(row.refunds),
+          commission: fromMils(row.commission),
+          net: fromMils(row.amount - row.refunds - row.commission),
+        }));
 
       // By dish and combo: the lines that were not voided, before the order's discount (rule 6).
       const lines = await db.orderLine.groupBy({
@@ -248,6 +264,7 @@ export function createReportsService() {
           netSales: fromMils(net),
           refunds: fromMils(refunds),
           netAfterRefunds: fromMils(net - refunds),
+          commissions: fromMils(commissions),
           averageOrder: fromMils(orders > 0 ? Math.round(net / orders) : 0),
           voidedOrders,
         },
