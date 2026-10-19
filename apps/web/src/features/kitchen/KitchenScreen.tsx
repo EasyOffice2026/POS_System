@@ -2,6 +2,7 @@ import { type KitchenTicket, nextTicketStatus } from '@pos/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BackOfficeLink } from '../../components/BackOfficeLink';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { localize } from '../../i18n/localize';
 import { ApiError } from '../../lib/api';
@@ -87,6 +88,7 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
             {clock}
           </span>
           <span className="text-sm text-slate-300">{user?.name}</span>
+          <BackOfficeLink className="rounded-md border border-slate-500 px-3 py-1 text-sm font-medium text-white hover:bg-slate-700 focus:ring-2 focus:ring-slate-400 focus:outline-none" />
           <div className="rounded-md bg-white">
             <LanguageSwitcher />
           </div>
