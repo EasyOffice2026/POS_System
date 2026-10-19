@@ -46,6 +46,7 @@ Secrets live in the host's secret settings or in `deploy/.env.production` on the
    docker run --rm -e DATABASE_URL pos-api-tools npm run admin:create -w @pos/api -- --email owner@example.com --name "Owner"
    ```
    The password is printed once. Never run the demo seed against this database; it refuses anyway.
+   If the owner ever loses the password, `npm run admin:reset -w @pos/api -- --email owner@example.com` prints a new one, the same way.
 5. Start the API and the web app, and point the HTTPS address at the web container.
 6. Sign in, set up the brands, branches, menus and settings, then set up each till at `/pos/setup`.
 

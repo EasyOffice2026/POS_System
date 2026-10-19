@@ -115,6 +115,7 @@ The demo branches already have opening hours and printers, so open one under Bra
 | `npm run db:migrate`                                   | Create a new migration after changing `apps/api/prisma/schema.prisma`  |
 | `npm run db:deploy`, `db:seed`, `db:reset`             | Apply migrations, add demo data, or wipe the database and start again  |
 | `npm run admin:create -- --email … --name …`           | Create the first admin of a real database (the demo seed is for demos) |
+| `npm run admin:reset -- --email …`                     | Give a locked-out group admin a new password (shown once)              |
 | `npm run check`                                        | Run everything CI runs: format check, lint, typecheck, tests, build    |
 | `npm run format`, `lint`, `typecheck`, `test`, `build` | Run a single step                                                      |
 

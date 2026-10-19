@@ -2,7 +2,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../app';
 import { createTestPrisma, resetDatabase, testConfig } from '../../test/helpers';
-import { createFirstAdmin, FirstAdminError } from './first-admin';
+import { createFirstAdmin, FirstAdminError, resetAdminPassword } from './first-admin';
 import { createPasswordHasher, hashProfiles } from './password';
 import { syncSystemRoles } from './roles';
 
@@ -112,5 +112,48 @@ describe('createFirstAdmin', () => {
       metadata: { role: 'group_admin', source: 'admin:create' },
     });
     expect(JSON.stringify(rows[0])).not.toContain(admin.password);
+  });
+});
+
+describe('resetAdminPassword', () => {
+  it('gives a locked-out group admin a new password, ends their sessions, and writes an audit row', async () => {
+    const admin = await createFirstAdmin(prisma, hasher, {
+      name: 'Owner One',
+      email: 'owner@client.example',
+    });
+    const first = await signIn('owner@client.example', admin.password);
+    expect(first.status).toBe(200);
+    await prisma.user.update({
+      where: { id: admin.id },
+      data: { failedLoginAttempts: 5, lockedUntil: new Date(Date.now() + 600_000) },
+    });
+
+    const reset = await resetAdminPassword(prisma, hasher, 'owner@client.example');
+
+    expect(reset.password).not.toBe(admin.password);
+    expect((await signIn('owner@client.example', admin.password)).status).toBe(401);
+    const again = await signIn('owner@client.example', reset.password);
+    expect(again.status).toBe(200);
+    expect((again.body as { user: { mustChangePassword: boolean } }).user.mustChangePassword).toBe(
+      false,
+    );
+    const sessions = await prisma.refreshToken.findMany({ where: { userId: admin.id } });
+    expect(sessions.filter((row) => row.revokedAt === null)).toHaveLength(1);
+    const rows = await prisma.auditLog.findMany({ where: { action: 'user.credentials_reset' } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.metadata).toEqual({ type: 'password', generated: true, source: 'admin:reset' });
+    expect(JSON.stringify(rows[0])).not.toContain(reset.password);
+  });
+
+  it('refuses an unknown email and an account that is not a group admin', async () => {
+    await expect(resetAdminPassword(prisma, hasher, 'nobody@client.example')).rejects.toThrow(
+      FirstAdminError,
+    );
+    const admin = await createFirstAdmin(prisma, hasher, { name: 'Owner', email: 'o@c.example' });
+    const manager = await prisma.role.findUniqueOrThrow({ where: { key: 'brand_manager' } });
+    await prisma.user.update({ where: { id: admin.id }, data: { roleId: manager.id } });
+    await expect(resetAdminPassword(prisma, hasher, 'o@c.example')).rejects.toThrow(
+      'not a group admin',
+    );
   });
 });

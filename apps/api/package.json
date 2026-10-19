@@ -15,6 +15,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "admin:create": "tsx --env-file-if-exists=../../.env prisma/create-admin.ts",
+    "admin:reset": "tsx --env-file-if-exists=../../.env prisma/reset-admin.ts",
     "menu:import": "tsx --env-file-if-exists=../../.env prisma/import-menu.ts",
     "db:reset": "prisma migrate reset"
   },
