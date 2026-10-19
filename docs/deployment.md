@@ -78,7 +78,7 @@ The database is the only thing to back up; the images can be built again from gi
 
 ## Vercel
 
-The system can also run on Vercel instead of a server, with the database still on Supabase. `vercel.json` at the root sets it up as two services: the API as a Node function and the web app as a static site, with `/api/...` sent to the API and everything else to the web app. The print bridge is not deployed there; it runs on the shop computer next to the printer.
+The system can also run on Vercel instead of a server, with the database still on Supabase. `vercel.json` at the root sets it up as two services: the API as a Node function and the web app as a static site, with `/api/...` sent to the API and everything else to the web app (inside the web service, every path that is not a file falls back to `index.html`, so `/pos`, `/kds` and `/admin/...` open directly). The print bridge is not deployed there; it runs on the shop computer next to the printer.
 
 **How it differs from a server.** Vercel runs the API as copies that start on demand and may run side by side, with no shared memory between them. Three things follow:
 
