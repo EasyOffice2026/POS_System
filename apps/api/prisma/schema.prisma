@@ -519,26 +519,29 @@ model OrderCounter {
 // One way an order was paid. The parts of one payment together pay the order's total exactly.
 model Payment {
   // Made on the terminal, so a payment sent twice is taken once.
-  id         String   @id @db.Uuid
-  orderId    String   @map("order_id") @db.Uuid
-  brandId    String   @map("brand_id") @db.Uuid
-  branchId   String   @map("branch_id") @db.Uuid
+  id             String   @id @db.Uuid
+  orderId        String   @map("order_id") @db.Uuid
+  brandId        String   @map("brand_id") @db.Uuid
+  branchId       String   @map("branch_id") @db.Uuid
   // Cash, or the key of a way to pay from the brand's settings (docs/specs/009-settings.md).
-  method     String
+  method         String
   // The name of the way to pay as it was at the time.
-  methodName Json     @default("{}") @map("method_name")
+  methodName     Json     @default("{}") @map("method_name")
   // The part of the order it pays.
-  amount     Decimal  @db.Decimal(15, 3)
+  amount         Decimal  @db.Decimal(15, 3)
   // Cash only: what the customer handed over, and the change given back.
-  tendered   Decimal? @db.Decimal(15, 3)
-  change     Decimal  @default(0) @db.Decimal(15, 3)
+  tendered       Decimal? @db.Decimal(15, 3)
+  change         Decimal  @default(0) @db.Decimal(15, 3)
   // Card only: the slip number, when the cashier typed it.
-  reference  String?
+  reference      String?
+  // The commission rate of the way to pay at the time, and what it came to (spec 025).
+  commissionRate Decimal  @default(0) @map("commission_rate") @db.Decimal(5, 2)
+  commission     Decimal  @default(0) @db.Decimal(15, 3)
   // The shift of the person who took it (docs/specs/010-shifts.md). Null for payments taken
   // before shifts existed.
-  shiftId    String?  @map("shift_id") @db.Uuid
-  takenById  String   @map("taken_by_id") @db.Uuid
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  shiftId        String?  @map("shift_id") @db.Uuid
+  takenById      String   @map("taken_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   order Order  @relation(fields: [orderId, branchId, brandId], references: [id, branchId, brandId], onDelete: Restrict)
   shift Shift? @relation(fields: [shiftId], references: [id], onDelete: Restrict)
@@ -640,6 +643,8 @@ model Refund {
   method       String
   methodName   Json     @default("{}") @map("method_name")
   reason       String
+  // The commission given back, at the rate kept on the payment refunded (spec 025, rule 3).
+  commission   Decimal  @default(0) @db.Decimal(15, 3)
   refundedById String   @map("refunded_by_id") @db.Uuid
   approvedById String?  @map("approved_by_id") @db.Uuid
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)

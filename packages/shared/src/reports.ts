@@ -31,6 +31,8 @@ export const salesSummarySchema = z.object({
   netSales: z.string(),
   refunds: z.string(),
   netAfterRefunds: z.string(),
+  // What the delivery platforms (and banks) kept, by their rates (spec 025).
+  commissions: z.string(),
   averageOrder: z.string(),
   voidedOrders: z.number().int(),
 });
@@ -55,6 +57,10 @@ export const salesReportSchema = z.object({
       count: z.number().int(),
       amount: z.string(),
       refunds: z.string(),
+      // Charged on the payments, less what refunds gave back (spec 025, rule 3).
+      commission: z.string(),
+      // The amount less the refunds and the commission.
+      net: z.string(),
     }),
   ),
   items: z.array(

@@ -76,6 +76,52 @@ describe('the settings page', () => {
     });
   });
 
+  it('adds a delivery platform with its commission rate (spec 025)', async () => {
+    const api = settingsApi({ [SAVE]: (request) => json(request.body) });
+    const user = userEvent.setup();
+    renderApp('/admin/settings');
+
+    expect(await screen.findByLabelText('Commission (%)')).toHaveValue('0.00');
+    await user.click(screen.getByRole('button', { name: 'Add a way to pay' }));
+    await user.type(field('method-1-key'), 'talabat');
+    await user.type(field('method-1-name-en'), 'Talabat');
+    await user.type(field('method-1-name-ar'), 'طلبات');
+    await user.clear(field('method-1-commission'));
+    await user.type(field('method-1-commission'), '18.5');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('The settings were saved.');
+    expect(
+      (api.calls.find((call) => call.key === SAVE)?.body as typeof defaultBrandSettings)
+        .paymentMethods,
+    ).toEqual([
+      { key: 'knet', name: { en: 'KNET', ar: 'كي نت' }, isActive: true, commissionRate: '0.00' },
+      {
+        key: 'talabat',
+        name: { en: 'Talabat', ar: 'طلبات' },
+        isActive: true,
+        commissionRate: '18.5',
+      },
+    ]);
+  });
+
+  it('shows a commission rate the server refuses next to its field', async () => {
+    settingsApi({
+      [SAVE]: () =>
+        errorResponse(400, 'VALIDATION_ERROR', [
+          { path: 'paymentMethods.0.commissionRate', message: 'COMMISSION_RATE_INVALID' },
+        ]),
+    });
+    const user = userEvent.setup();
+    renderApp('/admin/settings');
+
+    await user.clear(await screen.findByLabelText('Commission (%)'));
+    await user.type(screen.getByLabelText('Commission (%)'), '150');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByLabelText('Commission (%)')).toHaveAccessibleDescription(/0 to 100/);
+  });
+
   it('refuses a bad key, and a key used twice, before sending', async () => {
     const api = settingsApi({
       [SAVE]: () =>

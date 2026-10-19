@@ -29,6 +29,7 @@ const report: SalesReport = {
     netSales: '47.000',
     refunds: '5.000',
     netAfterRefunds: '42.000',
+    commissions: '0.900',
     averageOrder: '23.500',
     voidedOrders: 1,
   },
@@ -40,13 +41,26 @@ const report: SalesReport = {
       count: 1,
       amount: '27.000',
       refunds: '5.000',
+      commission: '0.000',
+      net: '22.000',
     },
     {
       method: 'knet',
       name: { en: 'KNET', ar: 'كي نت' },
       count: 1,
-      amount: '20.000',
+      amount: '15.000',
       refunds: '0.000',
+      commission: '0.000',
+      net: '15.000',
+    },
+    {
+      method: 'talabat',
+      name: { en: 'Talabat', ar: 'طلبات' },
+      count: 1,
+      amount: '5.000',
+      refunds: '0.000',
+      commission: '0.900',
+      net: '4.100',
     },
   ],
   items: [
@@ -114,7 +128,14 @@ describe('the sales report', () => {
     expect(figure('Voided orders')).toHaveTextContent('1');
 
     const payments = screen.getByRole('region', { name: 'By payment method' });
-    expect(within(payments).getAllByRole('row')[1]).toHaveTextContent('Cash127.000 KWD5.000 KWD');
+    expect(within(payments).getAllByRole('row')[1]).toHaveTextContent(
+      'Cash127.000 KWD5.000 KWD0.000 KWD22.000 KWD',
+    );
+    // A delivery platform's commission comes off its net (spec 025).
+    expect(within(payments).getAllByRole('row')[3]).toHaveTextContent(
+      'Talabat15.000 KWD0.000 KWD0.900 KWD4.100 KWD',
+    );
+    expect(figure('Platform commission')).toHaveTextContent('0.900 KWD');
     const items = screen.getByRole('region', { name: 'By item' });
     expect(within(items).getAllByRole('row')[1]).toHaveTextContent(
       'Margherita360.000 KWD7.200 KWD12%',
@@ -171,7 +192,8 @@ describe('the sales report', () => {
     const user = userEvent.setup();
     renderApp('/admin/reports');
 
-    await user.click(await screen.findByRole('button', { name: 'Download CSV' }));
+    const items = await screen.findByRole('region', { name: 'By item' });
+    await user.click(within(items).getByRole('button', { name: 'Download CSV' }));
     expect(click).toHaveBeenCalled();
     // The file starts with the byte order mark, so Excel reads the Arabic names.
     const bytes = new Uint8Array((await created[0]?.arrayBuffer()) ?? new ArrayBuffer(0));

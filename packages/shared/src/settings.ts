@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { localizedNameSchema, localizedTextSchema } from './localized';
+import { fromMils, toMils } from './money';
 
 // The settings of a brand, from the client's answers. Each one is an option a manager changes on
 // the Settings screen. See docs/specs/009-settings.md.
@@ -20,10 +21,30 @@ export const paymentMethodKeySchema = z
   .regex(/^[a-z0-9_]{1,32}$/, 'PAYMENT_METHOD_KEY_INVALID')
   .refine((key) => key !== CASH, 'PAYMENT_METHOD_KEY_INVALID');
 
+// The share a delivery platform (or a bank) keeps of what is paid that way, in percent with up
+// to two decimals: "18.50". It is kept on each payment, so changing it changes no past report
+// (docs/specs/025-platform-commission.md).
+export const commissionRateSchema = z
+  .string({ error: 'COMMISSION_RATE_INVALID' })
+  .trim()
+  .refine(
+    (value) => /^\d{1,3}(\.\d{1,2})?$/.test(value) && Number(value) <= 100,
+    'COMMISSION_RATE_INVALID',
+  )
+  .transform((value) => Number(value).toFixed(2));
+
+// What a commission rate takes of an amount, rounded to the fil: 18% of 10.000 is 1.800.
+export function commissionOf(amount: string, rate: string): string {
+  const hundredths = Math.round(Number(rate) * 100);
+  return fromMils(Math.round((toMils(amount) * hundredths) / 10_000));
+}
+
 export const paymentMethodSettingSchema = z.strictObject({
   key: paymentMethodKeySchema,
   name: localizedTextSchema,
   isActive: z.boolean(),
+  // Settings saved before commissions existed have none.
+  commissionRate: commissionRateSchema.default('0.00'),
 });
 export type PaymentMethodSetting = z.infer<typeof paymentMethodSettingSchema>;
 
@@ -31,6 +52,7 @@ const paymentMethodInputSchema = z.strictObject({
   key: paymentMethodKeySchema,
   name: localizedNameSchema,
   isActive: z.boolean().default(true),
+  commissionRate: commissionRateSchema.default('0.00'),
 });
 
 // When a void needs a manager: never (the cashier voids with a reason), once the line or the
@@ -135,7 +157,9 @@ export const brandSettingsSchema = z.object({
 export type BrandSettings = z.infer<typeof brandSettingsSchema>;
 
 export const defaultBrandSettings: BrandSettings = {
-  paymentMethods: [{ key: 'knet', name: { en: 'KNET', ar: 'كي نت' }, isActive: true }],
+  paymentMethods: [
+    { key: 'knet', name: { en: 'KNET', ar: 'كي نت' }, isActive: true, commissionRate: '0.00' },
+  ],
   discountPresets: ['5.00', '10.00', '15.00', '20.00', '25.00', '50.00'],
   cashierDiscountLimit: '0.00',
   voidNeedsManager: 'never',
