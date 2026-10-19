@@ -231,6 +231,24 @@ describe('taking an order', () => {
     });
   });
 
+  it('has a way back to the back office for a manager, and none for a cashier', async () => {
+    saveTerminal(mall);
+    terminalApi();
+    renderApp('/pos');
+    expect(await screen.findByRole('button', { name: /Margherita/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Back office' })).not.toBeInTheDocument();
+  });
+
+  it('shows the back office link to a manager on the till', async () => {
+    saveTerminal(mall);
+    terminalApi({ [REFRESH]: () => json(sessionFor(fullBrandManager)) });
+    renderApp('/pos');
+    expect(await screen.findByRole('link', { name: 'Back office' })).toHaveAttribute(
+      'href',
+      '/admin',
+    );
+  });
+
   it('shows the photo of a dish on its tile', async () => {
     saveTerminal(mall);
     const menu = branchMenu();

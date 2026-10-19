@@ -2,6 +2,7 @@ import { defaultBrandSettings, type Order, type OrderLine, type ShiftSummary } f
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BackOfficeLink } from '../../components/BackOfficeLink';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { localize } from '../../i18n/localize';
 import { useAuth } from '../auth/auth-context';
@@ -135,6 +136,7 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             >
               {t('pos.shift.close')}
             </button>
+            <BackOfficeLink className={headerButtonClass} />
             <LanguageSwitcher />
             <button
               type="button"

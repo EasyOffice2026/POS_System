@@ -94,6 +94,22 @@ function kitchenApi(handlers: Record<string, MockHandler> = {}, user = kitchenSt
 }
 
 describe('the kitchen screen', () => {
+  it('has a way back to the back office for a manager', async () => {
+    kitchenApi({}, fullBrandManager);
+    renderApp('/kds');
+    expect(await screen.findByRole('link', { name: 'Back office' })).toHaveAttribute(
+      'href',
+      '/admin',
+    );
+  });
+
+  it('has no back office link for the kitchen staff', async () => {
+    kitchenApi();
+    renderApp('/kds');
+    expect(await screen.findByText(/waiting/)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Back office' })).not.toBeInTheDocument();
+  });
+
   it('shows a ticket with its dishes, and the voided one as VOID (criteria 1 and 4)', async () => {
     const api = kitchenApi();
     renderApp('/kds');

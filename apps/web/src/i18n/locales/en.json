@@ -64,6 +64,7 @@
     "submit": "Sign in",
     "submitting": "Signing in…",
     "signOut": "Sign out",
+    "backOffice": "Back office",
     "errors": {
       "INVALID_CREDENTIALS": "The email or password is not correct.",
       "ACCOUNT_LOCKED": "This account is locked after too many failed attempts.",
