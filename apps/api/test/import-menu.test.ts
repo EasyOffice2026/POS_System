@@ -26,7 +26,7 @@ const mudawara = async (): Promise<unknown> =>
 describe('the menu import', () => {
   it('writes the menu of Mudawara, and the till can load it', async () => {
     const counts = await importMenu(prisma, world.pizza.id, await mudawara());
-    expect(counts).toEqual({ categories: 5, items: 22, groups: 8, modifiers: 17 });
+    expect(counts).toEqual({ categories: 6, items: 37, groups: 8, modifiers: 17 });
 
     const api = as(app, await signIn(app, 'cashier@x.io'));
     const res = await api.get(`/api/v1/menu?branchId=${world.mall.id}`);
@@ -47,6 +47,7 @@ describe('the menu import', () => {
       'Sides',
       'Drinks',
       'Khalia Mudawara',
+      'Ice Cream Mudawara',
     ]);
     const box = menu.categories[1]?.items.find((item) => item.name.en.startsWith('Mudawara box'));
     expect(box?.price).toBe('7.600');
@@ -76,11 +77,11 @@ describe('the menu import', () => {
     const karak = data.categories[3]?.items.find((item) => item.name.en === 'Karak');
     if (karak) karak.price = '0.500';
     const counts = await importMenu(prisma, world.pizza.id, data);
-    expect(counts.items).toBe(22);
+    expect(counts.items).toBe(37);
     await expect(prisma.menuCategory.count({ where: { brandId: world.pizza.id } })).resolves.toBe(
-      5,
+      6,
     );
-    await expect(prisma.menuItem.count({ where: { brandId: world.pizza.id } })).resolves.toBe(23);
+    await expect(prisma.menuItem.count({ where: { brandId: world.pizza.id } })).resolves.toBe(38);
     await expect(prisma.modifier.count({ where: { brandId: world.pizza.id } })).resolves.toBe(17);
     const updated = await prisma.menuItem.findFirst({
       where: { brandId: world.pizza.id, name: { path: ['en'], equals: 'Karak' } },
