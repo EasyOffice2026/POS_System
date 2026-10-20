@@ -285,6 +285,56 @@ describe('taking an order', () => {
     await waitFor(() => expect(api.count(MENU)).toBe(2));
   });
 
+  it('prints a kitchen slip of the dishes sent, when the branch works without a kitchen screen (spec 027)', async () => {
+    saveTerminal(mall);
+    nextIds(orderIds.first, lineIds.cola);
+    const sent = orderLine({ status: 'sent', sentAt: '2026-10-13T09:01:00.000Z' });
+    terminalApi({
+      [MENU]: () => json(branchMenu({ kitchen: { screen: false, slip: false } })),
+      [CREATE]: () => json(order(), 201),
+      [LINES]: () => json(colaOrder()),
+      [SEND]: () => json(colaOrder({ lines: [sent] })),
+    });
+    // What the browser would print, read at the moment it prints.
+    const printed: string[] = [];
+    const print = vi.spyOn(window, 'print').mockImplementation(() => {
+      printed.push(screen.getByTestId('kitchen-slip').textContent ?? '');
+    });
+    const user = userEvent.setup();
+    renderApp('/pos');
+
+    await user.click(await screen.findByRole('tab', { name: 'Drinks' }));
+    await user.click(screen.getByRole('button', { name: /Cola/ }));
+    await user.click(await screen.findByRole('button', { name: 'Send 1 item to kitchen' }));
+
+    await waitFor(() => expect(print).toHaveBeenCalledTimes(1));
+    expect(printed[0]).toContain('Order 1');
+    expect(printed[0]).toContain('1 × Cola');
+    expect(screen.queryByTestId('kitchen-slip')).not.toBeInTheDocument();
+    print.mockRestore();
+  });
+
+  it('prints nothing on sending when the branch has a kitchen screen and no slip', async () => {
+    saveTerminal(mall);
+    nextIds(orderIds.first, lineIds.cola);
+    const sent = orderLine({ status: 'sent', sentAt: '2026-10-13T09:01:00.000Z' });
+    const api = terminalApi({
+      [CREATE]: () => json(order(), 201),
+      [LINES]: () => json(colaOrder()),
+      [SEND]: () => json(colaOrder({ lines: [sent] })),
+    });
+    const print = vi.spyOn(window, 'print').mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    renderApp('/pos');
+
+    await user.click(await screen.findByRole('tab', { name: 'Drinks' }));
+    await user.click(screen.getByRole('button', { name: /Cola/ }));
+    await user.click(await screen.findByRole('button', { name: 'Send 1 item to kitchen' }));
+    await waitFor(() => expect(api.count(SEND)).toBe(1));
+    expect(print).not.toHaveBeenCalled();
+    print.mockRestore();
+  });
+
   it('sends the lines, then voids one with a manager (criterion 6)', async () => {
     saveTerminal(mall);
     nextIds(orderIds.first, lineIds.cola);

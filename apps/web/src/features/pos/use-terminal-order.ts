@@ -213,9 +213,8 @@ export function useTerminalOrder(branchId: string, brandId: string) {
       );
     },
 
-    send: () => {
-      if (order) void perform(() => sendOrder(order.id));
-    },
+    send: (): Promise<Order | null> =>
+      order ? perform(() => sendOrder(order.id)) : Promise.resolve(null),
 
     voidLine: (line: OrderLine, reason: string) => {
       if (order) void performApproved((given) => voidLine(order.id, line.id, reason, given));

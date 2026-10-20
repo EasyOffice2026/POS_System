@@ -177,6 +177,20 @@ export function createOrdersService({
     });
     if (pending.length === 0) return 0;
 
+    // A branch without a kitchen screen works from the printed slip: the dishes are sent, but no
+    // ticket waits on a screen (docs/specs/027-kitchen-screen-and-slip.md, rule 3).
+    const branch = await tx.branch.findUnique({
+      where: { id: order.branchId },
+      select: { config: true },
+    });
+    if (!parseBranchConfig(branch?.config).kitchen.screen) {
+      await tx.orderLine.updateMany({
+        where: { id: { in: pending.map((line) => line.id) } },
+        data: { status: 'sent', sentAt: at },
+      });
+      return pending.length;
+    }
+
     // With kitchen stations, each line goes to the station of its category; a line without one,
     // and a combo, go to the first station (spec 009, rule 6). Without stations, one ticket.
     const stations = (await settingsOf(tx, order.brandId)).kitchenStations;
@@ -1203,7 +1217,30 @@ export function createOrdersService({
           await sendPending(tx, order, at);
           // The stock goes down by what was sold, in the same transaction (spec 013, rule 4),
           // unless the brand takes it off when the kitchen starts each ticket instead.
-          if (settings.stockDeductAt === 'paid') await deductStock(tx, order, lines, by, at);
+          if (settings.stockDeductAt === 'paid') {
+            await deductStock(tx, order, lines, by, at);
+          } else {
+            // Taken off when the kitchen starts a ticket; at a branch without a kitchen screen no
+            // ticket is started, so what no kitchen started goes now (spec 027, rule 3).
+            const branch = await tx.branch.findUnique({
+              where: { id: order.branchId },
+              select: { config: true },
+            });
+            if (!parseBranchConfig(branch?.config).kitchen.screen) {
+              const started = new Set(
+                (
+                  await tx.kitchenTicket.findMany({
+                    where: { orderId, status: { not: 'new' } },
+                    select: { id: true },
+                  })
+                ).map((ticket) => ticket.id),
+              );
+              const unstarted = lines.filter(
+                (line) => !line.ticketId || !started.has(line.ticketId),
+              );
+              if (unstarted.length > 0) await deductStock(tx, order, unstarted, by, at);
+            }
+          }
           await tx.payment.createMany({
             data: input.tenders.map((tender) => ({
               id: tender.id,

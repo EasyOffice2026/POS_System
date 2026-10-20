@@ -481,6 +481,7 @@ describe('what the API answers', () => {
       brandId: id(2),
       currency: 'KWD',
       timezone: 'Asia/Riyadh',
+      kitchen: { screen: true, slip: false },
       categories: [
         {
           id: id(3),

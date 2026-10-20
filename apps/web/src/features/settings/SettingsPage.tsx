@@ -26,6 +26,7 @@ import { fieldsFromIssues, messageFor, problemsFrom } from '../../lib/error-mess
 import { normalizeNumberInput } from '../../lib/numbers';
 import { useAuth } from '../auth/auth-context';
 import { useMenuBrand } from '../menu/use-menu-brand';
+import { BranchKitchenSettings } from './BranchKitchenSettings';
 import { settingsKeys, updateBrandSettings, useBrandSettings } from './settings-api';
 
 interface MethodRow {
@@ -630,6 +631,9 @@ export function SettingsPage() {
       )}
       {brandId && settings.data && (
         <SettingsForm key={brandId} brandId={brandId} settings={settings.data} />
+      )}
+      {brandId && user?.permissions.includes('branches:write') && (
+        <BranchKitchenSettings key={`kitchen-${brandId}`} branches={menuBrand.branches} />
       )}
     </div>
   );

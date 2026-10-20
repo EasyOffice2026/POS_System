@@ -262,6 +262,44 @@ describe('paying an order', () => {
     expect(await movementsAtMall()).toHaveLength(1);
   });
 
+  it('takes it off at payment at a branch without a kitchen screen (spec 027, rule 3)', async () => {
+    await prisma.brand.update({
+      where: { id: world.pizza.id },
+      data: { settings: { stockDeductAt: 'preparing' } },
+    });
+    const mall = await prisma.branch.findUniqueOrThrow({ where: { id: world.mall.id } });
+    await prisma.branch.update({
+      where: { id: world.mall.id },
+      data: {
+        config: {
+          ...(mall.config as object),
+          kitchen: { screen: false, slip: false },
+        },
+      },
+    });
+    await setRecipes(await asPizzaManager());
+    const api = await asCashier();
+    const opened = orderOf(await api.post(ORDERS, { branchId: world.mall.id, type: 'dine_in' }));
+    await api.post(`${ORDERS}/${opened.id}/lines`, {
+      kind: 'item',
+      itemId: world.items.margherita.id,
+      quantity: 2,
+      modifierIds: [extraCheese.id],
+    });
+    const sent = orderOf(await api.post(`${ORDERS}/${opened.id}/send`));
+    // Sent from the slip: no ticket waits on a screen.
+    expect(sent.lines.map((line) => [line.status, line.ticketId])).toEqual([['sent', null]]);
+    await expect(prisma.kitchenTicket.count()).resolves.toBe(0);
+    expect(await stockAtMall()).toBeNull();
+
+    const paid = await api.post(`${ORDERS}/${opened.id}/pay`, {
+      tenders: [{ id: randomUUID(), method: 'cash', amount: sent.total, tendered: sent.total }],
+    });
+    expect(paid.status).toBe(200);
+    expect((await stockAtMall())?.quantity.toFixed(3)).toBe('-0.240');
+    expect(await movementsAtMall()).toHaveLength(1);
+  });
+
   it('uses the recipes of the dishes chosen in a combo (criterion 2)', async () => {
     await setRecipes(await asPizzaManager());
     const combo = await prisma.combo.create({

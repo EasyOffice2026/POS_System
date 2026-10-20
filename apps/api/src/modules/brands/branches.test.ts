@@ -70,7 +70,13 @@ describe('POST /brands/:id/branches', () => {
       address: null,
       timezone: 'Asia/Kuwait',
       isActive: true,
-      config: { openingHours: closedWeek(), printers: [], dayEndsAt: '00:00', specialHours: [] },
+      config: {
+        openingHours: closedWeek(),
+        printers: [],
+        dayEndsAt: '00:00',
+        specialHours: [],
+        kitchen: { screen: true, slip: false },
+      },
     });
 
     const list = pageSchema(branchSchema).parse((await api.get(branchesOf(world.pizza.id))).body);
@@ -252,6 +258,7 @@ describe('GET /branches/:id', () => {
       printers: [],
       dayEndsAt: '00:00',
       specialHours: [],
+      kitchen: { screen: true, slip: false },
     });
   });
 
@@ -322,6 +329,36 @@ describe('PATCH /branches/:id', () => {
       entityId: world.mall.id,
     });
     expect(row?.metadata).toEqual({ changed: ['name', 'address', 'timezone'] });
+  });
+
+  it('switches the kitchen screen off, and the till reads it at once (spec 027)', async () => {
+    const cashier = as(app, await signIn(app, 'cashier@x.io'));
+    const before = await cashier.get(`/api/v1/menu?branchId=${world.mall.id}`);
+    expect((before.body as { kitchen: unknown }).kitchen).toEqual({ screen: true, slip: false });
+
+    const api = await asPizzaManager();
+    const res = await api.patch(`${BRANCHES}/${world.mall.id}`, {
+      config: { kitchen: { screen: false, slip: true } },
+    });
+    expect(res.status).toBe(200);
+    expect(branchDetailSchema.parse(res.body).config.kitchen).toEqual({
+      screen: false,
+      slip: true,
+    });
+    const [row] = await auditRows('branch.updated');
+    expect(row?.metadata).toEqual({
+      changed: ['kitchen'],
+      kitchen: { screen: false, slip: true },
+    });
+
+    // The menu the till had is cleared, so the change does not wait for the cache.
+    const after = await cashier.get(`/api/v1/menu?branchId=${world.mall.id}`);
+    expect((after.body as { kitchen: unknown }).kitchen).toEqual({ screen: false, slip: true });
+
+    const bad = await api.patch(`${BRANCHES}/${world.mall.id}`, {
+      config: { kitchen: { screen: 'off', slip: true } },
+    });
+    expect(bad.status).toBe(400);
   });
 
   it('clears the address with null or an empty text', async () => {

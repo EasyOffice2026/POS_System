@@ -23,7 +23,13 @@ const patch = `PATCH /api/v1/branches/${pizzaMall.id}`;
 
 const withPrinters = (...printers: Printer[]) =>
   branchDetail({
-    config: { openingHours: closedWeek(), printers, dayEndsAt: '00:00', specialHours: [] },
+    config: {
+      openingHours: closedWeek(),
+      printers,
+      dayEndsAt: '00:00',
+      specialHours: [],
+      kitchen: { screen: true, slip: false },
+    },
   });
 
 const directory: Record<string, MockHandler> = {

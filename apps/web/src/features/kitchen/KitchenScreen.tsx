@@ -7,6 +7,7 @@ import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { localize } from '../../i18n/localize';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
+import { getBranchMenu, menuKeys } from '../menu/menu-api';
 import { useNow } from '../menu/use-now';
 import { SETTINGS_REFRESH_MS } from '../pos/OrderScreen';
 import { useBrandSettings } from '../settings/settings-api';
@@ -59,7 +60,16 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
     }
   }
 
-  const all = tickets.data ?? [];
+  // A branch can work from printed slips instead (docs/specs/027-kitchen-screen-and-slip.md).
+  const menu = useQuery({
+    queryKey: menuKeys.branchMenu(terminal.branchId),
+    queryFn: () => getBranchMenu(terminal.branchId),
+    refetchInterval: KITCHEN_REFRESH_MS,
+  });
+  const screenOff = menu.data?.kitchen.screen === false;
+
+  // Tickets sent before the screen was switched off are not shown: the branch works from slips.
+  const all = screenOff ? [] : (tickets.data ?? []);
   const open = all.filter((ticket) => ticket.status !== 'done');
   const done = all.filter((ticket) => ticket.status === 'done');
   const clock = new Intl.DateTimeFormat(i18n.language === 'ar' ? 'ar-u-nu-latn' : 'en-GB', {
@@ -114,8 +124,13 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
       )}
 
       <main className="flex-1 p-3">
+        {screenOff && (
+          <p role="status" className="mx-auto max-w-xl py-12 text-center text-lg text-slate-200">
+            {t('kds.screenOff')}
+          </p>
+        )}
         {tickets.isPending && <p className="text-slate-300">{t('common.loading')}</p>}
-        {tickets.data && open.length === 0 && (
+        {tickets.data && open.length === 0 && !screenOff && (
           <p className="py-12 text-center text-lg text-slate-300">{t('kds.empty')}</p>
         )}
         <section

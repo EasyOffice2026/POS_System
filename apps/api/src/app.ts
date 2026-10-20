@@ -88,11 +88,9 @@ export function createApp({
     revokeAllSessions: (userId) => authService.revokeAllSessions(userId),
   });
 
-  const brandsService = createBrandsService({ prisma });
-  const menuService = createMenuService({
-    prisma,
-    cache: menuCache ?? createMemoryMenuCache({ ttlMs: config.menuCacheTtlSeconds * 1000 }),
-  });
+  const cache = menuCache ?? createMemoryMenuCache({ ttlMs: config.menuCacheTtlSeconds * 1000 });
+  const brandsService = createBrandsService({ prisma, menuCache: cache });
+  const menuService = createMenuService({ prisma, cache });
   const inventoryService = createInventoryService({ prisma, now: now ?? (() => new Date()) });
   const transfersService = createTransfersService({ prisma, now: now ?? (() => new Date()) });
   const countsService = createCountsService({ prisma, now: now ?? (() => new Date()) });

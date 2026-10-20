@@ -1,4 +1,10 @@
-import { type BranchMenu, type BranchMenuItem, CURRENCY, openingHoursSchema } from '@pos/shared';
+import {
+  type BranchMenu,
+  type BranchMenuItem,
+  CURRENCY,
+  openingHoursSchema,
+  parseBranchConfig,
+} from '@pos/shared';
 import type { Branch as BranchRow } from '../../generated/prisma/client';
 import { errors } from '../../lib/http-errors';
 import type { ActorContext } from '../../middleware/authenticate';
@@ -104,6 +110,7 @@ export function createBranchMenuService({ cache }: Pick<MenuDeps, 'cache'>) {
       brandId,
       currency: CURRENCY,
       timezone: branch.timezone,
+      kitchen: parseBranchConfig(branch.config).kitchen,
       categories: menuCategories,
       combos,
     };

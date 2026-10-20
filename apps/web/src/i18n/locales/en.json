@@ -1089,6 +1089,10 @@
       "methodAmount": "Amount by {{method}}",
       "otherHint": "Take the payment by {{method}}, then confirm here."
     },
+    "slip": {
+      "title": "Kitchen",
+      "note": "Note:"
+    },
     "receipt": {
       "title": "Receipt",
       "cashier": "Cashier: {{name}}",
@@ -1171,6 +1175,7 @@
   },
   "kds": {
     "title": "Kitchen",
+    "screenOff": "The kitchen screen is switched off for this branch: orders print on a kitchen slip at the till. A manager switches it on under Settings → Kitchen at the branches.",
     "notAllowed": "{{name}} cannot see the kitchen tickets.",
     "waiting_one": "{{count}} ticket waiting",
     "waiting_other": "{{count}} tickets waiting",
@@ -1201,6 +1206,19 @@
     "allStations": "All stations"
   },
   "settings": {
+    "kitchenBranches": {
+      "title": "Kitchen at the branches",
+      "intro": "For each branch: whether orders go to the kitchen screen, and whether the till prints a kitchen slip when it sends them. Without a kitchen screen, the slip always prints, to hand to the kitchen.",
+      "none": "This brand has no branches yet.",
+      "screen": "Kitchen screen",
+      "screenOf": "Kitchen screen at {{branch}}",
+      "slip": "Print a kitchen slip too",
+      "slipAlways": "Kitchen slip prints (no screen)",
+      "slipOf": "Kitchen slip at {{branch}}",
+      "save": "Save the kitchen settings",
+      "saved": "The kitchen settings were saved. The tills use them at once.",
+      "failed": "The kitchen settings could not be saved. Try again."
+    },
     "title": "Settings",
     "intro": "How the terminals of this brand work. A change reaches every terminal within a few minutes.",
     "brand": "Brand",

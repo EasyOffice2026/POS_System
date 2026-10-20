@@ -227,6 +227,7 @@ export function branchMenu(overrides: Partial<BranchMenu> = {}): BranchMenu {
     brandId: ids.pizza,
     currency: 'KWD',
     timezone: 'Asia/Riyadh',
+    kitchen: { screen: true, slip: false },
     categories: [
       {
         id: categoryIds.pizzas,

@@ -16,6 +16,7 @@ import {
   openingHoursSchema,
   overlappingDays,
   parseBranchConfig,
+  printsKitchenSlip,
   printerInputListSchema,
   printerInputSchema,
   printerListSchema,
@@ -364,6 +365,22 @@ describe('printers', () => {
   });
 });
 
+describe('the kitchen switches (spec 027)', () => {
+  it('keep a stored choice, fall back to the screen without a slip, and print a slip when the screen is off', () => {
+    expect(parseBranchConfig({ kitchen: { screen: false, slip: false } }).kitchen).toEqual({
+      screen: false,
+      slip: false,
+    });
+    expect(parseBranchConfig({ kitchen: { screen: 'yes' } }).kitchen).toEqual({
+      screen: true,
+      slip: false,
+    });
+    expect(printsKitchenSlip({ screen: true, slip: false })).toBe(false);
+    expect(printsKitchenSlip({ screen: true, slip: true })).toBe(true);
+    expect(printsKitchenSlip({ screen: false, slip: false })).toBe(true);
+  });
+});
+
 describe('parseBranchConfig', () => {
   it('gives a branch that was never set up closed days and no printers', () => {
     const expected = {
@@ -371,6 +388,7 @@ describe('parseBranchConfig', () => {
       printers: [],
       dayEndsAt: '00:00',
       specialHours: [],
+      kitchen: { screen: true, slip: false },
     };
 
     expect(parseBranchConfig({})).toEqual(expected);
@@ -393,7 +411,12 @@ describe('parseBranchConfig', () => {
       ],
     };
 
-    expect(parseBranchConfig(stored)).toEqual({ ...stored, dayEndsAt: '00:00', specialHours: [] });
+    expect(parseBranchConfig(stored)).toEqual({
+      ...stored,
+      dayEndsAt: '00:00',
+      specialHours: [],
+      kitchen: { screen: true, slip: false },
+    });
   });
 
   it('falls back to the default for a part that cannot be read, and keeps the other part', () => {
@@ -412,6 +435,7 @@ describe('parseBranchConfig', () => {
       printers,
       dayEndsAt: '00:00',
       specialHours: [],
+      kitchen: { screen: true, slip: false },
     });
   });
 
@@ -421,6 +445,7 @@ describe('parseBranchConfig', () => {
       printers: [],
       dayEndsAt: '00:00',
       specialHours: [],
+      kitchen: { screen: true, slip: false },
     });
   });
 });
