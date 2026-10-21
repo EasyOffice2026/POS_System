@@ -66,7 +66,7 @@ export function Dialog({ title, onClose, children, footer, wide = false }: Dialo
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) close.current();
       }}
@@ -78,14 +78,14 @@ export function Dialog({ title, onClose, children, footer, wide = false }: Dialo
         aria-labelledby={titleId}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className={`flex max-h-[90vh] w-full flex-col rounded-t-xl bg-white shadow-xl sm:rounded-xl ${wide ? 'sm:max-w-4xl' : 'sm:max-w-md'}`}
+        className={`flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-float focus:outline-none sm:rounded-2xl ${wide ? 'sm:max-w-4xl' : 'sm:max-w-md'}`}
       >
-        <h2 id={titleId} className="border-b border-slate-200 px-4 py-3 text-lg font-semibold">
+        <h2 id={titleId} className="border-b border-line px-5 py-4 text-lg font-semibold">
           {title}
         </h2>
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
         {footer && (
-          <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 px-4 py-3">
+          <div className="flex flex-wrap justify-end gap-2 border-t border-line bg-slate-50 px-5 py-3">
             {footer}
           </div>
         )}

@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackOfficeLink } from '../../components/BackOfficeLink';
+import { BrandMark } from '../../components/BrandMark';
+import { useBrandColor } from '../../lib/use-brand-color';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { localize } from '../../i18n/localize';
 import { ApiError } from '../../lib/api';
@@ -67,6 +69,7 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
     refetchInterval: KITCHEN_REFRESH_MS,
   });
   const screenOff = menu.data?.kitchen.screen === false;
+  useBrandColor(menu.data?.brand.color);
 
   // Tickets sent before the screen was switched off are not shown: the branch works from slips.
   const all = screenOff ? [] : (tickets.data ?? []);
@@ -80,17 +83,23 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
   return (
     <div className="flex min-h-screen flex-col bg-slate-800 text-slate-900">
       <header className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 px-4 py-2 text-white">
-        <div className="min-w-0">
-          <p className="text-xs text-slate-300">{t('kds.title')}</p>
-          <p className="font-semibold">
-            {localize(terminal.branchName, i18n.language)}
-            {terminal.stationName && (
-              <span className="font-normal text-slate-300">
-                {' · '}
-                {localize(terminal.stationName, i18n.language)}
-              </span>
-            )}
-          </p>
+        <div className="flex min-w-0 items-center gap-3">
+          <BrandMark
+            name={terminal.brandName ? localize(terminal.brandName, i18n.language) : t('kds.title')}
+            logoUrl={menu.data?.brand.logoUrl}
+          />
+          <div className="min-w-0">
+            <p className="text-xs text-slate-300">{t('kds.title')}</p>
+            <p className="font-semibold">
+              {localize(terminal.branchName, i18n.language)}
+              {terminal.stationName && (
+                <span className="font-normal text-slate-300">
+                  {' · '}
+                  {localize(terminal.stationName, i18n.language)}
+                </span>
+              )}
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-sm text-slate-200">{t('kds.waiting', { count: open.length })}</span>

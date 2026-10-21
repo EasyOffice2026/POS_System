@@ -119,6 +119,20 @@ export const defaultLoyaltySettings: LoyaltySettings = {
 
 // When the stock of a dish's ingredients goes down (docs/client-decisions.md): when the order is
 // paid, or when the kitchen starts the ticket the dish is on.
+// How the brand looks on its tills, kitchen screens and back office: its own colour, used for
+// identity only (the logo mark, the chosen category, the active menu item). Null keeps the
+// product's neutral colour. The logo is the brand's logo link (Brands).
+export const brandColorSchema = z
+  .string({ error: 'BRAND_COLOR_INVALID' })
+  .trim()
+  .toLowerCase()
+  .regex(/^#[0-9a-f]{6}$/, 'BRAND_COLOR_INVALID');
+export const appearanceSettingsSchema = z.strictObject({
+  color: brandColorSchema.nullable(),
+});
+export type AppearanceSettings = z.infer<typeof appearanceSettingsSchema>;
+export const defaultAppearanceSettings: AppearanceSettings = { color: null };
+
 export const stockDeductAtSchema = z.enum(['paid', 'preparing'], {
   error: 'STOCK_DEDUCT_AT_INVALID',
 });
@@ -153,6 +167,7 @@ export const brandSettingsSchema = z.object({
   loyalty: loyaltySettingsSchema,
   alerts: alertSettingsSchema,
   stockDeductAt: stockDeductAtSchema,
+  appearance: appearanceSettingsSchema,
 });
 export type BrandSettings = z.infer<typeof brandSettingsSchema>;
 
@@ -168,6 +183,7 @@ export const defaultBrandSettings: BrandSettings = {
   loyalty: defaultLoyaltySettings,
   alerts: defaultAlertSettings,
   stockDeductAt: 'paid',
+  appearance: defaultAppearanceSettings,
 };
 
 // The whole settings as a request. Unknown fields are refused.
@@ -198,6 +214,7 @@ export const brandSettingsRequestSchema = z
     loyalty: loyaltySettingsSchema.default(defaultLoyaltySettings),
     alerts: alertSettingsSchema.default(defaultAlertSettings),
     stockDeductAt: stockDeductAtSchema.default('paid'),
+    appearance: appearanceSettingsSchema.default(defaultAppearanceSettings),
   })
   .transform((settings) => ({
     ...settings,
@@ -252,6 +269,11 @@ export function parseBrandSettings(stored: unknown): BrandSettings {
     loyalty: pick(brandSettingsSchema.shape.loyalty, source.loyalty, defaultLoyaltySettings),
     alerts: pick(brandSettingsSchema.shape.alerts, source.alerts, defaultAlertSettings),
     stockDeductAt: pick(brandSettingsSchema.shape.stockDeductAt, source.stockDeductAt, 'paid'),
+    appearance: pick(
+      brandSettingsSchema.shape.appearance,
+      source.appearance,
+      defaultAppearanceSettings,
+    ),
   };
 }
 

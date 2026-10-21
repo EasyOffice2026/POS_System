@@ -106,6 +106,27 @@ describe('the settings page', () => {
     ).toEqual({ config: { kitchen: { screen: false, slip: false } } });
   });
 
+  it('saves the brand colour, and refuses one that is not a colour', async () => {
+    const api = settingsApi({ [SAVE]: (request) => json(request.body) });
+    const user = userEvent.setup();
+    renderApp('/admin/settings');
+
+    const colour = await screen.findByLabelText('Colour');
+    expect(colour).toHaveValue('');
+    await user.type(colour, 'red');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(colour).toHaveAccessibleDescription(/six letters or digits/);
+    expect(api.count(SAVE)).toBe(0);
+
+    await user.clear(colour);
+    await user.type(colour, '#b00020');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('The settings were saved.');
+    expect(
+      (api.calls.find((call) => call.key === SAVE)?.body as typeof defaultBrandSettings).appearance,
+    ).toEqual({ color: '#b00020' });
+  });
+
   it('adds a delivery platform with its commission rate (spec 025)', async () => {
     const api = settingsApi({ [SAVE]: (request) => json(request.body) });
     const user = userEvent.setup();

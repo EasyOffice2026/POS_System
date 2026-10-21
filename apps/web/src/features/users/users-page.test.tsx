@@ -22,6 +22,9 @@ import { errorResponse, json, type MockHandler, mockApi } from '../../test/mock-
 import { renderApp } from '../../test/render-app';
 
 const REFRESH = 'POST /api/v1/auth/refresh';
+
+// The header loads the brand's look (colour and logo) on every page; this is not the page's data.
+const headerLook = (key: string) => /^GET \/api\/v1\/brands\/[^/]+(\/settings)?$/.test(key);
 const USERS = 'GET /api/v1/users';
 
 // What the page asks for besides the users: the brands and branches for the branch names.
@@ -211,7 +214,9 @@ describe('what each role can do on the users list', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'You do not have permission to open this page.',
     );
-    expect(api.calls.filter((call) => call.key !== REFRESH)).toHaveLength(0);
+    expect(api.calls.filter((call) => call.key !== REFRESH && !headerLook(call.key))).toHaveLength(
+      0,
+    );
   });
 
   it('sends a brand manager to the same list, with no group admin to see', async () => {

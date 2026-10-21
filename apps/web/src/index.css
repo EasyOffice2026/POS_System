@@ -1,5 +1,79 @@
 @import 'tailwindcss';
 
+/* The fonts, served with the app (the security policy allows fonts from the app only): IBM Plex
+   Sans and IBM Plex Sans Arabic, one family drawn for both scripts, and the condensed cut for
+   prices, totals and times. */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+@import '@fontsource/ibm-plex-sans-arabic/400.css';
+@import '@fontsource/ibm-plex-sans-arabic/500.css';
+@import '@fontsource/ibm-plex-sans-arabic/600.css';
+@import '@fontsource/ibm-plex-sans-arabic/700.css';
+@import '@fontsource/ibm-plex-sans-condensed/600.css';
+@import '@fontsource/ibm-plex-sans-condensed/700.css';
+
+/* The design system of the redesign: what each colour means is fixed for every brand, and only
+   the brand colour changes (it comes from the brand's settings, see BrandTheme). */
+@theme {
+  --font-sans: 'IBM Plex Sans', 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+  --font-num: 'IBM Plex Sans Condensed', 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif;
+
+  /* The neutrals every screen already uses, tuned to one family: ink for text and primary
+     buttons, canvas behind the pages, line for borders. */
+  --color-slate-50: #f6f7f9;
+  --color-slate-100: #eef0f3;
+  --color-slate-200: #e3e6eb;
+  --color-slate-300: #ccd1d9;
+  --color-slate-400: #9aa1ad;
+  --color-slate-500: #7a808c;
+  --color-slate-600: #5b616d;
+  --color-slate-700: #424853;
+  --color-slate-800: #2a2e36;
+  --color-slate-900: #15171c;
+
+  --color-ink: #15171c;
+  --color-canvas: #f4f5f7;
+  --color-line: #e3e6eb;
+
+  /* Money in: Charge, paid, gains. */
+  --color-money: #0e7a55;
+  --color-money-strong: #0b6446;
+  --color-money-soft: #e3f3ec;
+  /* Getting late, low stock. */
+  --color-warn: #a15c07;
+  --color-warn-soft: #fdf1d8;
+  /* Void, refund, late, errors: never shown by colour alone. */
+  --color-danger: #c0262d;
+  --color-danger-soft: #fbe7e7;
+  /* New tickets, links, focus. */
+  --color-info: #1f4fd1;
+  --color-info-soft: #e7edfc;
+
+  --radius-control: 0.5rem;
+  --radius-card: 0.875rem;
+  --shadow-float: 0 12px 32px rgb(21 23 28 / 0.16), 0 2px 6px rgb(21 23 28 / 0.08);
+}
+
+/* The brand's own colour, set on the page by BrandTheme; identity only (the logo, the chosen
+   category, the active menu item), never an action. */
+@theme inline {
+  --color-brand: var(--brand-color, #424853);
+  --color-brand-soft: color-mix(in srgb, var(--brand-color, #424853) 11%, white);
+}
+
 html {
-  font-family: system-ui, 'Segoe UI', Tahoma, 'Noto Sans Arabic', sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+/* Prices, totals and times line up in columns. */
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
 }

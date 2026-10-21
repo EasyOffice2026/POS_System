@@ -76,6 +76,7 @@ const menu: BranchMenu = {
   currency: 'KWD',
   timezone: 'Asia/Riyadh',
   kitchen: { screen: true, slip: false },
+  brand: { logoUrl: null, color: null },
   categories: [{ id: randomUUID(), name: text('All'), items: [pizza, cola, breakfast] }],
   combos: [meal],
 };

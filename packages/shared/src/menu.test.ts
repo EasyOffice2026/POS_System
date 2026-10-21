@@ -482,6 +482,7 @@ describe('what the API answers', () => {
       currency: 'KWD',
       timezone: 'Asia/Riyadh',
       kitchen: { screen: true, slip: false },
+      brand: { logoUrl: null, color: null },
       categories: [
         {
           id: id(3),

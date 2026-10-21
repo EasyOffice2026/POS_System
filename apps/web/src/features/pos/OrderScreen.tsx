@@ -10,6 +10,8 @@ import { useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { BackOfficeLink } from '../../components/BackOfficeLink';
+import { BrandMark } from '../../components/BrandMark';
+import { useBrandColor } from '../../lib/use-brand-color';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { localize } from '../../i18n/localize';
 import { useAuth } from '../auth/auth-context';
@@ -93,6 +95,10 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
     setSlip(null);
   };
   const printsSlip = menu.data ? printsKitchenSlip(menu.data.kitchen) : false;
+  useBrandColor(menu.data?.brand.color);
+  const brandName = terminal.brandName
+    ? localize(terminal.brandName, i18n.language)
+    : t('app.name');
   const unsent = () =>
     (terminalOrder.order?.lines ?? [])
       .filter((line) => line.status === 'pending')
@@ -137,11 +143,14 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
     <>
       <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 print:hidden lg:h-screen">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2">
-          <div className="min-w-0">
-            <p className="text-xs text-slate-500">
-              {terminal.brandName ? localize(terminal.brandName, i18n.language) : t('app.name')}
-            </p>
-            <p className="font-semibold">{localize(terminal.branchName, i18n.language)}</p>
+          <div className="flex min-w-0 items-center gap-3">
+            <BrandMark name={brandName} logoUrl={menu.data?.brand.logoUrl} />
+            <div className="min-w-0">
+              <p className="leading-tight font-semibold">{brandName}</p>
+              <p className="text-sm text-slate-600">
+                {localize(terminal.branchName, i18n.language)}
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium" dir="ltr">

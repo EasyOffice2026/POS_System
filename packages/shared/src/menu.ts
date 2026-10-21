@@ -169,6 +169,8 @@ export const branchMenuSchema = z.object({
   timezone: z.string(),
   // Whether orders go to the kitchen screen and a slip prints (spec 027).
   kitchen: kitchenSettingsSchema,
+  // How the brand shows on the till and the kitchen screen: its logo and its colour.
+  brand: z.object({ logoUrl: z.string().nullable(), color: z.string().nullable() }),
   categories: z.array(branchMenuCategorySchema),
   combos: z.array(branchMenuComboSchema),
 });

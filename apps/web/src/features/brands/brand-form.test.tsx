@@ -405,6 +405,8 @@ describe('who may change brands', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'You do not have permission to open this page.',
     );
-    expect(api.count(one(pizzaBrand.id))).toBe(0);
+    // The form never opens: no field of it is shown and nothing is saved.
+    expect(screen.queryByLabelText('Name (English)')).not.toBeInTheDocument();
+    expect(api.count(patch(pizzaBrand.id))).toBe(0);
   });
 });

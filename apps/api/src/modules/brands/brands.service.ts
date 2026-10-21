@@ -148,6 +148,8 @@ export function createBrandsService({
         },
         meta,
       );
+      // The till shows the brand colour with the branch menu.
+      if (changed.includes('appearance')) await menuCache?.invalidate(id);
       return parseBrandSettings(updated.settings);
     },
 
@@ -218,6 +220,8 @@ export function createBrandsService({
         },
         meta,
       );
+      // The till shows the logo with the branch menu.
+      if (changed.includes('logoUrl')) await menuCache?.invalidate(id);
       return toBrand(updated);
     },
 
