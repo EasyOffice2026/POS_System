@@ -109,6 +109,16 @@ Vercel sets `NODE_ENV=production` itself. The region is `fra1` (Frankfurt) in `v
 
 **Not yet tried on Vercel itself.** The entry file (`apps/api/src/vercel.ts`) is tested, and its bundle was run as a function on a developer's machine, but the first deploy to Vercel may still need a small change: the keys of `vercel.json` services (`runtime`, `entrypoint`, `buildCommand`) follow Vercel's import screen and documentation, and whether Vercel hands the API the full path `/api/v1/...` or strips `/api` is handled either way in the entry file. If the first deploy fails, send the build log to the development team.
 
+## Tills
+
+A till is a browser on the shop computer or tablet, open at `https://<address>/pos`. The receipt and the kitchen slip ([spec 027](specs/027-kitchen-screen-and-slip.md)) print through the browser on the computer's default printer. A browser normally asks before each print; to print the kitchen slip at once, start it in kiosk printing mode, for example a desktop shortcut whose target is:
+
+```
+"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --kiosk-printing --app=https://pos.nexerakw.com/pos
+```
+
+Close every Edge window first, or the flag is ignored. Chrome takes the same flags. Set the kitchen or receipt printer as the computer's default printer, and its paper size to the roll (80 mm). Printing straight to a network printer, without the browser, comes with the printer model (docs/client-decisions.md).
+
 ## Still to decide
 
 1. **Where it runs:** Vercel (chosen on 16 October 2026, section "Vercel"), with the server images above kept as the alternative.

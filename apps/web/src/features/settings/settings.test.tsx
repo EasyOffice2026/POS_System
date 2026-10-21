@@ -11,6 +11,7 @@ import {
   page,
   pizzaBrand,
   pizzaMall,
+  branchDetail,
   sessionFor,
 } from '../../test/fixtures';
 import { errorResponse, json, type MockHandler, mockApi } from '../../test/mock-api';
@@ -74,6 +75,56 @@ describe('the settings page', () => {
       discountPresets: ['5', '10', '15', '20', '25', '50'],
       kitchenStations: [{ name: { en: 'Pizza', ar: 'بيتزا' } }],
     });
+  });
+
+  it('switches the kitchen screen off at a branch, and the slip then always prints (spec 027)', async () => {
+    const api = settingsApi({
+      [`GET /api/v1/branches/${pizzaMall.id}`]: () => json(branchDetail()),
+      [`PATCH /api/v1/branches/${pizzaMall.id}`]: (request) =>
+        json(
+          branchDetail({
+            config: { ...branchDetail().config, ...(request.body as { config: object }).config },
+          }),
+        ),
+    });
+    const user = userEvent.setup();
+    renderApp('/admin/settings');
+
+    const screenBox = await screen.findByLabelText('Kitchen screen at Pizza Palace - Mall Branch');
+    expect(screenBox).toBeChecked();
+    const slipBox = screen.getByLabelText('Kitchen slip at Pizza Palace - Mall Branch');
+    expect(slipBox).not.toBeChecked();
+
+    await user.click(screenBox);
+    expect(slipBox).toBeChecked();
+    expect(slipBox).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Save the kitchen settings' }));
+
+    expect(await screen.findByText(/The kitchen settings were saved/)).toBeVisible();
+    expect(
+      api.calls.find((call) => call.key === `PATCH /api/v1/branches/${pizzaMall.id}`)?.body,
+    ).toEqual({ config: { kitchen: { screen: false, slip: false } } });
+  });
+
+  it('saves the brand colour, and refuses one that is not a colour', async () => {
+    const api = settingsApi({ [SAVE]: (request) => json(request.body) });
+    const user = userEvent.setup();
+    renderApp('/admin/settings');
+
+    const colour = await screen.findByLabelText('Colour');
+    expect(colour).toHaveValue('');
+    await user.type(colour, 'red');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(colour).toHaveAccessibleDescription(/six letters or digits/);
+    expect(api.count(SAVE)).toBe(0);
+
+    await user.clear(colour);
+    await user.type(colour, '#b00020');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('The settings were saved.');
+    expect(
+      (api.calls.find((call) => call.key === SAVE)?.body as typeof defaultBrandSettings).appearance,
+    ).toEqual({ color: '#b00020' });
   });
 
   it('adds a delivery platform with its commission rate (spec 025)', async () => {

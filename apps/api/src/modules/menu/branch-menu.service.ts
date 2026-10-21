@@ -1,4 +1,11 @@
-import { type BranchMenu, type BranchMenuItem, CURRENCY, openingHoursSchema } from '@pos/shared';
+import {
+  type BranchMenu,
+  type BranchMenuItem,
+  CURRENCY,
+  openingHoursSchema,
+  parseBranchConfig,
+  parseBrandSettings,
+} from '@pos/shared';
 import type { Branch as BranchRow } from '../../generated/prisma/client';
 import { errors } from '../../lib/http-errors';
 import type { ActorContext } from '../../middleware/authenticate';
@@ -99,11 +106,21 @@ export function createBranchMenuService({ cache }: Pick<MenuDeps, 'cache'>) {
         : [];
     });
 
+    const brandRow = await db.brand.findUnique({
+      where: { id: brandId },
+      select: { logoUrl: true, settings: true },
+    });
+
     return {
       branchId: branch.id,
       brandId,
       currency: CURRENCY,
       timezone: branch.timezone,
+      kitchen: parseBranchConfig(branch.config).kitchen,
+      brand: {
+        logoUrl: brandRow?.logoUrl ?? null,
+        color: parseBrandSettings(brandRow?.settings).appearance.color,
+      },
       categories: menuCategories,
       combos,
     };

@@ -1,8 +1,17 @@
-import { defaultBrandSettings, type Order, type OrderLine, type ShiftSummary } from '@pos/shared';
+import {
+  defaultBrandSettings,
+  type Order,
+  type OrderLine,
+  printsKitchenSlip,
+  type ShiftSummary,
+} from '@pos/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { BackOfficeLink } from '../../components/BackOfficeLink';
+import { BrandMark } from '../../components/BrandMark';
+import { useBrandColor } from '../../lib/use-brand-color';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { localize } from '../../i18n/localize';
 import { useAuth } from '../auth/auth-context';
@@ -13,6 +22,7 @@ import { type Choosing, ChoiceDialog } from './ChoiceDialog';
 import { CustomerDialog } from './CustomerDialog';
 import { DiscountDialog } from './DiscountDialog';
 import { FloorDialog } from './FloorDialog';
+import { KitchenSlip } from './KitchenSlip';
 import { PromoCodeDialog } from './PromoCodeDialog';
 import { MenuPanel } from './MenuPanel';
 import { OpenOrdersDialog } from './OpenOrdersDialog';
@@ -74,6 +84,32 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
     queryFn: () => getBranchMenu(terminal.branchId),
   });
 
+  // The kitchen slip of the dishes just sent, printed by itself when the branch wants one
+  // (docs/specs/027-kitchen-screen-and-slip.md, rule 4). What follows it, the receipt after a
+  // payment, waits until it has gone to the printer.
+  const [slip, setSlip] = useState<{ order: Order; lineIds: string[] } | null>(null);
+  const printSlip = (order: Order, lineIds: string[]) => {
+    // The slip must be on the page before the browser prints it.
+    flushSync(() => setSlip({ order, lineIds }));
+    window.print();
+    setSlip(null);
+  };
+  const printsSlip = menu.data ? printsKitchenSlip(menu.data.kitchen) : false;
+  useBrandColor(menu.data?.brand.color);
+  const brandName = terminal.brandName
+    ? localize(terminal.brandName, i18n.language)
+    : t('app.name');
+  const unsent = () =>
+    (terminalOrder.order?.lines ?? [])
+      .filter((line) => line.status === 'pending')
+      .map((line) => line.id);
+  const send = () => {
+    const lineIds = unsent();
+    void terminalOrder.send().then((sent) => {
+      if (sent && printsSlip && lineIds.length > 0) printSlip(sent, lineIds);
+    });
+  };
+
   const timeFormat = new Intl.DateTimeFormat(i18n.language === 'ar' ? 'ar-u-nu-latn' : 'en-GB', {
     timeStyle: 'short',
     hourCycle: 'h23',
@@ -107,11 +143,14 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
     <>
       <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 print:hidden lg:h-screen">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2">
-          <div className="min-w-0">
-            <p className="text-xs text-slate-500">
-              {terminal.brandName ? localize(terminal.brandName, i18n.language) : t('app.name')}
-            </p>
-            <p className="font-semibold">{localize(terminal.branchName, i18n.language)}</p>
+          <div className="flex min-w-0 items-center gap-3">
+            <BrandMark name={brandName} logoUrl={menu.data?.brand.logoUrl} />
+            <div className="min-w-0">
+              <p className="leading-tight font-semibold">{brandName}</p>
+              <p className="text-sm text-slate-600">
+                {localize(terminal.branchName, i18n.language)}
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium" dir="ltr">
@@ -185,7 +224,7 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             onType={terminalOrder.setType}
             onQuantity={terminalOrder.setQuantity}
             onVoidLine={(line) => setVoiding({ kind: 'line', line })}
-            onSend={terminalOrder.send}
+            onSend={send}
             onDiscount={() => setDiscounting(true)}
             onPromoCode={() => setPromoCoding(true)}
             onRemovePromoCode={() => terminalOrder.removePromoCode()}
@@ -346,8 +385,12 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             onCancel={() => setPaying(false)}
             onPay={(tenders) => {
               setPaying(false);
+              // Paying sends what was not sent yet, so its slip prints first.
+              const lineIds = unsent();
               void terminalOrder.pay(tenders).then((paid) => {
-                if (paid) setReceipt(paid);
+                if (!paid) return;
+                if (printsSlip && lineIds.length > 0) printSlip(paid, lineIds);
+                setReceipt(paid);
               });
             }}
           />
@@ -367,13 +410,18 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
         )}
       </div>
 
-      {/* Only the receipt is printed, never the screen around it. */}
-      {bill && !receipt && (
+      {/* Only the slip or the receipt is printed, never the screen around it. */}
+      {slip && (
+        <div className="hidden bg-white print:block">
+          <KitchenSlip order={slip.order} lineIds={slip.lineIds} terminal={terminal} />
+        </div>
+      )}
+      {bill && !receipt && !slip && (
         <div className="hidden bg-white print:block">
           <Receipt order={bill} terminal={terminal} cashier={cashier} bill />
         </div>
       )}
-      {receipt && (
+      {receipt && !slip && (
         <div className="hidden bg-white print:block">
           <Receipt order={receipt} terminal={terminal} cashier={cashier} />
         </div>

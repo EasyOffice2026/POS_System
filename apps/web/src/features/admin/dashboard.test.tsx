@@ -18,6 +18,9 @@ import { errorResponse, json, mockApi } from '../../test/mock-api';
 import { renderApp } from '../../test/render-app';
 
 const REFRESH = 'POST /api/v1/auth/refresh';
+
+// The header loads the brand's look (colour and logo) on every page; this is not the page's data.
+const headerLook = (key: string) => /^GET \/api\/v1\/brands\/[^/]+(\/settings)?$/.test(key);
 const BRANDS = 'GET /api/v1/brands';
 const ALERTS = 'GET /api/v1/inventory/alerts';
 const branchesOf = (brandId: string) => `GET /api/v1/brands/${brandId}/branches`;
@@ -195,6 +198,8 @@ describe('dashboard for other roles', () => {
     renderApp('/admin');
 
     expect(await screen.findByText('Your role has no dashboard sections yet.')).toBeInTheDocument();
-    expect(api.calls.filter((call) => call.key !== REFRESH)).toHaveLength(0);
+    expect(api.calls.filter((call) => call.key !== REFRESH && !headerLook(call.key))).toHaveLength(
+      0,
+    );
   });
 });

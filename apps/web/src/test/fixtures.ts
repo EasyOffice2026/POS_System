@@ -244,7 +244,13 @@ export const kitchenStaff: AuthUser = {
 export function branchDetail(overrides: Partial<BranchDetail> = {}): BranchDetail {
   return {
     ...pizzaMall,
-    config: { openingHours: closedWeek(), printers: [], dayEndsAt: '00:00', specialHours: [] },
+    config: {
+      openingHours: closedWeek(),
+      printers: [],
+      dayEndsAt: '00:00',
+      specialHours: [],
+      kitchen: { screen: true, slip: false },
+    },
     ...overrides,
   };
 }

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { openingHoursSchema } from './branch-config';
+import { kitchenSettingsSchema, openingHoursSchema } from './branch-config';
 import { localizedNameSchema, localizedTextSchema } from './localized';
 import { CURRENCY, priceChangeSchema, priceSchema } from './money';
 import { cursorQuerySchema } from './pagination';
@@ -167,6 +167,10 @@ export const branchMenuSchema = z.object({
   currency: z.literal(CURRENCY),
   // The branch's time zone, so a schedule is read on the branch's clock.
   timezone: z.string(),
+  // Whether orders go to the kitchen screen and a slip prints (spec 027).
+  kitchen: kitchenSettingsSchema,
+  // How the brand shows on the till and the kitchen screen: its logo and its colour.
+  brand: z.object({ logoUrl: z.string().nullable(), color: z.string().nullable() }),
   categories: z.array(branchMenuCategorySchema),
   combos: z.array(branchMenuComboSchema),
 });

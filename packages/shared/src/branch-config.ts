@@ -374,11 +374,25 @@ export const printerInputListSchema = z
 export const DEFAULT_DAY_END = '00:00';
 export const dayEndSchema = timeField;
 
+// Whether the branch's orders go to the kitchen screen, and whether the till prints a kitchen
+// slip when it sends them. With the screen off the slip always prints
+// (docs/specs/027-kitchen-screen-and-slip.md).
+export const kitchenSettingsSchema = z.strictObject({
+  screen: z.boolean({ error: 'KITCHEN_SETTING_INVALID' }),
+  slip: z.boolean({ error: 'KITCHEN_SETTING_INVALID' }),
+});
+export type KitchenSettings = z.infer<typeof kitchenSettingsSchema>;
+export const defaultKitchenSettings: KitchenSettings = { screen: true, slip: false };
+
+// Whether the till prints a slip when it sends dishes to the kitchen.
+export const printsKitchenSlip = (kitchen: KitchenSettings) => kitchen.slip || !kitchen.screen;
+
 export const branchConfigSchema = z.object({
   openingHours: openingHoursSchema,
   printers: printerListSchema,
   dayEndsAt: dayEndSchema.default(DEFAULT_DAY_END),
   specialHours: specialHoursSchema.default([]),
+  kitchen: kitchenSettingsSchema.default(defaultKitchenSettings),
 });
 
 export type BranchConfig = z.infer<typeof branchConfigSchema>;
@@ -389,6 +403,7 @@ export const branchConfigChangeSchema = z.strictObject({
   printers: printerInputListSchema.optional(),
   dayEndsAt: dayEndSchema.optional(),
   specialHours: specialHoursInputSchema.optional(),
+  kitchen: kitchenSettingsSchema.optional(),
 });
 
 // The day on the clock of a time zone, as YYYY-MM-DD, with the day ending at the hour given.
@@ -428,11 +443,13 @@ export function parseBranchConfig(stored: unknown): BranchConfig {
   const printers = printerListSchema.safeParse(source.printers);
   const dayEnd = dayEndSchema.safeParse(source.dayEndsAt);
   const special = specialHoursSchema.safeParse(source.specialHours);
+  const kitchen = kitchenSettingsSchema.safeParse(source.kitchen);
 
   return {
     openingHours: hours.success ? hours.data : closedWeek(),
     printers: printers.success ? printers.data : [],
     dayEndsAt: dayEnd.success ? dayEnd.data : DEFAULT_DAY_END,
     specialHours: special.success ? special.data : [],
+    kitchen: kitchen.success ? kitchen.data : defaultKitchenSettings,
   };
 }

@@ -8,10 +8,10 @@ A kiosk branch has no seats, so its cashier should not see Dine-in or the table 
 
 ## Who can do what
 
-| Action                          | Who                                                       |
-| ------------------------------- | --------------------------------------------------------- |
-| Switch order types of a branch  | `settings:write` and `branches:write`, on Settings        |
-| Take a delivery order           | `orders:write`, as for any order                          |
+| Action                         | Who                                                |
+| ------------------------------ | -------------------------------------------------- |
+| Switch order types of a branch | `settings:write` and `branches:write`, on Settings |
+| Take a delivery order          | `orders:write`, as for any order                   |
 
 No new permission.
 
@@ -27,12 +27,12 @@ No new permission.
 
 ## API
 
-| Route                                | Change                                                                                          |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `PATCH /branches/:id`                | `config.orderTypes`: `{ dine_in, takeaway, delivery }`, each true or false                       |
-| `GET /menu?branchId=`                | Answers `orderTypes`, the types the branch offers, in the till's order                           |
-| `POST /orders`, `PATCH /orders/:id`  | `type` may be `delivery`; `delivery: { name?, phone, address, note? }`, or null to clear it        |
-| Order                                | `delivery`: the details, or null                                                                 |
+| Route                               | Change                                                                                      |
+| ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| `PATCH /branches/:id`               | `config.orderTypes`: `{ dine_in, takeaway, delivery }`, each true or false                  |
+| `GET /menu?branchId=`               | Answers `orderTypes`, the types the branch offers, in the till's order                      |
+| `POST /orders`, `PATCH /orders/:id` | `type` may be `delivery`; `delivery: { name?, phone, address, note? }`, or null to clear it |
+| Order                               | `delivery`: the details, or null                                                            |
 
 ## Data
 

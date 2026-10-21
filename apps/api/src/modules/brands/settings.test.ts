@@ -119,6 +119,38 @@ describe('GET and PUT /brands/:id/settings', () => {
     );
   });
 
+  it('keeps the brand colour, and the till sees it and the logo at once', async () => {
+    const cashier = await asCashier();
+    const menuOf = async () =>
+      (await cashier.get(`/api/v1/menu?branchId=${world.mall.id}`)).body as {
+        brand: { logoUrl: string | null; color: string | null };
+      };
+    expect((await menuOf()).brand).toEqual({ logoUrl: null, color: null });
+
+    const api = await asPizzaManager();
+    const res = await api.put(settingsOf(world.pizza.id), {
+      ...defaultBrandSettings,
+      kitchenStations: [],
+      appearance: { color: ' #B00020 ' },
+    });
+    expect(res.status).toBe(200);
+    expect(brandSettingsSchema.parse(res.body).appearance).toEqual({ color: '#b00020' });
+    expect((await menuOf()).brand.color).toBe('#b00020');
+
+    const admin = await asAdmin();
+    await admin.patch(`/api/v1/brands/${world.pizza.id}`, {
+      logoUrl: 'https://files.test/pizza/logo/l.png',
+    });
+    expect((await menuOf()).brand.logoUrl).toBe('https://files.test/pizza/logo/l.png');
+
+    const bad = await api.put(settingsOf(world.pizza.id), {
+      ...defaultBrandSettings,
+      kitchenStations: [],
+      appearance: { color: 'red' },
+    });
+    expect(codesOf(bad)).toEqual(['BRAND_COLOR_INVALID']);
+  });
+
   it('refuses a branch manager, a cashier, and another brand', async () => {
     for (const api of [await asMallManager(), await asCashier()]) {
       expect((await api.put(settingsOf(world.pizza.id), defaultBrandSettings)).status).toBe(403);

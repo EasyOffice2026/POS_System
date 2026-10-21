@@ -87,6 +87,7 @@ function kitchenApi(handlers: Record<string, MockHandler> = {}, user = kitchenSt
   return mockApi({
     'POST /api/v1/auth/refresh': () => json(sessionFor(user)),
     [TICKETS]: () => json({ data: [ticket()] }),
+    'GET /api/v1/menu': () => json(branchMenu()),
     [`GET /api/v1/brands/${ids.pizza}/settings`]: () => json(brandSettings()),
     'GET /api/v1/shifts/current': () => json(shiftSummary()),
     ...handlers,
@@ -94,6 +95,21 @@ function kitchenApi(handlers: Record<string, MockHandler> = {}, user = kitchenSt
 }
 
 describe('the kitchen screen', () => {
+  it('says so when the branch works without a kitchen screen (spec 027)', async () => {
+    kitchenApi({
+      // A ticket sent before the screen was switched off.
+      [TICKETS]: () => json({ data: [ticket()] }),
+      'GET /api/v1/menu': () => json(branchMenu({ kitchen: { screen: false, slip: false } })),
+    });
+    renderApp('/kds');
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'The kitchen screen is switched off for this branch',
+    );
+    expect(screen.queryByText('Nothing to make. New orders appear here.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Start/ })).not.toBeInTheDocument();
+    expect(screen.getByText('0 tickets waiting')).toBeInTheDocument();
+  });
+
   it('has a way back to the back office for a manager', async () => {
     kitchenApi({}, fullBrandManager);
     renderApp('/kds');

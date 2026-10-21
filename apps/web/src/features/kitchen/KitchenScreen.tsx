@@ -3,10 +3,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackOfficeLink } from '../../components/BackOfficeLink';
+import { BrandMark } from '../../components/BrandMark';
+import { useBrandColor } from '../../lib/use-brand-color';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { localize } from '../../i18n/localize';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
+import { getBranchMenu, menuKeys } from '../menu/menu-api';
 import { useNow } from '../menu/use-now';
 import { SETTINGS_REFRESH_MS } from '../pos/OrderScreen';
 import { useBrandSettings } from '../settings/settings-api';
@@ -59,7 +62,17 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
     }
   }
 
-  const all = tickets.data ?? [];
+  // A branch can work from printed slips instead (docs/specs/027-kitchen-screen-and-slip.md).
+  const menu = useQuery({
+    queryKey: menuKeys.branchMenu(terminal.branchId),
+    queryFn: () => getBranchMenu(terminal.branchId),
+    refetchInterval: KITCHEN_REFRESH_MS,
+  });
+  const screenOff = menu.data?.kitchen.screen === false;
+  useBrandColor(menu.data?.brand.color);
+
+  // Tickets sent before the screen was switched off are not shown: the branch works from slips.
+  const all = screenOff ? [] : (tickets.data ?? []);
   const open = all.filter((ticket) => ticket.status !== 'done');
   const done = all.filter((ticket) => ticket.status === 'done');
   const clock = new Intl.DateTimeFormat(i18n.language === 'ar' ? 'ar-u-nu-latn' : 'en-GB', {
@@ -70,17 +83,23 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
   return (
     <div className="flex min-h-screen flex-col bg-slate-800 text-slate-900">
       <header className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 px-4 py-2 text-white">
-        <div className="min-w-0">
-          <p className="text-xs text-slate-300">{t('kds.title')}</p>
-          <p className="font-semibold">
-            {localize(terminal.branchName, i18n.language)}
-            {terminal.stationName && (
-              <span className="font-normal text-slate-300">
-                {' · '}
-                {localize(terminal.stationName, i18n.language)}
-              </span>
-            )}
-          </p>
+        <div className="flex min-w-0 items-center gap-3">
+          <BrandMark
+            name={terminal.brandName ? localize(terminal.brandName, i18n.language) : t('kds.title')}
+            logoUrl={menu.data?.brand.logoUrl}
+          />
+          <div className="min-w-0">
+            <p className="text-xs text-slate-300">{t('kds.title')}</p>
+            <p className="font-semibold">
+              {localize(terminal.branchName, i18n.language)}
+              {terminal.stationName && (
+                <span className="font-normal text-slate-300">
+                  {' · '}
+                  {localize(terminal.stationName, i18n.language)}
+                </span>
+              )}
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-sm text-slate-200">{t('kds.waiting', { count: open.length })}</span>
@@ -114,8 +133,13 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
       )}
 
       <main className="flex-1 p-3">
+        {screenOff && (
+          <p role="status" className="mx-auto max-w-xl py-12 text-center text-lg text-slate-200">
+            {t('kds.screenOff')}
+          </p>
+        )}
         {tickets.isPending && <p className="text-slate-300">{t('common.loading')}</p>}
-        {tickets.data && open.length === 0 && (
+        {tickets.data && open.length === 0 && !screenOff && (
           <p className="py-12 text-center text-lg text-slate-300">{t('kds.empty')}</p>
         )}
         <section

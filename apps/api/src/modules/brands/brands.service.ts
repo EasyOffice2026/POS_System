@@ -23,6 +23,7 @@ import type { Branch as BranchRow, Brand as BrandRow, Prisma } from '../../gener
 import { type AuditEvent, writeAudit } from '../../lib/audit';
 import { errors } from '../../lib/http-errors';
 import { cursorPageArgs, toPage } from '../../lib/pagination';
+import type { MenuCache } from '../../lib/menu-cache';
 import type { PrismaClient } from '../../lib/prisma';
 import type { RequestMeta } from '../../lib/request-meta';
 import type { ActorContext } from '../../middleware/authenticate';
@@ -71,7 +72,14 @@ function withIds(printers: PrintersRequest): Printer[] {
 }
 
 // See docs/specs/002-brands-and-branches.md for who may do what and for the rules.
-export function createBrandsService({ prisma }: { prisma: PrismaClient }) {
+export function createBrandsService({
+  prisma,
+  menuCache,
+}: {
+  prisma: PrismaClient;
+  // The tills read the kitchen switches with the branch menu, so a change clears it (spec 027).
+  menuCache?: MenuCache;
+}) {
   const audit = (event: AuditEvent, meta: RequestMeta) =>
     writeAudit(prisma, { ...event, ip: meta.ip, userAgent: meta.userAgent });
 
@@ -140,6 +148,8 @@ export function createBrandsService({ prisma }: { prisma: PrismaClient }) {
         },
         meta,
       );
+      // The till shows the brand colour with the branch menu.
+      if (changed.includes('appearance')) await menuCache?.invalidate(id);
       return parseBrandSettings(updated.settings);
     },
 
@@ -210,6 +220,8 @@ export function createBrandsService({ prisma }: { prisma: PrismaClient }) {
         },
         meta,
       );
+      // The till shows the logo with the branch menu.
+      if (changed.includes('logoUrl')) await menuCache?.invalidate(id);
       return toBrand(updated);
     },
 
@@ -310,14 +322,17 @@ export function createBrandsService({ prisma }: { prisma: PrismaClient }) {
       const hoursChanged = !isDeepStrictEqual(openingHours, current.openingHours);
       const printersChanged = !isDeepStrictEqual(printers, current.printers);
       const specialChanged = !isDeepStrictEqual(specialHours, current.specialHours);
+      const kitchen = input.config?.kitchen ?? current.kitchen;
+      const kitchenChanged = !isDeepStrictEqual(kitchen, current.kitchen);
       if (hoursChanged) changed.push('openingHours');
       if (printersChanged) changed.push('printers');
       if (specialChanged) changed.push('specialHours');
+      if (kitchenChanged) changed.push('kitchen');
 
-      if (hoursChanged || printersChanged || specialChanged) {
+      if (hoursChanged || printersChanged || specialChanged || kitchenChanged) {
         // Keep any part of the configuration that this module does not know about.
         const stored = isRecord(target.config) ? target.config : {};
-        data.config = { ...stored, openingHours, printers, specialHours };
+        data.config = { ...stored, openingHours, printers, specialHours, kitchen };
       }
       if (changed.length === 0) return toBranchDetail(target);
 
@@ -336,10 +351,12 @@ export function createBrandsService({ prisma }: { prisma: PrismaClient }) {
           metadata: {
             changed,
             ...(changed.includes('isActive') ? { isActive: updated.isActive } : {}),
+            ...(kitchenChanged ? { kitchen } : {}),
           },
         },
         meta,
       );
+      if (kitchenChanged) await menuCache?.invalidate(target.brandId, id);
       return toBranchDetail(updated);
     },
   };

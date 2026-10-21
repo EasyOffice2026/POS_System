@@ -28,7 +28,13 @@ const ranges = (...pairs: [string, string][]) => ({
 
 const withHours = (days: Partial<OpeningHours>) =>
   branchDetail({
-    config: { openingHours: week(days), printers: [], dayEndsAt: '00:00', specialHours: [] },
+    config: {
+      openingHours: week(days),
+      printers: [],
+      dayEndsAt: '00:00',
+      specialHours: [],
+      kitchen: { screen: true, slip: false },
+    },
   });
 
 function openHours(branch = branchDetail(), extra: Record<string, MockHandler> = {}) {
@@ -443,6 +449,7 @@ describe('the special hours of a branch', () => {
                 ...(period as object),
                 id: `01990000-0000-7000-8000-00000000a00${index + 1}`,
               })) as never,
+              kitchen: { screen: true, slip: false },
             },
           }),
         );

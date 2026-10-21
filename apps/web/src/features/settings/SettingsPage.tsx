@@ -15,6 +15,7 @@ import { useSearchParams } from 'react-router';
 import { BilingualNameFields } from '../../components/BilingualNameFields';
 import {
   compactFieldClass,
+  ghostButtonClass,
   fieldAttributes,
   fieldClass,
   FormField,
@@ -26,6 +27,7 @@ import { fieldsFromIssues, messageFor, problemsFrom } from '../../lib/error-mess
 import { normalizeNumberInput } from '../../lib/numbers';
 import { useAuth } from '../auth/auth-context';
 import { useMenuBrand } from '../menu/use-menu-brand';
+import { BranchKitchenSettings } from './BranchKitchenSettings';
 import { settingsKeys, updateBrandSettings, useBrandSettings } from './settings-api';
 
 interface MethodRow {
@@ -44,6 +46,8 @@ interface StationRow {
 }
 
 interface FormState {
+  // The brand's colour as "#b00020", or empty for the product's neutral colour.
+  brandColor: string;
   methods: MethodRow[];
   // The discount buttons as typed: "5, 10, 15".
   presets: string;
@@ -69,6 +73,7 @@ const wholeNumber = (text: string) => {
 
 function toForm(settings: BrandSettings): FormState {
   return {
+    brandColor: settings.appearance.color ?? '',
     methods: settings.paymentMethods.map((method) => ({ ...method, saved: true })),
     presets: settings.discountPresets.map((preset) => Number(preset).toString()).join(', '),
     cashierLimit: Number(settings.cashierDiscountLimit).toString(),
@@ -86,6 +91,7 @@ function toForm(settings: BrandSettings): FormState {
 
 function toRequest(form: FormState): BrandSettingsRequest {
   return {
+    appearance: { color: form.brandColor.trim() === '' ? null : form.brandColor.trim() },
     paymentMethods: form.methods.map(({ key, name, isActive, commissionRate }) => ({
       key,
       name,
@@ -120,7 +126,16 @@ function toRequest(form: FormState): BrandSettingsRequest {
 
 const sectionClass = 'space-y-3 rounded-lg border border-slate-200 bg-white p-4';
 
-function SettingsForm({ brandId, settings }: { brandId: string; settings: BrandSettings }) {
+function SettingsForm({
+  brandId,
+  brandName,
+  settings,
+}: {
+  brandId: string;
+  // For the sample of the brand mark.
+  brandName: string;
+  settings: BrandSettings;
+}) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(() => toForm(settings));
@@ -568,6 +583,58 @@ function SettingsForm({ brandId, settings }: { brandId: string; settings: BrandS
         </FormField>
       </section>
 
+      <section className={sectionClass} aria-labelledby="settings-look">
+        <h2 id="settings-look" className="text-lg font-semibold">
+          {t('settings.look.title')}
+        </h2>
+        <p className="text-sm text-slate-600">{t('settings.look.intro')}</p>
+        <FormField
+          id="brand-color"
+          label={t('settings.look.color')}
+          hint={t('settings.look.colorHint')}
+          error={error('appearance.color')}
+        >
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <input
+              type="color"
+              aria-label={t('settings.look.picker')}
+              value={form.brandColor || '#424853'}
+              onChange={(event) => change({ brandColor: event.target.value })}
+              className="h-11 w-14 cursor-pointer rounded-control border border-slate-300 bg-white p-1"
+            />
+            <input
+              {...fieldAttributes('brand-color', {
+                hint: true,
+                error: Boolean(error('appearance.color')),
+              })}
+              type="text"
+              dir="ltr"
+              autoComplete="off"
+              placeholder="#b00020"
+              value={form.brandColor}
+              onChange={(event) => change({ brandColor: event.target.value })}
+              className={`${compactFieldClass} w-32`}
+            />
+            <span
+              aria-hidden="true"
+              className="grid size-11 place-items-center rounded-control font-bold text-white"
+              style={{ background: form.brandColor || '#424853' }}
+            >
+              {Array.from(brandName)[0] ?? ''}
+            </span>
+            {form.brandColor && (
+              <button
+                type="button"
+                onClick={() => change({ brandColor: '' })}
+                className={ghostButtonClass}
+              >
+                {t('settings.look.reset')}
+              </button>
+            )}
+          </div>
+        </FormField>
+      </section>
+
       {formProblem && (
         <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
           {messageFor(formProblem, t)}
@@ -629,7 +696,18 @@ export function SettingsPage() {
         </p>
       )}
       {brandId && settings.data && (
-        <SettingsForm key={brandId} brandId={brandId} settings={settings.data} />
+        <SettingsForm
+          key={brandId}
+          brandId={brandId}
+          brandName={localize(
+            menuBrand.brands.find((brand) => brand.id === brandId)?.name ?? { en: '', ar: '' },
+            i18n.language,
+          )}
+          settings={settings.data}
+        />
+      )}
+      {brandId && user?.permissions.includes('branches:write') && (
+        <BranchKitchenSettings key={`kitchen-${brandId}`} branches={menuBrand.branches} />
       )}
     </div>
   );

@@ -2,6 +2,12 @@
 
 The answers of Easy Office / Nexera to the questions of the specs and the launch plan, with what was done about each. Newest first.
 
+## 21 October 2026
+
+| Topic          | Decision                                                                                                                        | Done                                                                                                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Kitchen screen | Each branch chooses: kitchen screen on or off, and a printed kitchen slip as well; without the screen the slip prints by itself | Done: Settings → Kitchen at the branches ([spec 027](specs/027-kitchen-screen-and-slip.md)); a till prints without asking when started with `--kiosk-printing` (docs/deployment.md, "Tills") |
+
 ## 20 October 2026
 
 | Topic               | Decision                                                                                                                                                 | Done                                                                                                                                                                                    |
@@ -9,6 +15,7 @@ The answers of Easy Office / Nexera to the questions of the specs and the launch
 | Delivery platforms  | Talabat, Keeta and Jahez stay manual: the cashier types their orders. A restaurant that needs integration gets it through an integrator such as Grubtech | Nothing to build now; the orders are paid with the platform as the way to pay                                                                                                           |
 | Platform commission | Shown in the reports, with rates the owner can change as they are renegotiated                                                                           | Done: a commission rate on each way to pay (Settings), kept on every payment, with commission and net per way to pay in the sales report ([spec 025](specs/025-platform-commission.md)) |
 | Photos and KNET     | Photos on the till like the website; the KNET reference number required; a way back to the dashboard from the till and kitchen                           | Done                                                                                                                                                                                    |
+| Full menu           | The whole menu with photos, as on the price list                                                                                                         | Done: `apps/api/prisma/menus/mudawara.json` has the 36 dishes of the price list of 6 October (and the box of your choice), its prices and paid add-ons, 31 with a photo                 |
 
 ## 16 October 2026
 
