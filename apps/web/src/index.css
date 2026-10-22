@@ -51,6 +51,17 @@
   --color-info: #1f4fd1;
   --color-info-soft: #e7edfc;
 
+  /* The kitchen screen: dark, read from two metres, a colour per stage; red only when late. */
+  --color-kds-page: #0f1114;
+  --color-kds-card: #1a1d22;
+  --color-kds-line: #2c3038;
+  --color-kds-ink: #f3f4f6;
+  --color-kds-ink-2: #a9afb9;
+  --color-stage-new: #4f8cff;
+  --color-stage-preparing: #f0a92a;
+  --color-stage-ready: #22b07d;
+  --color-stage-late: #ff5d5d;
+
   --radius-control: 0.5rem;
   --radius-card: 0.875rem;
   --shadow-float: 0 12px 32px rgb(21 23 28 / 0.16), 0 2px 6px rgb(21 23 28 / 0.08);

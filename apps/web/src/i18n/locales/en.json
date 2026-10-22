@@ -889,6 +889,10 @@
     "saturday": "Sat"
   },
   "pos": {
+    "account": {
+      "open": "{{name}}: shift and account",
+      "label": "Shift and account"
+    },
     "setup": {
       "title": "Set up this terminal",
       "intro": "Choose the branch this terminal belongs to. You are then signed out, and the staff of the branch sign in here with their staff code and PIN.",
@@ -922,6 +926,8 @@
     "menu": {
       "label": "Menu",
       "search": "Search the menu",
+      "inOrder_one": "{{count}} in the order",
+      "inOrder_other": "{{count}} in the order",
       "combos": "Combos",
       "noMatch": "Nothing on the menu matches.",
       "empty": "Nothing in this category."
@@ -1175,6 +1181,12 @@
     }
   },
   "kds": {
+    "late": "Late",
+    "hours": "{{hours}} h {{minutes}}",
+    "lateAfter_one": "Late after {{count}} minute",
+    "lateAfter_other": "Late after {{count}} min",
+    "stale_one": "{{count}} ticket older than a day",
+    "stale_other": "{{count}} tickets older than a day",
     "title": "Kitchen",
     "screenOff": "The kitchen screen is switched off for this branch: orders print on a kitchen slip at the till. A manager switches it on under Settings → Kitchen at the branches.",
     "notAllowed": "{{name}} cannot see the kitchen tickets.",
@@ -1224,6 +1236,9 @@
       "slip": "Print a kitchen slip too",
       "slipAlways": "Kitchen slip prints (no screen)",
       "slipOf": "Kitchen slip at {{branch}}",
+      "lateAfter": "Late after",
+      "lateAfterOf": "Minutes before a ticket is late at {{branch}}",
+      "minutes": "min",
       "save": "Save the kitchen settings",
       "saved": "The kitchen settings were saved. The tills use them at once.",
       "failed": "The kitchen settings could not be saved. Try again."

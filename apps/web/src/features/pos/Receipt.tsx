@@ -1,6 +1,7 @@
 import type { Order } from '@pos/shared';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '../../components/Dialog';
+import { Printer, SquarePlus } from 'lucide-react';
 import { primaryButtonClass, secondaryButtonClass } from '../../components/form';
 import { Price } from '../../components/Price';
 import { formatDateTime } from '../../i18n/format';
@@ -188,6 +189,7 @@ export function BillDialog({ onClose, ...receipt }: BillDialogProps) {
           {t('common.back')}
         </button>
         <button type="button" onClick={() => window.print()} className={primaryButtonClass}>
+          <Printer aria-hidden="true" />
           {t('pos.receipt.print')}
         </button>
       </div>
@@ -204,9 +206,11 @@ export function ReceiptDialog({ onNewOrder, onClose, ...receipt }: ReceiptDialog
       <Receipt {...receipt} />
       <div className="mt-4 flex justify-end gap-2">
         <button type="button" onClick={() => window.print()} className={secondaryButtonClass}>
+          <Printer aria-hidden="true" />
           {t('pos.receipt.print')}
         </button>
         <button type="button" onClick={onNewOrder} className={primaryButtonClass}>
+          <SquarePlus aria-hidden="true" />
           {t('pos.order.newOrder')}
         </button>
       </div>

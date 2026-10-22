@@ -99,7 +99,8 @@ describe('the kitchen screen', () => {
     kitchenApi({
       // A ticket sent before the screen was switched off.
       [TICKETS]: () => json({ data: [ticket()] }),
-      'GET /api/v1/menu': () => json(branchMenu({ kitchen: { screen: false, slip: false } })),
+      'GET /api/v1/menu': () =>
+        json(branchMenu({ kitchen: { screen: false, slip: false, lateAfterMinutes: 12 } })),
     });
     renderApp('/kds');
     expect(await screen.findByRole('status')).toHaveTextContent(
@@ -209,12 +210,40 @@ describe('the kitchen screen', () => {
     expect(within(card).queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('turns a ticket red after 20 minutes', async () => {
-    kitchenApi({ [TICKETS]: () => json({ data: [ticket({ sentAt: minutesAgo(25.5) })] }) });
+  it('calls a ticket late after the branch’s own limit, and shows hours past the hour', async () => {
+    kitchenApi({
+      [TICKETS]: () => json({ data: [ticket({ sentAt: minutesAgo(9.5) })] }),
+      'GET /api/v1/menu': () =>
+        json(branchMenu({ kitchen: { screen: true, slip: false, lateAfterMinutes: 8 } })),
+    });
     renderApp('/kds');
 
     const card = await screen.findByRole('article', { name: 'Order 12' });
-    expect(within(card).getByText('25 min')).toHaveClass('text-red-700');
+    expect(await within(card).findByText('Late')).toBeInTheDocument();
+    expect(within(card).getByText('9 min')).toBeInTheDocument();
+    expect(screen.getByText('Late after 8 min')).toBeInTheDocument();
+  });
+
+  it('is not late within the limit, and writes a long wait in hours', async () => {
+    kitchenApi({
+      [TICKETS]: () => json({ data: [ticket({ sentAt: minutesAgo(90.5), status: 'ready' })] }),
+    });
+    renderApp('/kds');
+
+    const card = await screen.findByRole('article', { name: 'Order 12' });
+    expect(within(card).getByText('1 h 30')).toBeInTheDocument();
+    // Ready for 90 minutes is not late: only what the kitchen still has to make is.
+    expect(within(card).queryByText('Late')).toBeNull();
+  });
+
+  it('puts a ticket older than a day in its own row, out of the way', async () => {
+    kitchenApi({ [TICKETS]: () => json({ data: [ticket({ sentAt: minutesAgo(2 * 24 * 60) })] }) });
+    renderApp('/kds');
+
+    expect(await screen.findByText('1 ticket older than a day')).toBeInTheDocument();
+    const open = screen.getByRole('region', { name: 'Tickets to make' });
+    expect(within(open).queryByRole('article')).not.toBeInTheDocument();
+    expect(screen.getByText('Nothing to make. New orders appear here.')).toBeInTheDocument();
   });
 
   it('comes back to the kitchen screen after a manager signs in and sets it up', async () => {

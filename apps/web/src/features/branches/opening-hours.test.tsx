@@ -33,7 +33,7 @@ const withHours = (days: Partial<OpeningHours>) =>
       printers: [],
       dayEndsAt: '00:00',
       specialHours: [],
-      kitchen: { screen: true, slip: false },
+      kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
     },
   });
 
@@ -449,7 +449,7 @@ describe('the special hours of a branch', () => {
                 ...(period as object),
                 id: `01990000-0000-7000-8000-00000000a00${index + 1}`,
               })) as never,
-              kitchen: { screen: true, slip: false },
+              kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
             },
           }),
         );

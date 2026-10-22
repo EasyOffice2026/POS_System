@@ -93,6 +93,27 @@ export function BranchKitchenSettings({ branches }: { branches: Branch[] }) {
                       ? t('settings.kitchenBranches.slip')
                       : t('settings.kitchenBranches.slipAlways')}
                   </label>
+                  {value.screen && (
+                    <label className="flex items-center gap-2 text-sm">
+                      {t('settings.kitchenBranches.lateAfter')}
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={120}
+                        dir="ltr"
+                        value={value.lateAfterMinutes}
+                        aria-label={t('settings.kitchenBranches.lateAfterOf', { branch: name })}
+                        onChange={(event) =>
+                          change(branch.id, {
+                            lateAfterMinutes: Math.round(Number(event.target.value)),
+                          })
+                        }
+                        className="num min-h-11 w-20 rounded-control border border-slate-300 bg-white px-2 text-center"
+                      />
+                      {t('settings.kitchenBranches.minutes')}
+                    </label>
+                  )}
                 </>
               ) : (
                 <span className="text-sm text-slate-500">{t('common.loading')}</span>

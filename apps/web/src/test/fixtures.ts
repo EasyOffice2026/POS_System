@@ -249,7 +249,7 @@ export function branchDetail(overrides: Partial<BranchDetail> = {}): BranchDetai
       printers: [],
       dayEndsAt: '00:00',
       specialHours: [],
-      kitchen: { screen: true, slip: false },
+      kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
     },
     ...overrides,
   };

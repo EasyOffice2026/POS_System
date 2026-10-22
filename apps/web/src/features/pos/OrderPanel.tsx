@@ -7,16 +7,46 @@ import {
   type OrderType,
   toMils,
 } from '@pos/shared';
+import {
+  Armchair,
+  Ban,
+  BellRing,
+  Check,
+  ChefHat,
+  Minus,
+  Percent,
+  Plus,
+  Printer,
+  RotateCcw,
+  Send,
+  ShoppingBag,
+  SquarePlus,
+  Trash2,
+  UserRound,
+  UtensilsCrossed,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { secondaryButtonClass } from '../../components/form';
+import { chipClass } from '../../components/form';
 import { Price } from '../../components/Price';
 import { localize } from '../../i18n/localize';
 
+// One loud action: Pay, in the money colour, with the total in large figures (docs/specs and the
+// redesign, principle 1). Send to kitchen is the clear second; the rest is a row of icon buttons.
 const payButtonClass =
-  'w-full rounded-md bg-emerald-700 px-4 py-3 text-base font-semibold text-white hover:bg-emerald-800 focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60';
+  'flex min-h-16 flex-col items-center justify-center rounded-xl bg-money px-4 text-white shadow-[0_6px_16px_rgb(14_122_85/0.28)] hover:bg-money-strong focus-visible:ring-2 focus-visible:ring-money/40 focus-visible:ring-offset-2 focus-visible:outline-none disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none';
+
+const sendButtonClass =
+  'flex min-h-16 items-center justify-center gap-2 rounded-xl border-[1.5px] border-ink bg-white px-3 text-center text-sm leading-tight font-bold text-ink hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-ink/30 focus-visible:outline-none disabled:border-slate-200 disabled:text-slate-400 [&_svg]:size-5 [&_svg]:shrink-0';
+
+const toolClass =
+  'flex min-h-14 flex-col items-center justify-center gap-1 rounded-control border border-line bg-white px-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-ink/25 focus-visible:outline-none disabled:opacity-40 [&_svg]:size-5';
 
 const stepClass =
-  'h-9 w-9 rounded-md border border-slate-300 bg-white text-lg font-semibold hover:bg-slate-100 disabled:opacity-40';
+  'grid size-10 place-items-center text-slate-700 hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-none disabled:opacity-40 [&_svg]:size-4';
+
+const linkButtonClass =
+  'rounded px-1 text-xs font-medium text-slate-600 underline underline-offset-2 hover:text-ink disabled:opacity-50';
 
 function LineDetails({ line }: { line: OrderLine }) {
   const { i18n } = useTranslation();
@@ -26,15 +56,47 @@ function LineDetails({ line }: { line: OrderLine }) {
   return (
     <>
       {line.modifiers.length > 0 && (
-        <p className="text-xs text-slate-600">{names(line.modifiers)}</p>
+        <p className="text-[13px] text-slate-600">{names(line.modifiers)}</p>
       )}
       {line.choices.map((choice) => (
-        <p key={choice.slotId} className="text-xs text-slate-600">
+        <p key={choice.slotId} className="text-[13px] text-slate-600">
           {localize(choice.name, i18n.language)}
           {choice.modifiers.length > 0 && ` (${names(choice.modifiers)})`}
         </p>
       ))}
     </>
+  );
+}
+
+// Where a sent dish is in the kitchen, as a pill with an icon.
+function KitchenChip({ line }: { line: OrderLine }) {
+  const { t } = useTranslation();
+  if (line.status === 'voided') {
+    return (
+      <span className={`${chipClass} bg-slate-100 text-slate-500`}>{t('pos.order.voided')}</span>
+    );
+  }
+  if (line.kitchenStatus === 'ready') {
+    return (
+      <span className={`${chipClass} bg-money-soft text-money`}>
+        <BellRing aria-hidden="true" />
+        {t('pos.order.kitchen.ready')}
+      </span>
+    );
+  }
+  if (line.kitchenStatus === 'done') {
+    return (
+      <span className={`${chipClass} bg-slate-100 text-slate-600`}>
+        <Check aria-hidden="true" />
+        {t('pos.order.kitchen.done')}
+      </span>
+    );
+  }
+  return (
+    <span className={`${chipClass} bg-warn-soft text-warn`}>
+      <ChefHat aria-hidden="true" />
+      {line.kitchenStatus === 'preparing' ? t('pos.order.kitchen.preparing') : t('pos.order.sent')}
+    </span>
   );
 }
 
@@ -64,91 +126,117 @@ function LineRow({
   const voided = line.status === 'voided';
 
   return (
-    <li className={`space-y-1 border-b border-slate-100 py-2 ${voided ? 'text-slate-400' : ''}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className={`font-medium ${voided ? 'line-through' : 'text-slate-900'}`}>{name}</p>
-          <LineDetails line={line} />
-          {voided && line.voidReason && (
-            <p className="text-xs">{t('pos.order.voidedBecause', { reason: line.voidReason })}</p>
-          )}
+    <li
+      className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 border-b border-dashed border-line py-3 ${
+        voided ? 'text-slate-400' : ''
+      }`}
+    >
+      {line.status === 'pending' ? (
+        <div className="flex items-center overflow-hidden rounded-control border border-slate-300 bg-white">
+          <button
+            type="button"
+            aria-label={
+              line.quantity === 1
+                ? t('pos.order.removeLine', { name })
+                : t('pos.order.lessOf', { name })
+            }
+            disabled={busy}
+            onClick={() => onQuantity(line, line.quantity - 1)}
+            className={stepClass}
+          >
+            {line.quantity === 1 ? <Trash2 aria-hidden="true" /> : <Minus aria-hidden="true" />}
+          </button>
+          <span className="num w-7 text-center text-base font-bold">{line.quantity}</span>
+          <button
+            type="button"
+            aria-label={t('pos.order.moreOf', { name })}
+            disabled={busy || line.quantity >= MAX_LINE_QUANTITY}
+            onClick={() => onQuantity(line, line.quantity + 1)}
+            className={stepClass}
+          >
+            <Plus aria-hidden="true" />
+          </button>
         </div>
-        <p className={`text-sm font-medium ${voided ? 'line-through' : ''}`}>
-          <Price value={line.lineTotal} />
+      ) : (
+        <span
+          className={`num grid h-10 min-w-10 place-items-center rounded-control px-2 text-base font-bold ${
+            voided ? 'bg-slate-50' : 'bg-slate-100'
+          }`}
+          aria-label={t('pos.order.quantity', { count: line.quantity })}
+        >
+          {line.quantity}×
+        </span>
+      )}
+
+      <div className="min-w-0 space-y-1">
+        <p className={`leading-snug font-semibold ${voided ? 'line-through' : 'text-ink'}`}>
+          {name}
         </p>
+        <LineDetails line={line} />
+        {voided && line.voidReason && (
+          <p className="text-xs">{t('pos.order.voidedBecause', { reason: line.voidReason })}</p>
+        )}
+        {line.status !== 'pending' && (
+          <div className="flex flex-wrap items-center gap-2 pt-0.5">
+            <KitchenChip line={line} />
+            {line.status === 'sent' && canMarkDone && line.kitchenStatus === 'ready' && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onMarkDone(line)}
+                className={`${chipClass} bg-money py-1 text-white hover:bg-money-strong`}
+                aria-label={`${t('pos.order.markDone')}: ${name}`}
+              >
+                <Check aria-hidden="true" />
+                {t('pos.order.markDone')}
+              </button>
+            )}
+            {line.status === 'sent' && !closed && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onVoid(line)}
+                className={`${chipClass} py-1 text-danger hover:bg-danger-soft`}
+                aria-label={t('pos.order.voidLine', { name })}
+              >
+                <Ban aria-hidden="true" />
+                {t('pos.order.void')}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {line.status === 'pending' ? (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label={
-                line.quantity === 1
-                  ? t('pos.order.removeLine', { name })
-                  : t('pos.order.lessOf', { name })
-              }
-              disabled={busy}
-              onClick={() => onQuantity(line, line.quantity - 1)}
-              className={stepClass}
-            >
-              {line.quantity === 1 ? '×' : '−'}
-            </button>
-            <span className="w-6 text-center font-semibold">{line.quantity}</span>
-            <button
-              type="button"
-              aria-label={t('pos.order.moreOf', { name })}
-              disabled={busy || line.quantity >= MAX_LINE_QUANTITY}
-              onClick={() => onQuantity(line, line.quantity + 1)}
-              className={stepClass}
-            >
-              +
-            </button>
-          </div>
-        ) : (
-          <p className="text-sm">
-            {t('pos.order.quantity', { count: line.quantity })}
-            <span
-              className={`ms-2 rounded-full px-2 py-0.5 text-xs font-medium ${
-                voided ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-900'
-              }`}
-            >
-              {voided
-                ? t('pos.order.voided')
-                : line.kitchenStatus === 'preparing'
-                  ? t('pos.order.kitchen.preparing')
-                  : line.kitchenStatus === 'ready'
-                    ? t('pos.order.kitchen.ready')
-                    : line.kitchenStatus === 'done'
-                      ? t('pos.order.kitchen.done')
-                      : t('pos.order.sent')}
-            </span>
-          </p>
-        )}
-        {line.status === 'sent' && canMarkDone && line.kitchenStatus === 'ready' && (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => onMarkDone(line)}
-            className="rounded-md bg-emerald-700 px-2 py-1 text-sm font-medium text-white hover:bg-emerald-800"
-            aria-label={`${t('pos.order.markDone')}: ${name}`}
-          >
-            {t('pos.order.markDone')}
-          </button>
-        )}
-        {line.status === 'sent' && !closed && (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => onVoid(line)}
-            className="rounded-md px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-50"
-            aria-label={t('pos.order.voidLine', { name })}
-          >
-            {t('pos.order.void')}
-          </button>
-        )}
-      </div>
+      <p className={`num pt-2 text-base font-bold ${voided ? 'line-through' : ''}`}>
+        <Price value={line.lineTotal} />
+      </p>
     </li>
+  );
+}
+
+// A row under the order type that says who or where the order is for.
+function InfoRow({
+  icon,
+  children,
+  actions,
+  testId,
+}: {
+  icon: ReactNode;
+  children: ReactNode;
+  actions?: ReactNode;
+  testId: string;
+}) {
+  return (
+    <div
+      className="flex flex-wrap items-center justify-between gap-2 rounded-control bg-slate-50 px-3 py-2 text-sm"
+      data-testid={testId}
+    >
+      <div className="flex min-w-0 items-center gap-2.5 [&>svg]:size-[18px] [&>svg]:shrink-0 [&>svg]:text-slate-500">
+        {icon}
+        <div className="min-w-0">{children}</div>
+      </div>
+      {actions && <div className="flex items-center gap-2">{actions}</div>}
+    </div>
   );
 }
 
@@ -157,38 +245,40 @@ function TableRow({ table, type, open, busy, ...props }: OrderPanelProps & { ope
   const { t } = useTranslation();
   if (table) {
     return (
-      <div
-        className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-slate-50 px-2 py-1 text-sm"
-        data-testid="order-table"
+      <InfoRow
+        testId="order-table"
+        icon={<Armchair aria-hidden="true" />}
+        actions={
+          open && (
+            <>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={props.onChooseTable}
+                className={linkButtonClass}
+              >
+                {t('pos.table.change')}
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={props.onRemoveTable}
+                aria-label={t('pos.table.remove')}
+                className={linkButtonClass}
+              >
+                {t('pos.promo.remove')}
+              </button>
+            </>
+          )
+        }
       >
         <p>
-          <span className="font-medium">{t('pos.table.name', { name: table.name })}</span>{' '}
+          <span className="font-semibold">{t('pos.table.name', { name: table.name })}</span>{' '}
           <span className="text-xs text-slate-600">
             <bdi>{table.area}</bdi>
           </span>
         </p>
-        {open && (
-          <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={props.onChooseTable}
-              className="rounded-md px-2 py-1 text-xs font-medium text-slate-700 underline"
-            >
-              {t('pos.table.change')}
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={props.onRemoveTable}
-              aria-label={t('pos.table.remove')}
-              className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 underline"
-            >
-              {t('pos.promo.remove')}
-            </button>
-          </div>
-        )}
-      </div>
+      </InfoRow>
     );
   }
   return type === 'dine_in' && open ? (
@@ -196,8 +286,9 @@ function TableRow({ table, type, open, busy, ...props }: OrderPanelProps & { ope
       type="button"
       disabled={busy}
       onClick={props.onChooseTable}
-      className={`${secondaryButtonClass} w-full`}
+      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-control border border-dashed border-slate-400 bg-white text-sm font-semibold text-ink hover:bg-slate-50 [&_svg]:size-[18px]"
     >
+      <Armchair aria-hidden="true" />
       {t('pos.table.choose')}
     </button>
   ) : null;
@@ -212,19 +303,7 @@ interface CustomerRowProps extends OrderPanelProps {
 function CustomerRow({ order, open, busy, loyalty, ...props }: CustomerRowProps) {
   const { t } = useTranslation();
   const { customer } = order;
-
-  if (!customer) {
-    return open ? (
-      <button
-        type="button"
-        disabled={busy}
-        onClick={props.onCustomer}
-        className={`${secondaryButtonClass} w-full`}
-      >
-        {t('pos.customer.button')}
-      </button>
-    ) : null;
-  }
+  if (!customer) return null;
 
   const canSpend =
     open &&
@@ -234,47 +313,47 @@ function CustomerRow({ order, open, busy, loyalty, ...props }: CustomerRowProps)
     toMils(order.total) > 0;
 
   return (
-    <div
-      className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-slate-50 px-2 py-1 text-sm"
-      data-testid="order-customer"
-    >
-      <div className="min-w-0">
-        <p className="font-medium">
-          {customer.name ? <bdi>{customer.name}</bdi> : <bdi dir="ltr">{customer.phone}</bdi>}
-        </p>
-        <p className="text-xs text-slate-600">
-          {customer.name && (
-            <>
-              <bdi dir="ltr">{customer.phone}</bdi> ·{' '}
-            </>
+    <InfoRow
+      testId="order-customer"
+      icon={<UserRound aria-hidden="true" />}
+      actions={
+        <>
+          {canSpend && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={props.onPoints}
+              className={`${chipClass} bg-money py-1 text-white hover:bg-money-strong`}
+            >
+              {t('pos.points.use')}
+            </button>
           )}
-          {t('pos.customer.points', { count: customer.points })}
-        </p>
-      </div>
-      <div className="flex gap-2">
-        {canSpend && (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={props.onPoints}
-            className="rounded-md bg-emerald-700 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-800"
-          >
-            {t('pos.points.use')}
-          </button>
+          {open && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={props.onRemoveCustomer}
+              aria-label={t('pos.customer.remove')}
+              className={linkButtonClass}
+            >
+              {t('pos.promo.remove')}
+            </button>
+          )}
+        </>
+      }
+    >
+      <p className="font-semibold">
+        {customer.name ? <bdi>{customer.name}</bdi> : <bdi dir="ltr">{customer.phone}</bdi>}
+      </p>
+      <p className="text-xs text-slate-600">
+        {customer.name && (
+          <>
+            <bdi dir="ltr">{customer.phone}</bdi> ·{' '}
+          </>
         )}
-        {open && (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={props.onRemoveCustomer}
-            aria-label={t('pos.customer.remove')}
-            className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 underline"
-          >
-            {t('pos.promo.remove')}
-          </button>
-        )}
-      </div>
-    </div>
+        {t('pos.customer.points', { count: customer.points })}
+      </p>
+    </InfoRow>
   );
 }
 
@@ -309,6 +388,11 @@ interface OrderPanelProps {
   onRefund: () => void;
 }
 
+const typeIcons: Record<OrderType, ReactNode> = {
+  dine_in: <UtensilsCrossed aria-hidden="true" />,
+  takeaway: <ShoppingBag aria-hidden="true" />,
+};
+
 // The order on the screen: its type, its lines, the totals, and what can be done with it.
 // See docs/specs/006-pos-terminal.md, rules 6 to 8.
 export function OrderPanel(props: OrderPanelProps) {
@@ -325,10 +409,13 @@ export function OrderPanel(props: OrderPanelProps) {
       aria-pressed={type === key}
       disabled={busy || !open}
       onClick={() => props.onType(key)}
-      className={`flex-1 rounded-md px-3 py-2 text-sm font-medium ${
-        type === key ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+      className={`flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed [&_svg]:size-[18px] ${
+        type === key
+          ? 'bg-white text-ink shadow-[0_1px_3px_rgb(21_23_28/0.14)]'
+          : 'text-slate-600 hover:text-ink'
       }`}
     >
+      {typeIcons[key]}
       {t(`pos.order.types.${key}`)}
     </button>
   );
@@ -336,30 +423,44 @@ export function OrderPanel(props: OrderPanelProps) {
   return (
     <section
       aria-label={t('pos.order.label')}
-      className="flex min-h-0 flex-col rounded-lg border border-slate-200 bg-white"
+      className="flex min-h-0 flex-col border-line bg-white lg:border-s"
     >
-      <div className="space-y-2 border-b border-slate-200 p-3">
+      <div className="space-y-3 border-b border-line px-4 pt-4 pb-3">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">
-            {order ? t('pos.order.number', { number: order.number }) : t('pos.order.new')}
-          </h2>
-          {order?.status === 'voided' && (
-            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
-              {t('pos.order.voided')}
-            </span>
-          )}
-          {order?.status === 'open' && order.billPrintedAt && (
-            <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-950">
-              {t('pos.table.billPrinted')}
-            </span>
-          )}
-          {order?.status === 'paid' && (
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900">
-              {t('pos.order.paid')}
-            </span>
-          )}
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h2 className="text-xl font-bold">
+              {order ? t('pos.order.number', { number: order.number }) : t('pos.order.new')}
+            </h2>
+            {order?.status === 'voided' && (
+              <span className={`${chipClass} bg-danger-soft text-danger`}>
+                <Ban aria-hidden="true" />
+                {t('pos.order.voided')}
+              </span>
+            )}
+            {order?.status === 'open' && order.billPrintedAt && (
+              <span className={`${chipClass} bg-info-soft text-info`}>
+                <Printer aria-hidden="true" />
+                {t('pos.table.billPrinted')}
+              </span>
+            )}
+            {order?.status === 'paid' && (
+              <span className={`${chipClass} bg-money-soft text-money`}>
+                <Check aria-hidden="true" />
+                {t('pos.order.paid')}
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            disabled={busy || !order}
+            onClick={props.onNewOrder}
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-control px-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 [&_svg]:size-[18px]"
+          >
+            <SquarePlus aria-hidden="true" />
+            {t('pos.order.newOrder')}
+          </button>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1 rounded-[0.625rem] bg-slate-100 p-1">
           {typeButton('dine_in')}
           {typeButton('takeaway')}
         </div>
@@ -367,9 +468,14 @@ export function OrderPanel(props: OrderPanelProps) {
         {order && <CustomerRow {...props} order={order} open={open} />}
       </div>
 
-      <div className="min-h-32 flex-1 overflow-y-auto px-3">
+      <div className="min-h-32 flex-1 overflow-y-auto px-4">
         {lines.length === 0 ? (
-          <p className="py-8 text-center text-sm text-slate-500">{t('pos.order.empty')}</p>
+          <div className="flex h-full min-h-32 flex-col items-center justify-center gap-3 py-8 text-center">
+            <span className="grid size-12 place-items-center rounded-full bg-slate-100 text-slate-500">
+              <ShoppingBag aria-hidden="true" className="size-6" />
+            </span>
+            <p className="text-sm text-slate-500">{t('pos.order.empty')}</p>
+          </div>
         ) : (
           <ul>
             {lines.map((line) => (
@@ -388,24 +494,24 @@ export function OrderPanel(props: OrderPanelProps) {
         )}
       </div>
 
-      <dl className="space-y-1 border-t border-slate-200 p-3 text-sm">
+      <dl className="space-y-1 border-t border-line px-4 py-3 text-sm text-slate-600">
         <div className="flex justify-between">
           <dt>{t('pos.order.subtotal')}</dt>
-          <dd>
+          <dd className="num">
             <Price value={order?.subtotal ?? '0.000'} />
           </dd>
         </div>
         {/* What each promotion took off, and the code typed (spec 021). */}
         {order?.promotions.map((promotion) => (
-          <div key={promotion.id} className="flex justify-between text-emerald-800">
+          <div key={promotion.id} className="flex justify-between text-money">
             <dt>{localize(promotion.name, i18n.language)}</dt>
-            <dd>
+            <dd className="num">
               − <Price value={promotion.amount} />
             </dd>
           </div>
         ))}
         {order?.promoCode ? (
-          <div className="flex items-center justify-between text-xs text-slate-600">
+          <div className="flex items-center justify-between text-xs">
             <dt>
               {t('pos.promo.typed')} <bdi dir="ltr">{order.promoCode}</bdi>
             </dt>
@@ -416,7 +522,7 @@ export function OrderPanel(props: OrderPanelProps) {
                   disabled={busy}
                   onClick={props.onRemovePromoCode}
                   aria-label={t('pos.promo.removeFor', { code: order.promoCode })}
-                  className="underline"
+                  className={linkButtonClass}
                 >
                   {t('pos.promo.remove')}
                 </button>
@@ -431,7 +537,7 @@ export function OrderPanel(props: OrderPanelProps) {
                 type="button"
                 disabled={busy}
                 onClick={props.onPromoCode}
-                className="text-xs text-slate-600 underline"
+                className={linkButtonClass}
               >
                 {t('pos.promo.add')}
               </button>
@@ -439,7 +545,7 @@ export function OrderPanel(props: OrderPanelProps) {
           )
         )}
         {order?.discount && (
-          <div className="flex justify-between text-red-700">
+          <div className="flex justify-between text-money">
             <dt>
               {t('pos.order.discount')}
               {order.discount.kind === 'percent' && (
@@ -449,13 +555,13 @@ export function OrderPanel(props: OrderPanelProps) {
                 </>
               )}
             </dt>
-            <dd>
+            <dd className="num">
               − <Price value={order.discount.amount} />
             </dd>
           </div>
         )}
         {order && order.pointsRedeemed > 0 && (
-          <div className="flex justify-between text-emerald-800">
+          <div className="flex justify-between text-money">
             <dt>
               {t('pos.points.row', { count: order.pointsRedeemed })}
               {open && (
@@ -466,65 +572,58 @@ export function OrderPanel(props: OrderPanelProps) {
                     disabled={busy}
                     onClick={props.onRemovePoints}
                     aria-label={t('pos.points.remove')}
-                    className="text-xs text-slate-600 underline"
+                    className={linkButtonClass}
                   >
                     {t('pos.promo.remove')}
                   </button>
                 </>
               )}
             </dt>
-            <dd>
+            <dd className="num">
               − <Price value={order.pointsDiscount} />
             </dd>
           </div>
         )}
         {order && Number(order.refunded) > 0 && (
-          <div className="flex justify-between text-red-700">
+          <div className="flex justify-between text-danger">
             <dt>{t('pos.order.refunds')}</dt>
-            <dd>
+            <dd className="num">
               − <Price value={order.refunded} />
             </dd>
           </div>
         )}
-        <div className="flex justify-between text-lg font-semibold">
-          <dt>{t('pos.order.total')}</dt>
-          <dd data-testid="order-total">
+        <div className="flex items-baseline justify-between pt-1 text-ink">
+          <dt className="text-lg font-bold">{t('pos.order.total')}</dt>
+          <dd data-testid="order-total" className="num text-[1.75rem] leading-none font-bold">
             <Price value={order?.total ?? '0.000'} />
           </dd>
         </div>
         {order && order.pointsEarned > 0 && (
-          <div className="flex justify-between text-xs text-slate-600">
+          <div className="flex justify-between text-xs">
             <dt>{t('pos.points.earned')}</dt>
             <dd>{t('pos.customer.points', { count: order.pointsEarned })}</dd>
           </div>
         )}
       </dl>
 
-      <div className="space-y-2 border-t border-slate-200 p-3">
-        <button
-          type="button"
-          disabled={busy || !order || !open || live === 0}
-          onClick={props.onPay}
-          className={payButtonClass}
-        >
-          {t('pos.order.pay')} <Price value={order?.total ?? '0.000'} />
-        </button>
-        <button
-          type="button"
-          disabled={busy || !open || pending === 0}
-          onClick={props.onSend}
-          className={`${secondaryButtonClass} w-full py-3 text-base`}
-        >
-          {pending > 0 ? t('pos.order.sendCount', { count: pending }) : t('pos.order.send')}
-        </button>
-        <div className="grid grid-cols-2 gap-2">
+      <div className="space-y-2 border-t border-line px-4 pt-3 pb-4">
+        <div className="grid grid-cols-4 gap-2">
+          {order && open && !order.customer ? (
+            <button type="button" disabled={busy} onClick={props.onCustomer} className={toolClass}>
+              <UserRound aria-hidden="true" />
+              {t('pos.customer.button')}
+            </button>
+          ) : (
+            <span aria-hidden="true" />
+          )}
           {order?.status === 'paid' ? (
             <button
               type="button"
               disabled={busy || toMils(order.refunded) >= toMils(order.total)}
               onClick={props.onRefund}
-              className={secondaryButtonClass}
+              className={toolClass}
             >
+              <RotateCcw aria-hidden="true" />
               {t('pos.order.refund')}
             </button>
           ) : (
@@ -532,36 +631,55 @@ export function OrderPanel(props: OrderPanelProps) {
               type="button"
               disabled={busy || !open || live === 0}
               onClick={props.onDiscount}
-              className={secondaryButtonClass}
+              className={toolClass}
             >
+              <Percent aria-hidden="true" />
               {t('pos.order.discountButton')}
             </button>
           )}
-          {open && (
+          {open ? (
             <button
               type="button"
               disabled={busy || !order || live === 0}
               onClick={props.onPrintBill}
-              className={secondaryButtonClass}
+              className={toolClass}
             >
+              <Printer aria-hidden="true" />
               {t('pos.table.printBill')}
             </button>
+          ) : (
+            <span aria-hidden="true" />
           )}
           <button
             type="button"
             disabled={busy || !order || !open}
             onClick={props.onVoidOrder}
-            className={secondaryButtonClass}
+            className={`${toolClass} text-danger`}
           >
+            <Ban aria-hidden="true" />
             {t('pos.order.voidOrder')}
+          </button>
+        </div>
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] gap-2">
+          <button
+            type="button"
+            disabled={busy || !open || pending === 0}
+            onClick={props.onSend}
+            className={sendButtonClass}
+          >
+            <Send aria-hidden="true" />
+            {pending > 0 ? t('pos.order.sendCount', { count: pending }) : t('pos.order.send')}
           </button>
           <button
             type="button"
-            disabled={busy || !order}
-            onClick={props.onNewOrder}
-            className={secondaryButtonClass}
+            disabled={busy || !order || !open || live === 0}
+            onClick={props.onPay}
+            className={payButtonClass}
           >
-            {t('pos.order.newOrder')}
+            <span className="text-sm font-semibold opacity-90">{t('pos.order.pay')}</span>{' '}
+            <span className="num text-[1.4rem] leading-tight font-bold">
+              <Price value={order?.total ?? '0.000'} />
+            </span>
           </button>
         </div>
       </div>

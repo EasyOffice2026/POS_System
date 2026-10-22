@@ -75,7 +75,7 @@ describe('POST /brands/:id/branches', () => {
         printers: [],
         dayEndsAt: '00:00',
         specialHours: [],
-        kitchen: { screen: true, slip: false },
+        kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
       },
     });
 
@@ -258,7 +258,7 @@ describe('GET /branches/:id', () => {
       printers: [],
       dayEndsAt: '00:00',
       specialHours: [],
-      kitchen: { screen: true, slip: false },
+      kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
     });
   });
 
@@ -334,31 +334,44 @@ describe('PATCH /branches/:id', () => {
   it('switches the kitchen screen off, and the till reads it at once (spec 027)', async () => {
     const cashier = as(app, await signIn(app, 'cashier@x.io'));
     const before = await cashier.get(`/api/v1/menu?branchId=${world.mall.id}`);
-    expect((before.body as { kitchen: unknown }).kitchen).toEqual({ screen: true, slip: false });
+    expect((before.body as { kitchen: unknown }).kitchen).toEqual({
+      screen: true,
+      slip: false,
+      lateAfterMinutes: 12,
+    });
 
     const api = await asPizzaManager();
     const res = await api.patch(`${BRANCHES}/${world.mall.id}`, {
-      config: { kitchen: { screen: false, slip: true } },
+      config: { kitchen: { screen: false, slip: true, lateAfterMinutes: 8 } },
     });
     expect(res.status).toBe(200);
     expect(branchDetailSchema.parse(res.body).config.kitchen).toEqual({
       screen: false,
       slip: true,
+      lateAfterMinutes: 8,
     });
     const [row] = await auditRows('branch.updated');
     expect(row?.metadata).toEqual({
       changed: ['kitchen'],
-      kitchen: { screen: false, slip: true },
+      kitchen: { screen: false, slip: true, lateAfterMinutes: 8 },
     });
 
     // The menu the till had is cleared, so the change does not wait for the cache.
     const after = await cashier.get(`/api/v1/menu?branchId=${world.mall.id}`);
-    expect((after.body as { kitchen: unknown }).kitchen).toEqual({ screen: false, slip: true });
+    expect((after.body as { kitchen: unknown }).kitchen).toEqual({
+      screen: false,
+      slip: true,
+      lateAfterMinutes: 8,
+    });
 
     const bad = await api.patch(`${BRANCHES}/${world.mall.id}`, {
       config: { kitchen: { screen: 'off', slip: true } },
     });
     expect(bad.status).toBe(400);
+    const tooLong = await api.patch(`${BRANCHES}/${world.mall.id}`, {
+      config: { kitchen: { screen: true, slip: false, lateAfterMinutes: 500 } },
+    });
+    expect(tooLong.status).toBe(400);
   });
 
   it('clears the address with null or an empty text', async () => {

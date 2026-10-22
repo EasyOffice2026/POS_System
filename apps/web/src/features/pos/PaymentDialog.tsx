@@ -9,7 +9,8 @@ import {
 import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '../../components/Dialog';
-import { fieldClass, primaryButtonClass, secondaryButtonClass } from '../../components/form';
+import { Banknote, CreditCard, Split } from 'lucide-react';
+import { fieldClass, moneyButtonClass, secondaryButtonClass } from '../../components/form';
 import { Price } from '../../components/Price';
 import { localize } from '../../i18n/localize';
 import { normalizeNumberInput } from '../../lib/numbers';
@@ -88,6 +89,7 @@ export function PaymentDialog({ order, settings, onPay, onCancel }: PaymentDialo
     if (ready) onPay(tenders());
   }
 
+  // Each way to pay as a big tile, cash first; the one chosen is dark.
   const tab = (key: string, label: string, pick: () => void, active: boolean) => (
     <button
       key={key}
@@ -97,10 +99,19 @@ export function PaymentDialog({ order, settings, onPay, onCancel }: PaymentDialo
         pick();
         setTendered('');
       }}
-      className={`rounded-md px-3 py-2 text-sm font-medium ${
-        active ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+      className={`flex min-h-14 min-w-24 flex-1 items-center justify-center gap-2 rounded-control border px-3 text-sm font-semibold transition-colors [&_svg]:size-5 ${
+        active
+          ? 'border-ink bg-ink text-white'
+          : 'border-line bg-white text-ink hover:border-slate-400'
       }`}
     >
+      {key === CASH ? (
+        <Banknote aria-hidden="true" />
+      ) : key === 'mixed' ? (
+        <Split aria-hidden="true" />
+      ) : (
+        <CreditCard aria-hidden="true" />
+      )}
       {label}
     </button>
   );
@@ -118,14 +129,14 @@ export function PaymentDialog({ order, settings, onPay, onCancel }: PaymentDialo
           autoComplete="off"
           value={tendered}
           onChange={(event) => setTendered(normalizeNumberInput(event.target.value))}
-          className={`${fieldClass} text-lg`}
+          className={`${fieldClass} num text-2xl font-bold`}
         />
       </label>
-      <div className="flex flex-wrap gap-2" dir="ltr">
+      <div className="grid grid-cols-5 gap-2" dir="ltr">
         <button
           type="button"
           onClick={() => setTendered(fromMils(cashPart))}
-          className={secondaryButtonClass}
+          className={`${secondaryButtonClass} min-h-12`}
         >
           {t('pos.pay.exact')}
         </button>
@@ -137,7 +148,7 @@ export function PaymentDialog({ order, settings, onPay, onCancel }: PaymentDialo
               key={note}
               type="button"
               onClick={() => setTendered(String(note))}
-              className={secondaryButtonClass}
+              className={`${secondaryButtonClass} num min-h-12 text-base`}
             >
               {note}
             </button>
@@ -182,9 +193,9 @@ export function PaymentDialog({ order, settings, onPay, onCancel }: PaymentDialo
   return (
     <Dialog title={t('pos.pay.title', { number: order.number })} onClose={onCancel}>
       <form onSubmit={onSubmit} className="space-y-4">
-        <p className="flex items-center justify-between rounded-md bg-slate-50 p-3">
-          <span className="text-sm text-slate-600">{t('pos.pay.due')}</span>
-          <span className="text-2xl font-semibold" data-testid="amount-due">
+        <p className="flex items-baseline justify-between rounded-control bg-slate-50 px-4 py-3">
+          <span className="text-sm font-medium text-slate-600">{t('pos.pay.due')}</span>
+          <span className="num text-3xl font-bold" data-testid="amount-due">
             <Price value={order.total} />
           </span>
         </p>
@@ -239,9 +250,9 @@ export function PaymentDialog({ order, settings, onPay, onCancel }: PaymentDialo
         {due === 0 && <p className="text-sm text-slate-600">{t('pos.pay.nothingDue')}</p>}
 
         {cashPart !== null && cashPart > 0 && (
-          <p className="flex items-center justify-between rounded-md bg-emerald-50 p-3 text-emerald-900">
-            <span className="text-sm">{t('pos.pay.change')}</span>
-            <span className="text-xl font-semibold" data-testid="change-due">
+          <p className="flex items-center justify-between rounded-control bg-money-soft px-4 py-3 text-money">
+            <span className="text-sm font-semibold">{t('pos.pay.change')}</span>
+            <span className="num text-2xl font-bold" data-testid="change-due">
               <Price value={fromMils(change)} />
             </span>
           </p>
@@ -251,7 +262,11 @@ export function PaymentDialog({ order, settings, onPay, onCancel }: PaymentDialo
           <button type="button" onClick={onCancel} className={secondaryButtonClass}>
             {t('common.cancel')}
           </button>
-          <button type="submit" disabled={!ready} className={`${primaryButtonClass} px-6`}>
+          <button
+            type="submit"
+            disabled={!ready}
+            className={`${moneyButtonClass} min-h-12 px-8 text-base`}
+          >
             {due === 0 ? t('pos.pay.close') : t('pos.pay.confirm')}
           </button>
         </div>
