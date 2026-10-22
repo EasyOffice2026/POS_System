@@ -14,7 +14,7 @@ import { useDirectory } from './use-directory';
 // How often the overview is asked for again (docs/specs/024-group-dashboard.md, rule 9).
 export const OVERVIEW_REFRESH_MS = 60_000;
 
-const cardClass = 'rounded-lg border border-slate-200 bg-white p-4';
+const cardClass = 'rounded-card border border-line bg-white p-5';
 
 // The change against last week, as a whole percentage, or null when last week had nothing.
 export function changeAgainst(now: number, before: number): number | null {
@@ -30,19 +30,31 @@ function Change({ now, before }: { now: number; before: number }) {
   if (change === null) {
     return <p className="text-xs text-slate-500">{t('overview.noLastWeek')}</p>;
   }
-  const tone = change > 0 ? 'text-emerald-700' : change < 0 ? 'text-red-700' : 'text-slate-600';
+  const tone = change > 0 ? 'text-money' : change < 0 ? 'text-danger' : 'text-slate-600';
   return (
-    <p className={`text-xs font-medium ${tone}`}>
+    <p className={`mt-1 text-xs font-semibold ${tone}`}>
+      <span aria-hidden="true">{change > 0 ? '▲ ' : change < 0 ? '▼ ' : ''}</span>
       <bdi dir="ltr">{change > 0 ? `+${change}%` : `${change}%`}</bdi> {t('overview.onLastWeek')}
     </p>
   );
 }
 
-function Figure({ label, children }: { label: string; children: ReactNode }) {
+// A figure of today; the lead one (sales) is the largest, the first thing an owner looks for.
+function Figure({
+  label,
+  children,
+  lead = false,
+}: {
+  label: string;
+  children: ReactNode;
+  lead?: boolean;
+}) {
   return (
-    <div className={cardClass}>
-      <p className="text-xs text-slate-500">{label}</p>
-      <div className="mt-1 text-xl font-semibold">{children}</div>
+    <div className={`${cardClass} ${lead ? 'col-span-2' : ''}`}>
+      <p className="text-sm font-medium text-slate-600">{label}</p>
+      <div className={`num mt-1 font-bold ${lead ? 'text-[2.25rem] leading-tight' : 'text-2xl'}`}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -56,6 +68,7 @@ function HourChart({ hours }: { hours: Overview['hours'] }) {
   const last = Math.max(...busy.map((slot) => slot.hour));
   const shown = hours.filter((slot) => slot.hour >= first && slot.hour <= last);
   const most = Math.max(...shown.map((slot) => toMils(slot.sales)), 1);
+  const peak = shown.find((slot) => toMils(slot.sales) === most)?.hour;
   const hourText = (hour: number) => `${String(hour).padStart(2, '0')}:00`;
 
   return (
@@ -69,7 +82,7 @@ function HourChart({ hours }: { hours: Overview['hours'] }) {
           <span
             aria-hidden="true"
             title={`${hourText(slot.hour)} · ${slot.sales}`}
-            className="w-full rounded-t bg-emerald-600"
+            className={`w-full rounded-t-md ${slot.hour === peak ? 'bg-ink' : 'bg-slate-300'}`}
             style={{
               height: `${Math.max((toMils(slot.sales) / most) * 100, slot.orders > 0 ? 3 : 0)}%`,
             }}
@@ -172,8 +185,8 @@ export function GroupOverview() {
 
       {data && (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <Figure label={t('overview.sales')}>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+            <Figure label={t('overview.sales')} lead>
               <Price value={data.summary.sales} />
               <Change
                 now={toMils(data.summary.sales)}
@@ -262,11 +275,11 @@ export function GroupOverview() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <div className={cardClass}>
-              <h3 className="mb-3 text-base font-semibold">{t('overview.byHour')}</h3>
+              <h3 className="mb-4 text-base font-semibold">{t('overview.byHour')}</h3>
               <HourChart hours={data.hours} />
             </div>
             <div className={cardClass}>
-              <h3 className="mb-3 text-base font-semibold">{t('overview.topItems')}</h3>
+              <h3 className="mb-4 text-base font-semibold">{t('overview.topItems')}</h3>
               {data.topItems.length === 0 ? (
                 <p className="text-sm text-slate-500">{t('overview.noSales')}</p>
               ) : (
@@ -287,7 +300,7 @@ export function GroupOverview() {
           </div>
 
           <div className={cardClass}>
-            <h3 className="mb-3 text-base font-semibold">{t('overview.voids.title')}</h3>
+            <h3 className="mb-4 text-base font-semibold">{t('overview.voids.title')}</h3>
             {data.voids.length === 0 ? (
               <p className="text-sm text-slate-500">{t('overview.voids.none')}</p>
             ) : (
@@ -319,7 +332,7 @@ export function GroupOverview() {
           </div>
 
           <div className={cardClass}>
-            <h3 className="mb-3 text-base font-semibold">{t('overview.attention.title')}</h3>
+            <h3 className="mb-4 text-base font-semibold">{t('overview.attention.title')}</h3>
             {data.attention.length === 0 ? (
               <p className="text-sm text-slate-500">{t('overview.attention.none')}</p>
             ) : (

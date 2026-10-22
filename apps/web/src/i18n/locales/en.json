@@ -37,6 +37,15 @@
   },
   "nav": {
     "label": "Main menu",
+    "open": "Menu",
+    "backOffice": "Back office",
+    "groups": {
+      "today": "Today",
+      "sell": "Sell",
+      "stock": "Menu and stock",
+      "people": "People",
+      "business": "Business"
+    },
     "dashboard": "Dashboard",
     "users": "Users",
     "roles": "Roles",
@@ -1219,6 +1228,10 @@
     "allStations": "All stations"
   },
   "settings": {
+    "sections": "Settings sections",
+    "unsaved": "Unsaved changes",
+    "noChanges": "No changes",
+    "discard": "Discard changes",
     "look": {
       "title": "Brand colour",
       "intro": "The colour of the brand on its tills, kitchen screens and back office: the logo mark, the chosen category and the active menu item. Buttons keep their own colours, so money stays green and voids red on every brand.",

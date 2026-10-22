@@ -37,17 +37,17 @@ describe('the main menu shows each person only what they may open', () => {
   it('shows a group admin every area', async () => {
     expect(await menuOf(groupAdmin)).toEqual([
       'Dashboard',
-      'Brands',
-      'Branches',
-      'Menu',
+      'Reports',
       'POS terminal',
       'Kitchen screen',
+      'Shifts',
+      'Menu',
+      'Inventory',
+      'Customers',
       'Users',
       'Roles',
-      'Inventory',
-      'Shifts',
-      'Reports',
-      'Customers',
+      'Brands',
+      'Branches',
       'Settings',
       'Audit log',
     ]);
@@ -56,28 +56,28 @@ describe('the main menu shows each person only what they may open', () => {
   it('shows a brand manager the brands and branches of their brand, and their people', async () => {
     expect(await menuOf(fullBrandManager)).toEqual([
       'Dashboard',
-      'Brands',
-      'Branches',
-      'Menu',
+      'Reports',
       'POS terminal',
       'Kitchen screen',
+      'Shifts',
+      'Menu',
+      'Inventory',
+      'Customers',
       'Users',
       'Roles',
-      'Inventory',
-      'Shifts',
-      'Reports',
-      'Customers',
+      'Brands',
+      'Branches',
       'Settings',
       'Audit log',
     ]);
   });
 
   it('shows a person who can only read brands, branches and the menu those three areas', async () => {
-    expect(await menuOf(brandManager)).toEqual(['Dashboard', 'Brands', 'Branches', 'Menu']);
+    expect(await menuOf(brandManager)).toEqual(['Dashboard', 'Menu', 'Brands', 'Branches']);
   });
 
   it('shows a branch manager their branch, the menu and their people, but not the brands', async () => {
-    expect(await menuOf(branchManager)).toEqual(['Dashboard', 'Branches', 'Menu', 'Users']);
+    expect(await menuOf(branchManager)).toEqual(['Dashboard', 'Menu', 'Users', 'Branches']);
   });
 
   it('shows a cashier the dashboard and the menu, which they may read', async () => {

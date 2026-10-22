@@ -139,6 +139,9 @@ function SettingsForm({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(() => toForm(settings));
+  // The settings as saved, to tell whether anything was changed since (the save bar, B2).
+  const [baseline, setBaseline] = useState<FormState>(() => toForm(settings));
+  const dirty = JSON.stringify(form) !== JSON.stringify(baseline);
   const [problems, setProblems] = useState<Record<string, string>>({});
   const [formProblem, setFormProblem] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -148,6 +151,7 @@ function SettingsForm({
     onSuccess: (next) => {
       queryClient.setQueryData(settingsKeys.brand(brandId), next);
       setForm(toForm(next));
+      setBaseline(toForm(next));
       setProblems({});
       setSaved(true);
     },
@@ -198,6 +202,31 @@ function SettingsForm({
 
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-4">
+      <nav
+        aria-label={t('settings.sections')}
+        className="flex flex-wrap gap-2 rounded-card border border-line bg-white p-2"
+      >
+        {(
+          [
+            ['settings-payment', t('settings.payment.title')],
+            ['settings-discounts', t('settings.discounts.title')],
+            ['settings-voids', t('settings.voids.title')],
+            ['settings-kitchen', t('settings.kitchen.title')],
+            ['settings-loyalty', t('settings.loyalty.title')],
+            ['settings-alerts', t('settings.alerts.title')],
+            ['settings-look', t('settings.look.title')],
+            ['settings-kitchen-branches', t('settings.kitchenBranches.title')],
+          ] as const
+        ).map(([id, label]) => (
+          <a
+            key={id}
+            href={`#${id}`}
+            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-ink"
+          >
+            {label}
+          </a>
+        ))}
+      </nav>
       <section className={sectionClass} aria-labelledby="settings-payment">
         <h2 id="settings-payment" className="text-lg font-semibold">
           {t('settings.payment.title')}
@@ -640,14 +669,38 @@ function SettingsForm({
           {messageFor(formProblem, t)}
         </p>
       )}
-      {saved && (
-        <p role="status" className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">
-          {t('settings.saved')}
+      {/* Always in view at the foot of the screen, so the save is never missed (B2). */}
+      <div className="sticky bottom-3 z-20 flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-white/95 px-4 py-3 shadow-float backdrop-blur">
+        <p className="text-sm">
+          {saved ? (
+            <span role="status" className="font-semibold text-money">
+              {t('settings.saved')}
+            </span>
+          ) : dirty ? (
+            <span className="font-semibold text-warn">{t('settings.unsaved')}</span>
+          ) : (
+            <span className="text-slate-500">{t('settings.noChanges')}</span>
+          )}
         </p>
-      )}
-      <button type="submit" disabled={save.isPending} className={primaryButtonClass}>
-        {save.isPending ? t('common.saving') : t('common.save')}
-      </button>
+        <div className="flex gap-2">
+          {dirty && (
+            <button
+              type="button"
+              onClick={() => {
+                setForm(baseline);
+                setProblems({});
+                setFormProblem(null);
+              }}
+              className={secondaryButtonClass}
+            >
+              {t('settings.discard')}
+            </button>
+          )}
+          <button type="submit" disabled={save.isPending} className={`${primaryButtonClass} px-6`}>
+            {save.isPending ? t('common.saving') : t('common.save')}
+          </button>
+        </div>
+      </div>
     </form>
   );
 }

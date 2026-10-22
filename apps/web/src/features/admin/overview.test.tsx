@@ -123,10 +123,10 @@ describe('the overview of today on the dashboard', () => {
     const today = await screen.findByRole('region', { name: 'Today' });
     expect(await within(today).findByText('Sales', { selector: 'p' })).toBeVisible();
     const sales = within(today).getByText('Sales', { selector: 'p' }).parentElement as HTMLElement;
-    expect(sales).toHaveTextContent('35.000 KWD+25% on last week at this time');
+    expect(sales).toHaveTextContent('35.000 KWD▲ +25% on last week at this time');
     const orders = within(today).getByText('Orders', { selector: 'p' })
       .parentElement as HTMLElement;
-    expect(orders).toHaveTextContent('3-25% on last week at this time');
+    expect(orders).toHaveTextContent('3▼ -25% on last week at this time');
     expect(within(today).getByText('1 order voided')).toBeVisible();
 
     const table = within(today).getByRole('table', { name: 'Branches' });
