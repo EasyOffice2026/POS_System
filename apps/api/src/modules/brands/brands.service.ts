@@ -324,15 +324,25 @@ export function createBrandsService({
       const specialChanged = !isDeepStrictEqual(specialHours, current.specialHours);
       const kitchen = input.config?.kitchen ?? current.kitchen;
       const kitchenChanged = !isDeepStrictEqual(kitchen, current.kitchen);
+      // The order types the till offers (docs/specs/026-order-types.md).
+      const orderTypes = input.config?.orderTypes ?? current.orderTypes;
+      const orderTypesChanged = !isDeepStrictEqual(orderTypes, current.orderTypes);
       if (hoursChanged) changed.push('openingHours');
       if (printersChanged) changed.push('printers');
       if (specialChanged) changed.push('specialHours');
       if (kitchenChanged) changed.push('kitchen');
+      if (orderTypesChanged) changed.push('orderTypes');
 
-      if (hoursChanged || printersChanged || specialChanged || kitchenChanged) {
+      if (
+        hoursChanged ||
+        printersChanged ||
+        specialChanged ||
+        kitchenChanged ||
+        orderTypesChanged
+      ) {
         // Keep any part of the configuration that this module does not know about.
         const stored = isRecord(target.config) ? target.config : {};
-        data.config = { ...stored, openingHours, printers, specialHours, kitchen };
+        data.config = { ...stored, openingHours, printers, specialHours, kitchen, orderTypes };
       }
       if (changed.length === 0) return toBranchDetail(target);
 
@@ -352,11 +362,12 @@ export function createBrandsService({
             changed,
             ...(changed.includes('isActive') ? { isActive: updated.isActive } : {}),
             ...(kitchenChanged ? { kitchen } : {}),
+            ...(orderTypesChanged ? { orderTypes } : {}),
           },
         },
         meta,
       );
-      if (kitchenChanged) await menuCache?.invalidate(target.brandId, id);
+      if (kitchenChanged || orderTypesChanged) await menuCache?.invalidate(target.brandId, id);
       return toBranchDetail(updated);
     },
   };

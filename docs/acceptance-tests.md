@@ -79,25 +79,28 @@
 
 ## 4. Cashier (till)
 
-| #    | Try this                                                                   | What should happen                                                                              | Result | Note |
-| ---- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------ | ---- |
-| 4.1  | Sign in with staff code 1001 and PIN 1234.                                 | The till asks for the cash in the drawer to open the shift.                                     |        |      |
-| 4.2  | Open the shift with 50.000.                                                | The menu and an empty order appear.                                                             |        |      |
-| 4.3  | Tap a pizza, choose its size and two extras, add a drink.                  | The order shows both with the right prices and total.                                           |        |      |
-| 4.4  | Tap **+** and **−** on a line, then remove a line not yet sent.            | The quantity and total change; the line disappears.                                             |        |      |
-| 4.5  | Tap **Send to kitchen**.                                                   | The kitchen screen shows a ticket within 5 seconds.                                             |        |      |
-| 4.6  | Void a sent dish with a reason.                                            | A manager's approval is asked if the brand's settings say so; the dish is struck through.       |        |      |
-| 4.7  | Give a 10% discount with the discount button.                              | No manager needed (within the limit); the total drops by 10%.                                   |        |      |
-| 4.8  | Tap **Promo code**, type `welcome`.                                        | The code is taken and the order shows what it took off. A wrong code is refused with a message. |        |      |
-| 4.9  | Tap **Customer**, type a new phone (8 digits) and a name.                  | The customer is added to the order.                                                             |        |      |
-| 4.10 | Pay part with KNET (with slip number) and the rest in cash, giving 20.000. | The change is shown and printed on the receipt. The customer earns points.                      |        |      |
-| 4.11 | On the next order, find the same customer by phone and tap **Use points**. | Their points take money off the bill; the receipt shows points spent and the new balance.       |        |      |
-| 4.12 | Tap **Tables**, choose a free table, take an order there.                  | The order is dine-in at that table; the floor shows the table taken.                            |        |      |
-| 4.13 | Move the order to another table, then tap **Print bill**.                  | The table shows "Bill printed"; the bill says "Not paid".                                       |        |      |
-| 4.14 | Pay the table's order.                                                     | The table is free again; the receipt names the table.                                           |        |      |
-| 4.15 | Open **Open orders**, open an earlier order, continue it.                  | The order comes back as it was.                                                                 |        |      |
-| 4.16 | **Close shift**: count the drawer, type the counted cash.                  | The shift report shows expected and counted cash and the difference.                            |        |      |
-| 4.17 | Use the till in Arabic.                                                    | Every text is Arabic, the screen reads right to left, numbers and prices are readable.          |        |      |
+| #    | Try this                                                                               | What should happen                                                                              | Result | Note |
+| ---- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------ | ---- |
+| 4.1  | Sign in with staff code 1001 and PIN 1234.                                             | The till asks for the cash in the drawer to open the shift.                                     |        |      |
+| 4.2  | Open the shift with 50.000.                                                            | The menu and an empty order appear.                                                             |        |      |
+| 4.3  | Tap a pizza, choose its size and two extras, add a drink.                              | The order shows both with the right prices and total.                                           |        |      |
+| 4.4  | Tap **+** and **−** on a line, then remove a line not yet sent.                        | The quantity and total change; the line disappears.                                             |        |      |
+| 4.5  | Tap **Send to kitchen**.                                                               | The kitchen screen shows a ticket within 5 seconds.                                             |        |      |
+| 4.6  | Void a sent dish with a reason.                                                        | A manager's approval is asked if the brand's settings say so; the dish is struck through.       |        |      |
+| 4.7  | Give a 10% discount with the discount button.                                          | No manager needed (within the limit); the total drops by 10%.                                   |        |      |
+| 4.8  | Tap **Promo code**, type `welcome`.                                                    | The code is taken and the order shows what it took off. A wrong code is refused with a message. |        |      |
+| 4.9  | Tap **Customer**, type a new phone (8 digits) and a name.                              | The customer is added to the order.                                                             |        |      |
+| 4.10 | Pay part with KNET (with slip number) and the rest in cash, giving 20.000.             | The change is shown and printed on the receipt. The customer earns points.                      |        |      |
+| 4.11 | On the next order, find the same customer by phone and tap **Use points**.             | Their points take money off the bill; the receipt shows points spent and the new balance.       |        |      |
+| 4.12 | Tap **Tables**, choose a free table, take an order there.                              | The order is dine-in at that table; the floor shows the table taken.                            |        |      |
+| 4.13 | Move the order to another table, then tap **Print bill**.                              | The table shows "Bill printed"; the bill says "Not paid".                                       |        |      |
+| 4.14 | Pay the table's order.                                                                 | The table is free again; the receipt names the table.                                           |        |      |
+| 4.15 | Open **Open orders**, open an earlier order, continue it.                              | The order comes back as it was.                                                                 |        |      |
+| 4.16 | **Close shift**: count the drawer, type the counted cash.                              | The shift report shows expected and counted cash and the difference.                            |        |      |
+| 4.17 | Use the till in Arabic.                                                                | Every text is Arabic, the screen reads right to left, numbers and prices are readable.          |        |      |
+| 4.18 | Settings → Order types at the branches: switch Dine-in off at one branch, Delivery on. | That branch's till has no **Tables** button and no Dine-in; it offers Takeaway and Delivery.    |        |      |
+| 4.19 | Choose **Delivery**, tap **Add delivery details**, type a phone and an address.        | The address shows on the order. Without an address, **Send to kitchen** and **Pay** ask for it. |        |      |
+| 4.20 | Pay the delivery order.                                                                | The receipt prints the name, phone, address and note under "Deliver to".                        |        |      |
 
 ## 5. Kitchen
 

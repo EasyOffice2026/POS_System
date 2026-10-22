@@ -1,4 +1,11 @@
-import type { Approval, Order, OrderLine, OrderTable, OrderType } from '@pos/shared';
+import type {
+  Approval,
+  DeliveryDetails,
+  Order,
+  OrderLine,
+  OrderTable,
+  OrderType,
+} from '@pos/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { moveTicket } from '../kitchen/kitchen-api';
@@ -28,6 +35,7 @@ import {
   removeLine,
   sendOrder,
   setDiscount,
+  setDelivery,
   setOrderCustomer,
   setOrderPoints,
   setOrderTable,
@@ -55,10 +63,19 @@ export interface Notice {
 
 // The order on the screen of one terminal, and every change to it. Each answer of the API is
 // the whole order, which replaces what the screen shows. See docs/specs/006-pos-terminal.md.
-export function useTerminalOrder(branchId: string, brandId: string) {
+export function useTerminalOrder(
+  branchId: string,
+  brandId: string,
+  // The order types the branch offers, in the till's order (spec 026).
+  offered: readonly OrderType[] = ['dine_in', 'takeaway'],
+) {
   const queryClient = useQueryClient();
   const [orderId, setOrderId] = useState<string | null>(null);
-  const [draftType, setDraftType] = useState<OrderType>('takeaway');
+  const [pickedType, setDraftType] = useState<OrderType>('takeaway');
+  // A new order starts with the type picked, or the first one the branch offers.
+  const draftType = offered.includes(pickedType) ? pickedType : (offered[0] ?? 'takeaway');
+  // The phone and address typed for a delivery order not made yet (docs/specs/026-order-types.md).
+  const [draftDelivery, setDraftDelivery] = useState<DeliveryDetails | null>(null);
   // The table picked for an order not made yet (docs/specs/023-floor-plan.md).
   const [draftTable, setDraftTable] = useState<OrderTable | null>(null);
   const [busy, setBusy] = useState(false);
@@ -95,6 +112,10 @@ export function useTerminalOrder(branchId: string, brandId: string) {
     }
     // The shift was closed elsewhere: the gate asks for a new one.
     // Another terminal sat an order at the table first.
+    // The branch switched this type off since the terminal loaded its menu.
+    if (code === 'ORDER_TYPE_NOT_OFFERED') {
+      void queryClient.invalidateQueries({ queryKey: menuKeys.branchMenu(branchId) });
+    }
     if (code === 'TABLE_TAKEN' || code === 'TABLE_NOT_FOUND') {
       void queryClient.invalidateQueries({ queryKey: tableKeys.floor(branchId) });
     }
@@ -158,7 +179,7 @@ export function useTerminalOrder(branchId: string, brandId: string) {
       return null;
     } catch (error) {
       const found = problemsFrom(error);
-      return found.fields[field] ?? found.form ?? 'saveError';
+      return found.fields[field] ?? Object.values(found.fields)[0] ?? found.form ?? 'saveError';
     } finally {
       setBusy(false);
     }
@@ -176,11 +197,15 @@ export function useTerminalOrder(branchId: string, brandId: string) {
             branchId,
             type: draftTable ? 'dine_in' : draftType,
             ...(draftTable ? { tableId: draftTable.id } : {}),
+            ...(!draftTable && draftType === 'delivery' && draftDelivery
+              ? { delivery: draftDelivery }
+              : {}),
           })
         ).id;
       if (!id) {
         setOrderId(target);
         setDraftTable(null);
+        setDraftDelivery(null);
       }
       return addLine(target, { ...input, id: crypto.randomUUID() });
     });
@@ -193,6 +218,8 @@ export function useTerminalOrder(branchId: string, brandId: string) {
     type: order?.type ?? (draftTable ? 'dine_in' : draftType),
     // The order's table, or the one picked for the order about to be made.
     table: order ? order.table : draftTable,
+    // The phone and address of a delivery order, or the ones typed before it exists.
+    delivery: order ? order.delivery : draftDelivery,
     busy,
     notice,
     dismissNotice: () => setNotice(null),
@@ -202,7 +229,8 @@ export function useTerminalOrder(branchId: string, brandId: string) {
     setType: (type: OrderType) => {
       if (!order) {
         setDraftType(type);
-        if (type === 'takeaway') setDraftTable(null);
+        if (type !== 'dine_in') setDraftTable(null);
+        if (type !== 'delivery') setDraftDelivery(null);
       } else if (order.status === 'open') void perform(() => changeOrderType(order.id, type));
     },
 
@@ -251,6 +279,16 @@ export function useTerminalOrder(branchId: string, brandId: string) {
     // problem to show in the box, or null when it was done (docs/specs/022-loyalty.md, rule 2).
     applyCustomer: (input: { phone: string; name?: string }) =>
       boxed((id) => setOrderCustomer(id, input), 'phone'),
+
+    // Types the phone and address of a delivery order. Before the order exists they wait for its
+    // first dish; answers the problem to show in the box, or null when it was done.
+    applyDelivery: async (details: DeliveryDetails): Promise<string | null> => {
+      if (!order) {
+        setDraftDelivery(details);
+        return null;
+      }
+      return boxed((id) => setDelivery(id, details), 'phone');
+    },
 
     removeCustomer: () => {
       if (order) void perform(() => removeOrderCustomer(order.id));

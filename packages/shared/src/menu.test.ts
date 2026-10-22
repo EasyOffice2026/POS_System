@@ -482,6 +482,7 @@ describe('what the API answers', () => {
       currency: 'KWD',
       timezone: 'Asia/Riyadh',
       kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
+      orderTypes: ['dine_in', 'takeaway'],
       brand: { logoUrl: null, color: null },
       categories: [
         {

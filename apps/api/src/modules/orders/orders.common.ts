@@ -1,6 +1,7 @@
 import {
   CURRENCY,
   appliedPromotionSchema,
+  deliveryDetailsSchema,
   localizedTextSchema,
   type Order,
   orderComboChoiceSchema,
@@ -110,6 +111,7 @@ function orderFields(row: OrderRow, { customer = null, table = null }: OrderLink
     type: row.type,
     status: row.status,
     note: row.note,
+    delivery: deliveryDetailsSchema.safeParse(row.delivery).data ?? null,
     currency: CURRENCY,
     subtotal: row.subtotal.toFixed(3),
     promoCode: row.promoCode,

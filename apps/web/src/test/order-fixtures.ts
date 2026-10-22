@@ -46,6 +46,7 @@ export function order(overrides: Partial<Order> = {}): Order {
     type: 'takeaway',
     status: 'open',
     note: null,
+    delivery: null,
     currency: 'KWD',
     subtotal: '0.000',
     promoCode: null,

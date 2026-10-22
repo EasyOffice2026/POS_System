@@ -153,7 +153,7 @@ export function ShiftsPage() {
                     <button
                       type="button"
                       onClick={() => setReportId(shift.id)}
-                      className="rounded-md px-2 py-1 font-medium text-slate-700 hover:bg-slate-100"
+                      className="inline-flex min-h-9 items-center rounded-md px-2.5 font-medium text-slate-700 hover:bg-slate-100"
                       aria-label={`${t('shifts.report.title')}: ${shift.openedByName}`}
                     >
                       {t('shifts.report.title')}
@@ -162,7 +162,7 @@ export function ShiftsPage() {
                       <button
                         type="button"
                         onClick={() => setClosingId(shift.id)}
-                        className="ms-1 rounded-md px-2 py-1 font-medium text-red-700 hover:bg-red-50"
+                        className="ms-1 inline-flex min-h-9 items-center rounded-md px-2.5 font-medium text-red-700 hover:bg-red-50"
                         aria-label={`${t('shifts.close.title')}: ${shift.openedByName}`}
                       >
                         {t('shifts.close.title')}

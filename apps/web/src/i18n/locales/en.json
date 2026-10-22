@@ -375,7 +375,14 @@
     "SPECIAL_NAME_TOO_LONG": "A period name has at most 40 characters.",
     "SPECIAL_OVERLAP": "These dates overlap another period.",
     "SPECIAL_TOO_MANY": "At most 20 periods.",
-    "DATE_RANGE_INVALID": "The last day is before the first day."
+    "DATE_RANGE_INVALID": "The last day is before the first day.",
+    "DELIVERY_PHONE_REQUIRED": "Type the customer's phone.",
+    "DELIVERY_PHONE_INVALID": "Type a whole phone number, like 9999 1234 or +965 9999 1234.",
+    "DELIVERY_ADDRESS_REQUIRED": "Type the address.",
+    "DELIVERY_ADDRESS_TOO_LONG": "The address can have up to 300 characters.",
+    "DELIVERY_NAME_TOO_LONG": "The name can have up to 80 characters.",
+    "ORDER_TYPES_NONE": "Keep at least one order type on.",
+    "ORDER_TYPES_INVALID": "Choose which order types this branch takes."
   },
   "rolesPage": {
     "title": "Roles",
@@ -950,7 +957,8 @@
       "number": "Order {{number}}",
       "types": {
         "dine_in": "Dine-in",
-        "takeaway": "Takeaway"
+        "takeaway": "Takeaway",
+        "delivery": "Delivery"
       },
       "empty": "Tap a dish to start the order.",
       "subtotal": "Subtotal",
@@ -1075,7 +1083,10 @@
       "LOYALTY_OFF": "Loyalty points are switched off for this brand.",
       "CUSTOMER_REQUIRED": "Put a customer on the order first.",
       "TABLE_TAKEN": "Another order is open at this table. Open it from Tables.",
-      "TABLE_NOT_FOUND": "This table is no longer in use. Pick another one."
+      "TABLE_NOT_FOUND": "This table is no longer in use. Pick another one.",
+      "ORDER_TYPE_NOT_OFFERED": "This branch no longer takes this type of order. Pick another one.",
+      "DELIVERY_DETAILS_REQUIRED": "Type the customer's phone and address first.",
+      "DELIVERY_NOT_APPLICABLE": "Only a delivery order has a delivery address."
     },
     "pay": {
       "title": "Pay order {{number}}",
@@ -1115,7 +1126,8 @@
       "slip": "slip",
       "thanks": "Thank you for your visit",
       "print": "Print",
-      "customer": "Customer:"
+      "customer": "Customer:",
+      "deliverTo": "Deliver to:"
     },
     "shift": {
       "since": "Shift since {{time}}",
@@ -1187,6 +1199,17 @@
       "billTitle": "Bill",
       "notPaid": "Not paid",
       "billThanks": "Please pay at the counter or ask for the card machine."
+    },
+    "delivery": {
+      "title": "Delivery details",
+      "add": "Add delivery details",
+      "change": "Change",
+      "phone": "Customer's phone",
+      "name": "Customer's name",
+      "address": "Address",
+      "note": "Note for the driver",
+      "optional": "Optional",
+      "save": "Save details"
     }
   },
   "kds": {
@@ -1312,7 +1335,19 @@
       "intro": "Who is told by email when something is voided on a till.",
       "voidEmails": "Email addresses for void alerts",
       "voidEmailsHint": "One per line. Leave empty to send none."
-    }
+    },
+    "orderTypes": {
+      "title": "Order types at the branches",
+      "intro": "For each branch: which types of order the till offers. A kiosk has no seats, so it can switch Dine-in off; a branch with its own drivers can switch Delivery on. At least one type stays on.",
+      "dine_in": "Dine-in",
+      "takeaway": "Takeaway",
+      "delivery": "Delivery",
+      "of": "{{type}} at {{branch}}",
+      "save": "Save the order types",
+      "saved": "The order types were saved. The tills use them at once.",
+      "failed": "The order types could not be saved. Try again."
+    },
+    "sectionOrderTypes": "Order types"
   },
   "shifts": {
     "title": "Shifts",

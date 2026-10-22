@@ -228,6 +228,7 @@ export function branchMenu(overrides: Partial<BranchMenu> = {}): BranchMenu {
     currency: 'KWD',
     timezone: 'Asia/Riyadh',
     kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
+    orderTypes: ['dine_in', 'takeaway'],
     brand: { logoUrl: null, color: null },
     categories: [
       {

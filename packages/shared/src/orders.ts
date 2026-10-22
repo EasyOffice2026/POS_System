@@ -14,7 +14,7 @@ import { orderTableSchema } from './tables';
 export const MAX_ORDER_LINES = 200;
 export const MAX_LINE_QUANTITY = 99;
 
-export const orderTypes = ['dine_in', 'takeaway'] as const;
+export const orderTypes = ['dine_in', 'takeaway', 'delivery'] as const;
 export const orderTypeSchema = z.enum(orderTypes, { error: 'ORDER_TYPE_INVALID' });
 export type OrderType = z.infer<typeof orderTypeSchema>;
 
@@ -138,6 +138,30 @@ export const orderRefundSchema = z.object({
 });
 export type OrderRefund = z.infer<typeof orderRefundSchema>;
 
+// Where a delivery order goes: the phone and the address are needed before it is sent or paid
+// (docs/specs/026-order-types.md, rule 5).
+const deliveryText = (max: number, tooLong: string) =>
+  z
+    .string()
+    .trim()
+    .max(max, tooLong)
+    .transform((text) => (text === '' ? null : text));
+
+export const deliveryDetailsSchema = z.strictObject({
+  name: deliveryText(80, 'DELIVERY_NAME_TOO_LONG').nullable().optional().default(null),
+  phone: z
+    .string({ error: 'DELIVERY_PHONE_REQUIRED' })
+    .trim()
+    .regex(/^[+]?[0-9 ()-]{6,20}$/, 'DELIVERY_PHONE_INVALID'),
+  address: z
+    .string({ error: 'DELIVERY_ADDRESS_REQUIRED' })
+    .trim()
+    .min(1, 'DELIVERY_ADDRESS_REQUIRED')
+    .max(300, 'DELIVERY_ADDRESS_TOO_LONG'),
+  note: deliveryText(200, 'NOTE_TOO_LONG').nullable().optional().default(null),
+});
+export type DeliveryDetails = z.infer<typeof deliveryDetailsSchema>;
+
 const orderFields = {
   id: z.uuid(),
   brandId: z.uuid(),
@@ -149,6 +173,8 @@ const orderFields = {
   type: orderTypeSchema,
   status: orderStatusSchema,
   note: z.string().nullable(),
+  // The customer's phone and address of a delivery order, else null (spec 026).
+  delivery: deliveryDetailsSchema.nullable(),
   currency: z.literal(CURRENCY),
   subtotal: z.string(),
   // What promotions took off, before the manual discount (docs/specs/021-promotions.md).
@@ -241,6 +267,8 @@ export const createOrderRequestSchema = z.strictObject({
   note: noteField.optional(),
   // A dine-in order at a table (docs/specs/023-floor-plan.md, rule 3).
   tableId: z.uuid({ error: 'TABLE_NOT_FOUND' }).optional(),
+  // A delivery order may be opened with its details (spec 026).
+  delivery: deliveryDetailsSchema.optional(),
 });
 export type CreateOrderRequest = z.infer<typeof createOrderRequestSchema>;
 
@@ -248,6 +276,8 @@ export const updateOrderRequestSchema = z
   .strictObject({
     type: orderTypeSchema.optional(),
     note: noteField.nullable().optional(),
+    // The delivery details, or null to clear them (spec 026).
+    delivery: deliveryDetailsSchema.nullable().optional(),
   })
   .refine((request) => Object.keys(request).length > 0, { message: 'NOTHING_TO_UPDATE' });
 export type UpdateOrderRequest = z.infer<typeof updateOrderRequestSchema>;

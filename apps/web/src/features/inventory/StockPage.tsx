@@ -270,7 +270,7 @@ export function StockPage() {
                                 typed.trim() === '' ? null : normalizeNumberInput(typed.trim()),
                             });
                           }}
-                          className="ms-2 text-xs text-slate-600 underline"
+                          className="ms-2 inline-flex min-h-9 items-center px-1 text-xs text-slate-600 underline"
                           aria-label={`${t('inventory.stock.setLevel')}: ${name}`}
                         >
                           {t('inventory.stock.setLevel')}
@@ -287,7 +287,7 @@ export function StockPage() {
                             key={kind}
                             type="button"
                             onClick={() => setMoving({ stock: row, kind: kind as ManualKind })}
-                            className="ms-1 rounded-md px-2 py-1 font-medium text-slate-700 hover:bg-slate-100"
+                            className="ms-1 inline-flex min-h-9 items-center rounded-md px-2.5 font-medium text-slate-700 hover:bg-slate-100"
                             aria-label={`${t(`inventory.movements.kinds.${kind}`)}: ${name}`}
                           >
                             {t(`inventory.movements.kinds.${kind}`)}

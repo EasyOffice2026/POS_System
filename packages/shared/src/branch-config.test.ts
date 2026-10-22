@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  offeredOrderTypes,
   DEFAULT_PRINTER_PORT,
   MAX_PRINTERS,
   MAX_RANGES_PER_DAY,
@@ -399,6 +400,7 @@ describe('parseBranchConfig', () => {
       dayEndsAt: '00:00',
       specialHours: [],
       kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
+      orderTypes: { dine_in: true, takeaway: true, delivery: false },
     };
 
     expect(parseBranchConfig({})).toEqual(expected);
@@ -426,6 +428,7 @@ describe('parseBranchConfig', () => {
       dayEndsAt: '00:00',
       specialHours: [],
       kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
+      orderTypes: { dine_in: true, takeaway: true, delivery: false },
     });
   });
 
@@ -446,6 +449,7 @@ describe('parseBranchConfig', () => {
       dayEndsAt: '00:00',
       specialHours: [],
       kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
+      orderTypes: { dine_in: true, takeaway: true, delivery: false },
     });
   });
 
@@ -456,6 +460,7 @@ describe('parseBranchConfig', () => {
       dayEndsAt: '00:00',
       specialHours: [],
       kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
+      orderTypes: { dine_in: true, takeaway: true, delivery: false },
     });
   });
 });
@@ -643,5 +648,30 @@ describe('special hours', () => {
 
   it('come back empty from a configuration that has none', () => {
     expect(parseBranchConfig({}).specialHours).toEqual([]);
+  });
+});
+
+describe('the order types of a branch (spec 026)', () => {
+  it('start with Dine-in and Takeaway, keep a stored choice, and list the types that are on', () => {
+    expect(parseBranchConfig({}).orderTypes).toEqual({
+      dine_in: true,
+      takeaway: true,
+      delivery: false,
+    });
+    const kiosk = { dine_in: false, takeaway: true, delivery: true };
+    expect(parseBranchConfig({ orderTypes: kiosk }).orderTypes).toEqual(kiosk);
+    expect(offeredOrderTypes(kiosk)).toEqual(['takeaway', 'delivery']);
+    // A stored choice with nothing on is not trusted.
+    expect(
+      parseBranchConfig({ orderTypes: { dine_in: false, takeaway: false, delivery: false } })
+        .orderTypes,
+    ).toEqual({ dine_in: true, takeaway: true, delivery: false });
+  });
+
+  it('refuses a change that switches every type off', () => {
+    const off = { dine_in: false, takeaway: false, delivery: false };
+    const result = branchConfigChangeSchema.safeParse({ orderTypes: off });
+    expect(result.success).toBe(false);
+    expect(JSON.stringify(result.error?.issues)).toContain('ORDER_TYPES_NONE');
   });
 });

@@ -29,6 +29,7 @@ const withPrinters = (...printers: Printer[]) =>
       dayEndsAt: '00:00',
       specialHours: [],
       kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
+      orderTypes: { dine_in: true, takeaway: true, delivery: false },
     },
   });
 

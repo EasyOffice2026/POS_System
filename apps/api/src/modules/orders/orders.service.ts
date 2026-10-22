@@ -14,6 +14,8 @@ import {
   localizedTextSchema,
   MAX_ORDER_LINES,
   maxPointsFor,
+  deliveryDetailsSchema,
+  type OrderType,
   parseBranchConfig,
   parseBrandSettings,
   pointsEarned,
@@ -34,10 +36,10 @@ import {
   toMils,
   type VoidRequest,
 } from '@pos/shared';
-import type {
-  Branch as BranchRow,
-  OrderLine as LineRow,
-  Order as OrderRow,
+import {
+  type Branch as BranchRow,
+  type OrderLine as LineRow,
+  type Order as OrderRow,
   Prisma,
 } from '../../generated/prisma/client';
 import { type AuditEvent, writeAudit } from '../../lib/audit';
@@ -105,6 +107,26 @@ export function createOrdersService({
     const brand = await db.brand.findUnique({ where: { id: branch.brandId } });
     if (!branch.isActive || !brand?.isActive) throw errors.branchInactive();
     return branch;
+  }
+
+  // A branch refuses an order type it has switched off (docs/specs/026-order-types.md, rule 4).
+  function assertOffered(branch: { config: unknown }, type: OrderType) {
+    if (!parseBranchConfig(branch.config).orderTypes[type]) {
+      throw errors.conflict(
+        'ORDER_TYPE_NOT_OFFERED',
+        'This branch does not take this type of order',
+      );
+    }
+  }
+
+  // A delivery order needs its phone and address before it is sent or paid (rule 5).
+  function assertDeliveryDetails(order: OrderRow) {
+    if (order.type === 'delivery' && !deliveryDetailsSchema.safeParse(order.delivery).success) {
+      throw errors.conflict(
+        'DELIVERY_DETAILS_REQUIRED',
+        'A delivery order needs a phone and an address',
+      );
+    }
   }
 
   // The settings of the brand, which say what a cashier may do alone (docs/specs/009-settings.md).
@@ -513,6 +535,8 @@ export function createOrdersService({
       );
       // An order at a table is dine-in (docs/specs/023-floor-plan.md, rule 3).
       const table = input.tableId ? await freeTable(db, branch.id, input.tableId, null) : null;
+      const type: OrderType = table ? 'dine_in' : input.type;
+      assertOffered(branch, type);
       const number = await nextNumber(db, branch, businessDate);
 
       try {
@@ -523,8 +547,9 @@ export function createOrdersService({
             branchId: branch.id,
             businessDate: dbDate(businessDate),
             number,
-            type: table ? 'dine_in' : input.type,
+            type,
             note: input.note ?? null,
+            ...(type === 'delivery' && input.delivery ? { delivery: input.delivery } : {}),
             openedById: auth.sub,
             ...(table ? { tableId: table.id, tableOpenKey: table.id } : {}),
           },
@@ -548,13 +573,27 @@ export function createOrdersService({
 
     async update(ctx: ActorContext, id: string, input: UpdateOrderRequest): Promise<Order> {
       return ctx.db.$transaction(async (tx) => {
-        await lockOpen(tx, id);
+        const current = await lockOpen(tx, id);
+        const type = input.type ?? current.type;
+        if (type !== current.type) assertOffered(await openBranch(tx, current.branchId), type);
+        if (input.delivery && type !== 'delivery') {
+          throw errors.conflict(
+            'DELIVERY_NOT_APPLICABLE',
+            'Only a delivery order has delivery details',
+          );
+        }
         const row = await tx.order.update({
           where: { id },
           data: {
             ...(input.type ? { type: input.type } : {}),
-            // A takeaway order has no table (docs/specs/023-floor-plan.md, rule 3).
-            ...(input.type === 'takeaway' ? { tableId: null, tableOpenKey: null } : {}),
+            // Only a dine-in order has a table (docs/specs/023-floor-plan.md, rule 3), and only
+            // a delivery order has delivery details (docs/specs/026-order-types.md, rule 7).
+            ...(type !== 'dine_in' ? { tableId: null, tableOpenKey: null } : {}),
+            ...(type !== 'delivery'
+              ? { delivery: Prisma.DbNull }
+              : input.delivery !== undefined
+                ? { delivery: input.delivery ?? Prisma.DbNull }
+                : {}),
             ...(input.note !== undefined ? { note: input.note } : {}),
           },
         });
@@ -665,6 +704,7 @@ export function createOrdersService({
     async send(ctx: ActorContext, orderId: string): Promise<Order> {
       return ctx.db.$transaction(async (tx) => {
         const order = await lockOpen(tx, orderId);
+        assertDeliveryDetails(order);
         if ((await sendPending(tx, order, now())) === 0) {
           throw errors.conflict('NOTHING_TO_SEND', 'Every line of this order was sent already');
         }
@@ -830,6 +870,7 @@ export function createOrdersService({
       const { db } = ctx;
       const order = await load(db, orderId);
       if (order.status !== 'open') throw notOpen();
+      assertOffered(await openBranch(db, order.branchId), 'dine_in');
       await freeTable(db, order.branchId, tableId, orderId);
       try {
         return await db.$transaction(async (tx) => {
@@ -837,7 +878,7 @@ export function createOrdersService({
           await freeTable(tx, order.branchId, tableId, orderId);
           const row = await tx.order.update({
             where: { id: orderId },
-            data: { type: 'dine_in', tableId, tableOpenKey: tableId },
+            data: { type: 'dine_in', tableId, tableOpenKey: tableId, delivery: Prisma.DbNull },
           });
           return describe(tx, row);
         });
@@ -1189,6 +1230,7 @@ export function createOrdersService({
       try {
         return await db.$transaction(async (tx) => {
           const order = await lockOpen(tx, orderId);
+          assertDeliveryDetails(order);
           const lines = await readLines(tx, orderId);
           if (!lines.some((line) => line.status !== 'voided')) {
             throw errors.conflict('ORDER_EMPTY', 'This order has nothing to pay for');
