@@ -237,7 +237,7 @@ export function AdminLayout() {
             if (shown.length === 0) return null;
             return (
               <div key={group.label} className="space-y-0.5">
-                <p className="px-3 pb-1 text-[11px] font-bold tracking-[0.08em] text-slate-400 uppercase">
+                <p className="px-3 pb-1 text-[11px] font-bold tracking-[0.08em] text-slate-500 uppercase">
                   {group.label}
                 </p>
                 {shown.map((entry) => (
@@ -288,7 +288,7 @@ export function AdminLayout() {
             {user.email && (
               <Link
                 to="/change-password"
-                className="inline-flex items-center gap-2 text-sm text-slate-600 underline underline-offset-2 hover:text-ink [&_svg]:size-4"
+                className="inline-flex min-h-9 items-center gap-2 text-sm text-slate-600 underline underline-offset-2 hover:text-ink [&_svg]:size-4"
               >
                 <KeyRound aria-hidden="true" />
                 {t('auth.changePassword.link')}
