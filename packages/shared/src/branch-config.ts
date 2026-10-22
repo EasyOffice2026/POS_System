@@ -380,12 +380,24 @@ export const dayEndSchema = timeField;
 export const kitchenSettingsSchema = z.strictObject({
   screen: z.boolean({ error: 'KITCHEN_SETTING_INVALID' }),
   slip: z.boolean({ error: 'KITCHEN_SETTING_INVALID' }),
+  // After this many minutes a ticket on the kitchen screen turns red (the redesign, step 3).
+  lateAfterMinutes: z
+    .number({ error: 'LATE_AFTER_INVALID' })
+    .int('LATE_AFTER_INVALID')
+    .min(1, 'LATE_AFTER_INVALID')
+    .max(120, 'LATE_AFTER_INVALID')
+    .default(12),
 });
 export type KitchenSettings = z.infer<typeof kitchenSettingsSchema>;
-export const defaultKitchenSettings: KitchenSettings = { screen: true, slip: false };
+export const defaultKitchenSettings: KitchenSettings = {
+  screen: true,
+  slip: false,
+  lateAfterMinutes: 12,
+};
 
 // Whether the till prints a slip when it sends dishes to the kitchen.
-export const printsKitchenSlip = (kitchen: KitchenSettings) => kitchen.slip || !kitchen.screen;
+export const printsKitchenSlip = (kitchen: Pick<KitchenSettings, 'screen' | 'slip'>) =>
+  kitchen.slip || !kitchen.screen;
 
 export const branchConfigSchema = z.object({
   openingHours: openingHoursSchema,

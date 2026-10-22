@@ -367,14 +367,24 @@ describe('printers', () => {
 
 describe('the kitchen switches (spec 027)', () => {
   it('keep a stored choice, fall back to the screen without a slip, and print a slip when the screen is off', () => {
-    expect(parseBranchConfig({ kitchen: { screen: false, slip: false } }).kitchen).toEqual({
+    expect(
+      parseBranchConfig({ kitchen: { screen: false, slip: false, lateAfterMinutes: 8 } }).kitchen,
+    ).toEqual({ screen: false, slip: false, lateAfterMinutes: 8 });
+    // Saved before the late limit existed: 12 minutes.
+    expect(parseBranchConfig({ kitchen: { screen: false, slip: true } }).kitchen).toEqual({
       screen: false,
-      slip: false,
+      slip: true,
+      lateAfterMinutes: 12,
     });
     expect(parseBranchConfig({ kitchen: { screen: 'yes' } }).kitchen).toEqual({
       screen: true,
       slip: false,
+      lateAfterMinutes: 12,
     });
+    expect(
+      parseBranchConfig({ kitchen: { screen: true, slip: false, lateAfterMinutes: 0 } }).kitchen
+        .lateAfterMinutes,
+    ).toBe(12);
     expect(printsKitchenSlip({ screen: true, slip: false })).toBe(false);
     expect(printsKitchenSlip({ screen: true, slip: true })).toBe(true);
     expect(printsKitchenSlip({ screen: false, slip: false })).toBe(true);
@@ -388,7 +398,7 @@ describe('parseBranchConfig', () => {
       printers: [],
       dayEndsAt: '00:00',
       specialHours: [],
-      kitchen: { screen: true, slip: false },
+      kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
     };
 
     expect(parseBranchConfig({})).toEqual(expected);
@@ -415,7 +425,7 @@ describe('parseBranchConfig', () => {
       ...stored,
       dayEndsAt: '00:00',
       specialHours: [],
-      kitchen: { screen: true, slip: false },
+      kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
     });
   });
 
@@ -435,7 +445,7 @@ describe('parseBranchConfig', () => {
       printers,
       dayEndsAt: '00:00',
       specialHours: [],
-      kitchen: { screen: true, slip: false },
+      kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
     });
   });
 
@@ -445,7 +455,7 @@ describe('parseBranchConfig', () => {
       printers: [],
       dayEndsAt: '00:00',
       specialHours: [],
-      kitchen: { screen: true, slip: false },
+      kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
     });
   });
 });

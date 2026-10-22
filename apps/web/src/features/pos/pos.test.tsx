@@ -298,7 +298,8 @@ describe('taking an order', () => {
     nextIds(orderIds.first, lineIds.cola);
     const sent = orderLine({ status: 'sent', sentAt: '2026-10-13T09:01:00.000Z' });
     terminalApi({
-      [MENU]: () => json(branchMenu({ kitchen: { screen: false, slip: false } })),
+      [MENU]: () =>
+        json(branchMenu({ kitchen: { screen: false, slip: false, lateAfterMinutes: 12 } })),
       [CREATE]: () => json(order(), 201),
       [LINES]: () => json(colaOrder()),
       [SEND]: () => json(colaOrder({ lines: [sent] })),

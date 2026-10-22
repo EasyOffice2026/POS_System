@@ -1,5 +1,6 @@
 import { type KitchenTicket, nextTicketStatus } from '@pos/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ChefHat, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackOfficeLink } from '../../components/BackOfficeLink';
@@ -15,7 +16,7 @@ import { SETTINGS_REFRESH_MS } from '../pos/OrderScreen';
 import { useBrandSettings } from '../settings/settings-api';
 import type { Terminal } from '../pos/terminal-store';
 import { kitchenKeys, listTickets, moveTicket } from './kitchen-api';
-import { TicketCard } from './TicketCard';
+import { minutesSince, STALE_MINUTES, stageColor, TicketCard } from './TicketCard';
 
 // How often the screen asks for the tickets (spec 008, rule 7).
 export const KITCHEN_REFRESH_MS = 5_000;
@@ -75,106 +76,136 @@ export function KitchenScreen({ terminal }: { terminal: Terminal }) {
   const all = screenOff ? [] : (tickets.data ?? []);
   const open = all.filter((ticket) => ticket.status !== 'done');
   const done = all.filter((ticket) => ticket.status === 'done');
+  // A ticket left for more than a day was forgotten; it waits in its own row, out of the way.
+  const stale = open.filter((ticket) => minutesSince(ticket.sentAt, now) >= STALE_MINUTES);
+  const current = open.filter((ticket) => minutesSince(ticket.sentAt, now) < STALE_MINUTES);
+  const lateAfterMinutes = menu.data?.kitchen.lateAfterMinutes ?? 12;
+  const countOf = (status: KitchenTicket['status']) =>
+    current.filter((ticket) => ticket.status === status).length;
+  const card = (ticket: KitchenTicket) => (
+    <TicketCard
+      key={ticket.id}
+      ticket={ticket}
+      now={now}
+      lateAfterMinutes={lateAfterMinutes}
+      busy={busy === ticket.id}
+      onMove={canMove ? (chosen) => void move(chosen) : null}
+      doneByCashier={doneByCashier}
+    />
+  );
+  const darkButton =
+    'inline-flex min-h-11 items-center gap-2 rounded-control border border-kds-line bg-kds-card px-3 text-sm font-semibold text-kds-ink hover:bg-kds-line focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:outline-none [&_svg]:size-[18px]';
   const clock = new Intl.DateTimeFormat(i18n.language === 'ar' ? 'ar-u-nu-latn' : 'en-GB', {
     timeStyle: 'short',
     hourCycle: 'h23',
   }).format(now);
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-800 text-slate-900">
-      <header className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 px-4 py-2 text-white">
+    <div className="flex min-h-screen flex-col bg-kds-page text-kds-ink">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-kds-line px-5 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <BrandMark
             name={terminal.brandName ? localize(terminal.brandName, i18n.language) : t('kds.title')}
             logoUrl={menu.data?.brand.logoUrl}
           />
           <div className="min-w-0">
-            <p className="text-xs text-slate-300">{t('kds.title')}</p>
-            <p className="font-semibold">
-              {localize(terminal.branchName, i18n.language)}
+            <p className="leading-tight font-bold">
+              {t('kds.title')} · {localize(terminal.branchName, i18n.language)}
               {terminal.stationName && (
-                <span className="font-normal text-slate-300">
+                <span className="font-semibold text-kds-ink-2">
                   {' · '}
                   {localize(terminal.stationName, i18n.language)}
                 </span>
               )}
             </p>
+            <p className="text-sm text-kds-ink-2">
+              {t('kds.lateAfter', { count: lateAfterMinutes })}
+            </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-sm text-slate-200">{t('kds.waiting', { count: open.length })}</span>
-          <span className="text-sm font-medium" dir="ltr">
+          {/* For screen readers: how many tickets wait, said when it changes. */}
+          <p className="sr-only" aria-live="polite">
+            {t('kds.waiting', { count: open.length })}
+          </p>
+          {!screenOff && (
+            <div className="flex flex-wrap gap-2" aria-hidden="true">
+              {(['new', 'preparing', 'ready'] as const).map((status) => (
+                <span
+                  key={status}
+                  className="inline-flex h-9 items-center gap-2 rounded-full border border-kds-line bg-kds-card px-3.5 text-sm font-semibold"
+                >
+                  <span
+                    className="size-2.5 rounded-full"
+                    style={{ background: stageColor[status] }}
+                  />
+                  {`${t(`kds.status.${status}`)} ${countOf(status)}`}
+                </span>
+              ))}
+            </div>
+          )}
+          <span className="num px-1 text-[1.75rem] leading-none font-bold" dir="ltr">
             {clock}
           </span>
-          <span className="text-sm text-slate-300">{user?.name}</span>
-          <BackOfficeLink className="rounded-md border border-slate-500 px-3 py-1 text-sm font-medium text-white hover:bg-slate-700 focus:ring-2 focus:ring-slate-400 focus:outline-none" />
-          <div className="rounded-md bg-white">
-            <LanguageSwitcher />
-          </div>
-          <button
-            type="button"
-            onClick={() => void logout()}
-            className="rounded-md bg-white px-3 py-1 text-sm font-medium text-slate-900 hover:bg-slate-200"
-          >
+          <BackOfficeLink className={darkButton} />
+          <LanguageSwitcher className={darkButton} />
+          <button type="button" onClick={() => void logout()} className={darkButton}>
+            <LogOut aria-hidden="true" />
             {t('auth.signOut')}
           </button>
         </div>
       </header>
 
       {problem && (
-        <p role="alert" className="bg-amber-100 px-4 py-2 text-sm text-amber-900">
+        <p role="alert" className="bg-warn-soft px-5 py-2 text-sm font-medium text-warn">
           {t(`kds.problems.${problem}`)}
         </p>
       )}
       {tickets.isError && !tickets.data && (
-        <p role="alert" className="bg-red-100 px-4 py-2 text-sm text-red-800">
+        <p role="alert" className="bg-danger-soft px-5 py-2 text-sm font-medium text-danger">
           {t('common.loadError')}
         </p>
       )}
 
-      <main className="flex-1 p-3">
+      <main className="flex-1 p-5">
         {screenOff && (
-          <p role="status" className="mx-auto max-w-xl py-12 text-center text-lg text-slate-200">
+          <p role="status" className="mx-auto max-w-xl py-16 text-center text-lg text-kds-ink-2">
             {t('kds.screenOff')}
           </p>
         )}
-        {tickets.isPending && <p className="text-slate-300">{t('common.loading')}</p>}
-        {tickets.data && open.length === 0 && !screenOff && (
-          <p className="py-12 text-center text-lg text-slate-300">{t('kds.empty')}</p>
+        {tickets.isPending && <p className="text-kds-ink-2">{t('common.loading')}</p>}
+        {tickets.data && current.length === 0 && !screenOff && (
+          <div className="flex flex-col items-center gap-3 py-20 text-center text-kds-ink-2">
+            <ChefHat aria-hidden="true" className="size-10" />
+            <p className="text-lg">{t('kds.empty')}</p>
+          </div>
         )}
         <section
           aria-label={t('kds.openTickets')}
-          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         >
-          {open.map((ticket) => (
-            <TicketCard
-              key={ticket.id}
-              ticket={ticket}
-              now={now}
-              busy={busy === ticket.id}
-              onMove={canMove ? (chosen) => void move(chosen) : null}
-              doneByCashier={doneByCashier}
-            />
-          ))}
+          {current.map(card)}
         </section>
       </main>
 
+      {stale.length > 0 && (
+        <details className="border-t border-kds-line px-5 py-3">
+          <summary className="cursor-pointer text-sm font-semibold text-kds-ink-2">
+            {t('kds.stale', { count: stale.length })}
+          </summary>
+          <div className="mt-3 grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {stale.map(card)}
+          </div>
+        </details>
+      )}
+
       {done.length > 0 && (
-        <section
-          aria-label={t('kds.doneTickets')}
-          className="border-t border-slate-700 bg-slate-900 p-3"
-        >
-          <h2 className="mb-2 text-sm font-medium text-slate-300">{t('kds.doneTickets')}</h2>
-          <div className="flex gap-3 overflow-x-auto pb-1">
+        <section aria-label={t('kds.doneTickets')} className="border-t border-kds-line px-5 py-3">
+          <h2 className="mb-2 text-sm font-semibold text-kds-ink-2">{t('kds.doneTickets')}</h2>
+          <div className="flex gap-4 overflow-x-auto pb-1">
             {done.map((ticket) => (
-              <div key={ticket.id} className="w-64 shrink-0">
-                <TicketCard
-                  ticket={ticket}
-                  now={now}
-                  busy={busy === ticket.id}
-                  onMove={canMove ? (chosen) => void move(chosen) : null}
-                  doneByCashier={doneByCashier}
-                />
+              <div key={ticket.id} className="w-72 shrink-0">
+                {card(ticket)}
               </div>
             ))}
           </div>

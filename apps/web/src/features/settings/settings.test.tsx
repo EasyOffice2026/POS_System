@@ -103,7 +103,7 @@ describe('the settings page', () => {
     expect(await screen.findByText(/The kitchen settings were saved/)).toBeVisible();
     expect(
       api.calls.find((call) => call.key === `PATCH /api/v1/branches/${pizzaMall.id}`)?.body,
-    ).toEqual({ config: { kitchen: { screen: false, slip: false } } });
+    ).toEqual({ config: { kitchen: { screen: false, slip: false, lateAfterMinutes: 12 } } });
   });
 
   it('saves the brand colour, and refuses one that is not a colour', async () => {

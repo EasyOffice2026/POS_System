@@ -1181,6 +1181,12 @@
     }
   },
   "kds": {
+    "late": "Late",
+    "hours": "{{hours}} h {{minutes}}",
+    "lateAfter_one": "Late after {{count}} minute",
+    "lateAfter_other": "Late after {{count}} min",
+    "stale_one": "{{count}} ticket older than a day",
+    "stale_other": "{{count}} tickets older than a day",
     "title": "Kitchen",
     "screenOff": "The kitchen screen is switched off for this branch: orders print on a kitchen slip at the till. A manager switches it on under Settings → Kitchen at the branches.",
     "notAllowed": "{{name}} cannot see the kitchen tickets.",
@@ -1230,6 +1236,9 @@
       "slip": "Print a kitchen slip too",
       "slipAlways": "Kitchen slip prints (no screen)",
       "slipOf": "Kitchen slip at {{branch}}",
+      "lateAfter": "Late after",
+      "lateAfterOf": "Minutes before a ticket is late at {{branch}}",
+      "minutes": "min",
       "save": "Save the kitchen settings",
       "saved": "The kitchen settings were saved. The tills use them at once.",
       "failed": "The kitchen settings could not be saved. Try again."
