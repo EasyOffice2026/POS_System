@@ -97,7 +97,9 @@ describe('the shift on the POS', () => {
     await user.click(screen.getByRole('button', { name: 'Open the shift' }));
 
     expect(await screen.findByRole('region', { name: 'Menu' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Close shift' })).toBeVisible();
+    // Closing the shift is in the account menu of the till.
+    await user.click(screen.getByRole('button', { name: /shift and account/ }));
+    expect(screen.getByRole('menuitem', { name: 'Close shift' })).toBeVisible();
     expect(api.calls.find((call) => call.key === OPEN)?.body).toEqual({
       branchId: ids.pizzaMall,
       openingCash: '50',
@@ -131,7 +133,8 @@ describe('the shift on the POS', () => {
     const user = userEvent.setup();
     renderApp('/pos');
 
-    await user.click(await screen.findByRole('button', { name: 'Close shift' }));
+    await user.click(await screen.findByRole('button', { name: /shift and account/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'Close shift' }));
     const dialog = screen.getByRole('dialog', { name: 'Close shift' });
     expect(within(dialog).getByTestId('cash-expected')).toHaveTextContent('50.000');
     await user.type(within(dialog).getByLabelText('Cash counted'), '74.5');

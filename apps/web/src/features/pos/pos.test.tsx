@@ -75,8 +75,14 @@ describe('a terminal that is not set up', () => {
     mockApi({ [REFRESH]: anonymous });
     renderApp('/pos');
 
+    // The first test of the file waits for the till's code to load, which on a busy machine
+    // takes longer than the usual second.
     expect(
-      await screen.findByRole('heading', { name: 'This terminal is not set up' }),
+      await screen.findByRole(
+        'heading',
+        { name: 'This terminal is not set up' },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Set up this terminal' })).toHaveAttribute(
       'href',
@@ -234,19 +240,21 @@ describe('taking an order', () => {
   it('has a way back to the back office for a manager, and none for a cashier', async () => {
     saveTerminal(mall);
     terminalApi();
+    const user = userEvent.setup();
     renderApp('/pos');
     expect(await screen.findByRole('button', { name: /Margherita/ })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Back office' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /shift and account/ }));
+    expect(screen.getByRole('menuitem', { name: 'Close shift' })).toBeVisible();
+    expect(screen.queryByRole('menuitem', { name: 'Back office' })).not.toBeInTheDocument();
   });
 
   it('shows the back office link to a manager on the till', async () => {
     saveTerminal(mall);
     terminalApi({ [REFRESH]: () => json(sessionFor(fullBrandManager)) });
+    const user = userEvent.setup();
     renderApp('/pos');
-    expect(await screen.findByRole('link', { name: 'Back office' })).toHaveAttribute(
-      'href',
-      '/admin',
-    );
+    await user.click(await screen.findByRole('button', { name: /shift and account/ }));
+    expect(screen.getByRole('menuitem', { name: 'Back office' })).toHaveAttribute('href', '/admin');
   });
 
   it('shows the photo of a dish on its tile', async () => {
@@ -312,6 +320,23 @@ describe('taking an order', () => {
     expect(printed[0]).toContain('1 × Cola');
     expect(screen.queryByTestId('kitchen-slip')).not.toBeInTheDocument();
     print.mockRestore();
+  });
+
+  it('marks the tile of a dish that is already in the order with how many', async () => {
+    saveTerminal(mall);
+    nextIds(orderIds.first, lineIds.cola);
+    terminalApi({
+      [CREATE]: () => json(order(), 201),
+      [LINES]: () => json(colaOrder({ lines: [orderLine({ quantity: 2 })] })),
+    });
+    const user = userEvent.setup();
+    renderApp('/pos');
+
+    await user.click(await screen.findByRole('tab', { name: 'Drinks' }));
+    const tile = screen.getByRole('button', { name: /Cola/ });
+    expect(within(tile).queryByLabelText(/in the order/)).not.toBeInTheDocument();
+    await user.click(tile);
+    expect(await within(tile).findByLabelText('2 in the order')).toHaveTextContent('× 2');
   });
 
   it('prints nothing on sending when the branch has a kitchen screen and no slip', async () => {

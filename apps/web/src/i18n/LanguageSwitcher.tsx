@@ -13,7 +13,7 @@ export function LanguageSwitcher() {
       lang={next}
       aria-label={t('language.switchTo')}
       onClick={() => void setLanguage(next)}
-      className="rounded-md border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100 focus:ring-2 focus:ring-slate-400 focus:outline-none"
+      className="inline-flex min-h-11 items-center rounded-control border border-slate-300 bg-white px-3 text-sm font-semibold text-ink hover:border-slate-400 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-ink/25 focus-visible:outline-none"
     >
       {next === 'ar' ? t('language.arabic') : t('language.english')}
     </button>

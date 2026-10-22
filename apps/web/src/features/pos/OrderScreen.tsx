@@ -9,14 +9,16 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { BackOfficeLink } from '../../components/BackOfficeLink';
+import { Armchair, ReceiptText } from 'lucide-react';
 import { BrandMark } from '../../components/BrandMark';
+import { secondaryButtonClass } from '../../components/form';
 import { useBrandColor } from '../../lib/use-brand-color';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { localize } from '../../i18n/localize';
 import { useAuth } from '../auth/auth-context';
 import { getBranchMenu, menuKeys } from '../menu/menu-api';
 import { useNow } from '../menu/use-now';
+import { AccountMenu } from './AccountMenu';
 import { ApprovalDialog } from './ApprovalDialog';
 import { type Choosing, ChoiceDialog } from './ChoiceDialog';
 import { CustomerDialog } from './CustomerDialog';
@@ -41,8 +43,7 @@ import { VoidDialog } from './VoidDialog';
 
 type Voiding = { kind: 'line'; line: OrderLine } | { kind: 'order' };
 
-const headerButtonClass =
-  'rounded-md border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100 focus:ring-2 focus:ring-slate-400 focus:outline-none';
+const headerButtonClass = secondaryButtonClass;
 
 // The screen a cashier takes orders on: the menu of the branch, and the order being taken.
 // See docs/specs/006-pos-terminal.md.
@@ -55,7 +56,7 @@ interface OrderScreenProps {
 
 export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps) {
   const { t, i18n } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const now = useNow();
   const terminalOrder = useTerminalOrder(terminal.branchId, terminal.brandId);
   // The brand's settings: ways to pay, discount buttons, who marks dishes done (spec 009).
@@ -95,6 +96,12 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
     setSlip(null);
   };
   const printsSlip = menu.data ? printsKitchenSlip(menu.data.kitchen) : false;
+  // How many of each dish the order already has, for the badge on its tile.
+  const inOrder = new Map<string, number>();
+  for (const line of order?.lines ?? []) {
+    const id = line.itemId ?? line.comboId;
+    if (id && line.status !== 'voided') inOrder.set(id, (inOrder.get(id) ?? 0) + line.quantity);
+  }
   useBrandColor(menu.data?.brand.color);
   const brandName = terminal.brandName
     ? localize(terminal.brandName, i18n.language)
@@ -141,49 +148,38 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
 
   return (
     <>
-      <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 print:hidden lg:h-screen">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2">
+      <div className="flex min-h-screen flex-col bg-canvas text-ink print:hidden lg:h-screen">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-white px-4 py-2.5">
           <div className="flex min-w-0 items-center gap-3">
             <BrandMark name={brandName} logoUrl={menu.data?.brand.logoUrl} />
             <div className="min-w-0">
               <p className="leading-tight font-semibold">{brandName}</p>
-              <p className="text-sm text-slate-600">
+              <p className="truncate text-sm text-slate-600">
                 {localize(terminal.branchName, i18n.language)}
               </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium" dir="ltr">
+            <span className="num px-2 text-lg font-semibold" dir="ltr">
               {clock}
             </span>
-            <span className="text-sm text-slate-600">{user?.name}</span>
             <button
               type="button"
               onClick={() => setFloorMode('open')}
               className={headerButtonClass}
             >
+              <Armchair aria-hidden="true" />
               {t('pos.table.button')}
             </button>
             <button type="button" onClick={() => setListing(true)} className={headerButtonClass}>
+              <ReceiptText aria-hidden="true" />
               {t('pos.openOrders.button')}
             </button>
-            <button
-              type="button"
-              onClick={onCloseShift}
-              className={headerButtonClass}
-              title={t('pos.shift.since', { time: timeOf(shift.openedAt) })}
-            >
-              {t('pos.shift.close')}
-            </button>
-            <BackOfficeLink className={headerButtonClass} />
             <LanguageSwitcher />
-            <button
-              type="button"
-              onClick={() => void logout()}
-              className="rounded-md bg-slate-900 px-3 py-1 text-sm font-medium text-white hover:bg-slate-700"
-            >
-              {t('auth.signOut')}
-            </button>
+            <AccountMenu
+              shiftSince={t('pos.shift.since', { time: timeOf(shift.openedAt) })}
+              onCloseShift={onCloseShift}
+            />
           </div>
         </header>
 
@@ -206,15 +202,23 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
           </div>
         )}
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_24rem]">
-          <div className="min-h-0 overflow-y-auto">
+        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_26rem]">
+          <div className="min-h-0 overflow-y-auto p-4">
             {menu.isPending && <p className="text-sm text-slate-500">{t('common.loading')}</p>}
             {menu.isError && (
               <p role="alert" className="text-sm text-red-700">
                 {t('common.loadError')}
               </p>
             )}
-            {menu.data && <MenuPanel menu={menu.data} now={now} disabled={busy} onPick={pick} />}
+            {menu.data && (
+              <MenuPanel
+                menu={menu.data}
+                now={now}
+                disabled={busy}
+                onPick={pick}
+                inOrder={inOrder}
+              />
+            )}
           </div>
 
           <OrderPanel

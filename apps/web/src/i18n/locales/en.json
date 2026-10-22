@@ -889,6 +889,10 @@
     "saturday": "Sat"
   },
   "pos": {
+    "account": {
+      "open": "{{name}}: shift and account",
+      "label": "Shift and account"
+    },
     "setup": {
       "title": "Set up this terminal",
       "intro": "Choose the branch this terminal belongs to. You are then signed out, and the staff of the branch sign in here with their staff code and PIN.",
@@ -922,6 +926,8 @@
     "menu": {
       "label": "Menu",
       "search": "Search the menu",
+      "inOrder_one": "{{count}} in the order",
+      "inOrder_other": "{{count}} in the order",
       "combos": "Combos",
       "noMatch": "Nothing on the menu matches.",
       "empty": "Nothing in this category."
