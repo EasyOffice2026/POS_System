@@ -106,6 +106,26 @@ describe('the settings page', () => {
     ).toEqual({ config: { kitchen: { screen: false, slip: false, lateAfterMinutes: 12 } } });
   });
 
+  it('says when there are unsaved changes, and discards them on request', async () => {
+    settingsApi();
+    const user = userEvent.setup();
+    renderApp('/admin/settings');
+
+    const limit = await screen.findByLabelText('A cashier may give up to (%)');
+    expect(screen.getByText('No changes')).toBeInTheDocument();
+    await user.clear(limit);
+    await user.type(limit, '15');
+    expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Discard changes' }));
+    expect(limit).toHaveValue('0');
+    expect(screen.getByText('No changes')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Brand colour' })).toHaveAttribute(
+      'href',
+      '#settings-look',
+    );
+  });
+
   it('saves the brand colour, and refuses one that is not a colour', async () => {
     const api = settingsApi({ [SAVE]: (request) => json(request.body) });
     const user = userEvent.setup();

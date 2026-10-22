@@ -73,7 +73,8 @@ describe('dashboard for a group admin', () => {
     await screen.findByText('Welcome, Group Admin');
 
     expect(screen.getByText('Role: Group Admin')).toBeInTheDocument();
-    expect(screen.getByRole('banner')).toHaveTextContent('Group Admin');
+    // The person and their role sit at the foot of the sidebar.
+    expect(screen.getByRole('complementary')).toHaveTextContent('Group Admin');
   });
 
   it('switches names, labels and direction to Arabic', async () => {

@@ -88,3 +88,15 @@ html {
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
 }
+
+/* Back office tables: a soft hover on rows, and figures that line up (the redesign, B4). */
+.office-main tbody tr {
+  transition: background-color 120ms;
+}
+.office-main tbody tr:hover {
+  background: var(--color-slate-50);
+}
+.office-main td.text-end,
+.office-main th.text-end {
+  font-variant-numeric: tabular-nums;
+}

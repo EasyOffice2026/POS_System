@@ -55,15 +55,65 @@ function Figure({
   label,
   children,
   tone = '',
+  lead = false,
 }: {
   label: string;
   children: ReactNode;
   tone?: string;
+  // Net sales, the figure an owner looks for first, is the largest (the redesign, B3).
+  lead?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className={`mt-1 text-lg font-semibold ${tone}`}>{children}</p>
+    <div className={`rounded-card border border-line bg-white p-4 ${lead ? 'col-span-2' : ''}`}>
+      <p className="text-sm font-medium text-slate-600">{label}</p>
+      <p
+        className={`num mt-1 font-bold ${lead ? 'text-[2.25rem] leading-tight' : 'text-xl'} ${tone}`}
+      >
+        {children}
+      </p>
+    </div>
+  );
+}
+
+// Net sales of each day as bars, the busiest in ink; the table below has the figures.
+function DayChart({ days }: { days: { date: string; netSales: string }[] }) {
+  const { i18n } = useTranslation();
+  if (days.length < 2) return null;
+  const values = days.map((day) => Number(day.netSales));
+  const most = Math.max(...values, 0.001);
+  const peak = values.indexOf(Math.max(...values));
+  const label = (date: string) =>
+    new Intl.DateTimeFormat(i18n.language === 'ar' ? 'ar-u-nu-latn' : 'en-GB', {
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'UTC',
+    }).format(new Date(`${date}T00:00:00Z`));
+  return (
+    <div aria-hidden="true" className="rounded-card border border-line bg-white p-4" dir="ltr">
+      <div className="flex h-36 items-end gap-1.5">
+        {days.map((day, index) => {
+          const value = Number(day.netSales);
+          return (
+            <div key={day.date} className="flex h-full min-w-0 flex-1 flex-col justify-end">
+              <div
+                title={`${day.date} · ${day.netSales}`}
+                className={`mx-auto w-full max-w-14 rounded-t-md ${index === peak && value > 0 ? 'bg-ink' : 'bg-slate-300'}`}
+                style={{ height: `${Math.max((value / most) * 100, value > 0 ? 3 : 0)}%` }}
+              />
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2 flex gap-1.5 border-t border-line pt-1.5">
+        {days.map((day) => (
+          <span
+            key={day.date}
+            className="num min-w-0 flex-1 truncate text-center text-[11px] text-slate-500"
+          >
+            {label(day.date)}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -225,33 +275,34 @@ function Report({
       </p>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label={t('reports.summary')}>
+        <Figure label={t('reports.netSales')} lead>
+          <Price value={summary.netSales} />
+        </Figure>
         <Figure label={t('reports.orders')}>{summary.orders}</Figure>
+        <Figure label={t('reports.averageOrder')}>
+          <Price value={summary.averageOrder} />
+        </Figure>
         <Figure label={t('reports.grossSales')}>
           <Price value={summary.grossSales} />
         </Figure>
         <Figure label={t('reports.discounts')}>
           <Price value={summary.discounts} />
         </Figure>
-        <Figure label={t('reports.netSales')}>
-          <Price value={summary.netSales} />
-        </Figure>
-        <Figure label={t('reports.refunds')} tone="text-red-700">
+        <Figure label={t('reports.refunds')} tone="text-danger">
           <Price value={summary.refunds} />
         </Figure>
-        <Figure label={t('reports.netAfterRefunds')} tone="text-emerald-800">
+        <Figure label={t('reports.netAfterRefunds')} tone="text-money">
           <Price value={summary.netAfterRefunds} />
         </Figure>
-        <Figure label={t('reports.commissions')} tone="text-amber-800">
+        <Figure label={t('reports.commissions')} tone="text-warn">
           <Price value={summary.commissions} />
-        </Figure>
-        <Figure label={t('reports.averageOrder')}>
-          <Price value={summary.averageOrder} />
         </Figure>
         <Figure label={t('reports.voidedOrders')}>{summary.voidedOrders}</Figure>
       </div>
 
       <Section title={t('reports.byDay')}>
-        <table className="w-full text-sm">
+        <DayChart days={report.days} />
+        <table className="mt-3 w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-600">
               <th className={`${th} text-start`}>{t('reports.day')}</th>

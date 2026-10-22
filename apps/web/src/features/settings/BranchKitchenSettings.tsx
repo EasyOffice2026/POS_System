@@ -53,9 +53,10 @@ export function BranchKitchenSettings({ branches }: { branches: Branch[] }) {
   return (
     <section
       className="space-y-3 rounded-lg border border-slate-200 bg-white p-4"
-      aria-labelledby="settings-kitchen-branches"
+      id="settings-kitchen-branches"
+      aria-labelledby="settings-kitchen-branches-title"
     >
-      <h2 id="settings-kitchen-branches" className="text-lg font-semibold">
+      <h2 id="settings-kitchen-branches-title" className="text-lg font-semibold">
         {t('settings.kitchenBranches.title')}
       </h2>
       <p className="text-sm text-slate-600">{t('settings.kitchenBranches.intro')}</p>
