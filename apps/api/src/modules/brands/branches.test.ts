@@ -76,6 +76,7 @@ describe('POST /brands/:id/branches', () => {
         dayEndsAt: '00:00',
         specialHours: [],
         kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
+        orderTypes: { dine_in: true, takeaway: true, delivery: false },
       },
     });
 
@@ -259,7 +260,28 @@ describe('GET /branches/:id', () => {
       dayEndsAt: '00:00',
       specialHours: [],
       kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
+      orderTypes: { dine_in: true, takeaway: true, delivery: false },
     });
+  });
+
+  it('switches order types per branch, keeps one on, and the till reads it at once (spec 026)', async () => {
+    const api = await asPizzaManager();
+    const none = await api.patch(`${BRANCHES}/${world.mall.id}`, {
+      config: { orderTypes: { dine_in: false, takeaway: false, delivery: false } },
+    });
+    expect(none.status).toBe(400);
+    expect(errorOf(none).details?.map((detail) => detail.message)).toContain('ORDER_TYPES_NONE');
+
+    const types = { dine_in: false, takeaway: true, delivery: true };
+    const res = await api.patch(`${BRANCHES}/${world.mall.id}`, { config: { orderTypes: types } });
+    expect(res.status).toBe(200);
+    expect(branchDetailSchema.parse(res.body).config.orderTypes).toEqual(types);
+    const [row] = await auditRows('branch.updated');
+    expect(row?.metadata).toEqual({ changed: ['orderTypes'], orderTypes: types });
+
+    const cashier = as(app, await signIn(app, 'cashier@x.io'));
+    const menu = await cashier.get(`/api/v1/menu?branchId=${world.mall.id}`);
+    expect((menu.body as { orderTypes: string[] }).orderTypes).toEqual(['takeaway', 'delivery']);
   });
 
   it('shows a group admin any branch and a brand manager the branches of their brand', async () => {

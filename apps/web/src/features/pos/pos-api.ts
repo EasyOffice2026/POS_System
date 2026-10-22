@@ -3,6 +3,7 @@ import {
   type Approval,
   type Customer,
   customerSchema,
+  type DeliveryDetails,
   type DiscountKind,
   type OrderType,
   orderSchema,
@@ -43,10 +44,15 @@ export const createOrder = (body: {
   branchId: string;
   type: OrderType;
   tableId?: string;
+  delivery?: DeliveryDetails;
 }) => request('/orders', { method: 'POST', body, ...asOrder });
 
 export const changeOrderType = (id: string, type: OrderType) =>
   request(`/orders/${id}`, { method: 'PATCH', body: { type }, ...asOrder });
+
+// The phone and address of a delivery order (spec 026).
+export const setDelivery = (id: string, delivery: DeliveryDetails) =>
+  request(`/orders/${id}`, { method: 'PATCH', body: { delivery }, ...asOrder });
 
 export const addLine = (orderId: string, body: AddLineInput) =>
   request(`/orders/${orderId}/lines`, { method: 'POST', body, ...asOrder });

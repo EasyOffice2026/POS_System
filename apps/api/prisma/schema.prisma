@@ -358,6 +358,7 @@ model ComboSlotOption {
 enum OrderType {
   dine_in
   takeaway
+  delivery
 
   @@map("order_type")
 }
@@ -404,6 +405,8 @@ model Order {
   type                 OrderType
   status               OrderStatus   @default(open)
   note                 String?
+  // The phone and address of a delivery order (docs/specs/026-order-types.md); null for others.
+  delivery             Json?
   subtotal             Decimal       @default(0) @db.Decimal(15, 3)
   // The code typed on the order, and what promotions took off (docs/specs/021-promotions.md).
   promoCode            String?       @map("promo_code")

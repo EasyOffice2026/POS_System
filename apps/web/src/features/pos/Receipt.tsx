@@ -44,6 +44,22 @@ export function Receipt({ order, terminal, cashier, bill = false }: ReceiptProps
         </p>
         {bill && <p className="mt-1 font-semibold uppercase">{t('pos.table.notPaid')}</p>}
         <p className="text-xs text-slate-600">{t('pos.receipt.cashier', { name: cashier })}</p>
+        {order.delivery && (
+          <div className="mt-1 text-xs text-slate-600">
+            <p>
+              {t('pos.receipt.deliverTo')} {order.delivery.name && <bdi>{order.delivery.name}</bdi>}{' '}
+              <bdi dir="ltr">{order.delivery.phone}</bdi>
+            </p>
+            <p>
+              <bdi>{order.delivery.address}</bdi>
+            </p>
+            {order.delivery.note && (
+              <p>
+                <bdi>{order.delivery.note}</bdi>
+              </p>
+            )}
+          </div>
+        )}
         {order.customer && (
           <p className="text-xs text-slate-600">
             {t('pos.receipt.customer')} {order.customer.name && <bdi>{order.customer.name}</bdi>}{' '}

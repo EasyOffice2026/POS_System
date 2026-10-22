@@ -2,6 +2,7 @@ import {
   defaultBrandSettings,
   type Order,
   type OrderLine,
+  type OrderType,
   printsKitchenSlip,
   type ShiftSummary,
 } from '@pos/shared';
@@ -22,6 +23,7 @@ import { AccountMenu } from './AccountMenu';
 import { ApprovalDialog } from './ApprovalDialog';
 import { type Choosing, ChoiceDialog } from './ChoiceDialog';
 import { CustomerDialog } from './CustomerDialog';
+import { DeliveryDialog } from './DeliveryDialog';
 import { DiscountDialog } from './DiscountDialog';
 import { FloorDialog } from './FloorDialog';
 import { KitchenSlip } from './KitchenSlip';
@@ -44,6 +46,8 @@ import { VoidDialog } from './VoidDialog';
 type Voiding = { kind: 'line'; line: OrderLine } | { kind: 'order' };
 
 const headerButtonClass = secondaryButtonClass;
+// Until the menu of the branch has loaded.
+const defaultOffered: readonly OrderType[] = ['dine_in', 'takeaway'];
 
 // The screen a cashier takes orders on: the menu of the branch, and the order being taken.
 // See docs/specs/006-pos-terminal.md.
@@ -58,7 +62,15 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const now = useNow();
-  const terminalOrder = useTerminalOrder(terminal.branchId, terminal.brandId);
+  const menu = useQuery({
+    queryKey: menuKeys.branchMenu(terminal.branchId),
+    queryFn: () => getBranchMenu(terminal.branchId),
+  });
+
+  // The order types the branch offers: a kiosk has no Dine-in, a branch with drivers has Delivery
+  // (docs/specs/026-order-types.md).
+  const offered = menu.data?.orderTypes ?? defaultOffered;
+  const terminalOrder = useTerminalOrder(terminal.branchId, terminal.brandId, offered);
   // The brand's settings: ways to pay, discount buttons, who marks dishes done (spec 009).
   const settings = useBrandSettings(terminal.brandId, SETTINGS_REFRESH_MS);
   const brandSettings = settings.data ?? defaultBrandSettings;
@@ -69,6 +81,7 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
   const [discounting, setDiscounting] = useState(false);
   const [promoCoding, setPromoCoding] = useState(false);
   const [customering, setCustomering] = useState(false);
+  const [delivering, setDelivering] = useState(false);
   const [pointing, setPointing] = useState(false);
   // The floor of the branch: to open a table's order, or to move the order on the screen.
   const [floorMode, setFloorMode] = useState<'open' | 'move' | null>(null);
@@ -79,11 +92,6 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
   const [paying, setPaying] = useState(false);
   // The paid order whose receipt is shown, and printed.
   const [receipt, setReceipt] = useState<Order | null>(null);
-
-  const menu = useQuery({
-    queryKey: menuKeys.branchMenu(terminal.branchId),
-    queryFn: () => getBranchMenu(terminal.branchId),
-  });
 
   // The kitchen slip of the dishes just sent, printed by itself when the branch wants one
   // (docs/specs/027-kitchen-screen-and-slip.md, rule 4). What follows it, the receipt after a
@@ -110,7 +118,15 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
     (terminalOrder.order?.lines ?? [])
       .filter((line) => line.status === 'pending')
       .map((line) => line.id);
+  // A delivery order is sent and paid with its phone and address (spec 026, rule 5): the box
+  // opens first when they are missing.
+  const needsDelivery = terminalOrder.type === 'delivery' && !terminalOrder.delivery;
+
   const send = () => {
+    if (needsDelivery) {
+      setDelivering(true);
+      return;
+    }
     const lineIds = unsent();
     void terminalOrder.send().then((sent) => {
       if (sent && printsSlip && lineIds.length > 0) printSlip(sent, lineIds);
@@ -163,14 +179,17 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             <span className="num px-2 text-lg font-semibold" dir="ltr">
               {clock}
             </span>
-            <button
-              type="button"
-              onClick={() => setFloorMode('open')}
-              className={headerButtonClass}
-            >
-              <Armchair aria-hidden="true" />
-              {t('pos.table.button')}
-            </button>
+            {/* A branch without Dine-in has no tables to show (spec 026, rule 3). */}
+            {offered.includes('dine_in') && (
+              <button
+                type="button"
+                onClick={() => setFloorMode('open')}
+                className={headerButtonClass}
+              >
+                <Armchair aria-hidden="true" />
+                {t('pos.table.button')}
+              </button>
+            )}
             <button type="button" onClick={() => setListing(true)} className={headerButtonClass}>
               <ReceiptText aria-hidden="true" />
               {t('pos.openOrders.button')}
@@ -224,6 +243,9 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
           <OrderPanel
             order={order}
             type={terminalOrder.type}
+            offered={offered}
+            delivery={terminalOrder.delivery}
+            onDelivery={() => setDelivering(true)}
             busy={busy}
             onType={terminalOrder.setType}
             onQuantity={terminalOrder.setQuantity}
@@ -248,11 +270,19 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             onRefund={() => setRefunding(true)}
             onVoidOrder={() => setVoiding({ kind: 'order' })}
             onNewOrder={terminalOrder.newOrder}
-            onPay={() => setPaying(true)}
+            onPay={() => (needsDelivery ? setDelivering(true) : setPaying(true))}
             canMarkDone={brandSettings.ticketDoneBy === 'cashier'}
             onMarkDone={terminalOrder.markDone}
           />
         </div>
+
+        {delivering && (
+          <DeliveryDialog
+            current={terminalOrder.delivery}
+            onApply={terminalOrder.applyDelivery}
+            onCancel={() => setDelivering(false)}
+          />
+        )}
 
         {choosing && menu.data && (
           <ChoiceDialog

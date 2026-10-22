@@ -3,6 +3,7 @@ import {
   type BranchMenuItem,
   CURRENCY,
   openingHoursSchema,
+  offeredOrderTypes,
   parseBranchConfig,
   parseBrandSettings,
 } from '@pos/shared';
@@ -117,6 +118,7 @@ export function createBranchMenuService({ cache }: Pick<MenuDeps, 'cache'>) {
       currency: CURRENCY,
       timezone: branch.timezone,
       kitchen: parseBranchConfig(branch.config).kitchen,
+      orderTypes: offeredOrderTypes(parseBranchConfig(branch.config).orderTypes),
       brand: {
         logoUrl: brandRow?.logoUrl ?? null,
         color: parseBrandSettings(brandRow?.settings).appearance.color,

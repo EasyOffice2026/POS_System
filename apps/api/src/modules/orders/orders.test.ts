@@ -181,7 +181,7 @@ describe('POST /orders', () => {
 
   it('checks the request', async () => {
     const api = await asCashier();
-    const res = await api.post(ORDERS, { type: 'delivery' });
+    const res = await api.post(ORDERS, { type: 'drive_through' });
     expect(res.status).toBe(400);
     expect(codesOf(res)).toEqual(expect.arrayContaining(['BRANCH_REQUIRED', 'ORDER_TYPE_INVALID']));
   });
@@ -692,5 +692,108 @@ describe('discounts', () => {
       reason: 'x',
     });
     expect(codesOf(res)).toEqual(['DISCOUNT_VALUE_INVALID']);
+  });
+});
+
+// Order types per branch and delivery (docs/specs/026-order-types.md).
+describe('order types and delivery', () => {
+  const details = { name: 'Noor', phone: '+965 5555 1234', address: 'Block 4, Street 12, House 7' };
+
+  async function offer(types: { dine_in: boolean; takeaway: boolean; delivery: boolean }) {
+    const branch = await prisma.branch.findUniqueOrThrow({ where: { id: world.mall.id } });
+    await prisma.branch.update({
+      where: { id: world.mall.id },
+      data: { config: { ...(branch.config as object), orderTypes: types } },
+    });
+  }
+
+  it('offers Dine-in and Takeaway until the branch changes it', async () => {
+    const api = await asCashier();
+    const menu = await api.get(`/api/v1/menu?branchId=${world.mall.id}`);
+    expect((menu.body as { orderTypes: string[] }).orderTypes).toEqual(['dine_in', 'takeaway']);
+
+    const refused = await api.post(ORDERS, { branchId: world.mall.id, type: 'delivery' });
+    expect(refused.status).toBe(409);
+    expect(errorOf(refused).code).toBe('ORDER_TYPE_NOT_OFFERED');
+  });
+
+  it('refuses a type that is off, when opening an order and when changing its type', async () => {
+    await offer({ dine_in: false, takeaway: true, delivery: true });
+    const api = await asCashier();
+
+    const opened = await api.post(ORDERS, { branchId: world.mall.id, type: 'dine_in' });
+    expect(errorOf(opened).code).toBe('ORDER_TYPE_NOT_OFFERED');
+
+    const order = await openOrder(api);
+    const changed = await api.patch(`${ORDERS}/${order.id}`, { type: 'dine_in' });
+    expect(errorOf(changed).code).toBe('ORDER_TYPE_NOT_OFFERED');
+
+    const menu = await api.get(`/api/v1/menu?branchId=${world.mall.id}`);
+    expect((menu.body as { orderTypes: string[] }).orderTypes).toEqual(['takeaway', 'delivery']);
+  });
+
+  it('keeps an open order of a type that was switched off since', async () => {
+    const api = await asCashier();
+    const order = await openOrder(api, { type: 'dine_in' });
+    await offer({ dine_in: false, takeaway: true, delivery: false });
+    await addedLine(api, order.id, world.items.cola.id);
+    const sent = await api.post(`${ORDERS}/${order.id}/send`);
+    expect(orderOf(sent).type).toBe('dine_in');
+  });
+
+  it('takes a delivery order with its phone and address, and prints them on the order', async () => {
+    await offer({ dine_in: true, takeaway: true, delivery: true });
+    const api = await asCashier();
+    const order = await openOrder(api, { type: 'delivery' });
+    expect(order.delivery).toBeNull();
+    await addedLine(api, order.id, world.items.cola.id);
+
+    // Not sent, nor paid, without the details.
+    const early = await api.post(`${ORDERS}/${order.id}/send`);
+    expect(early.status).toBe(409);
+    expect(errorOf(early).code).toBe('DELIVERY_DETAILS_REQUIRED');
+    const unpaid = await api.post(`${ORDERS}/${order.id}/pay`, { tenders: [] });
+    expect(errorOf(unpaid).code).toBe('DELIVERY_DETAILS_REQUIRED');
+
+    const set = await api.patch(`${ORDERS}/${order.id}`, {
+      delivery: { ...details, note: ' Ring twice ' },
+    });
+    expect(set.status).toBe(200);
+    expect(orderOf(set).delivery).toEqual({ ...details, note: 'Ring twice' });
+
+    const sent = await api.post(`${ORDERS}/${order.id}/send`);
+    expect(sent.status).toBe(200);
+    expect(orderOf(sent).delivery?.address).toBe(details.address);
+  });
+
+  it('needs a phone and an address, and only for a delivery order', async () => {
+    await offer({ dine_in: true, takeaway: true, delivery: true });
+    const api = await asCashier();
+    const order = await openOrder(api, { type: 'delivery' });
+
+    const noAddress = await api.patch(`${ORDERS}/${order.id}`, {
+      delivery: { phone: '55551234', address: ' ' },
+    });
+    expect(noAddress.status).toBe(400);
+    expect(codesOf(noAddress)).toContain('DELIVERY_ADDRESS_REQUIRED');
+
+    const badPhone = await api.patch(`${ORDERS}/${order.id}`, {
+      delivery: { phone: 'abc', address: 'Block 1' },
+    });
+    expect(codesOf(badPhone)).toContain('DELIVERY_PHONE_INVALID');
+
+    const takeaway = await openOrder(api);
+    const wrong = await api.patch(`${ORDERS}/${takeaway.id}`, { delivery: details });
+    expect(errorOf(wrong).code).toBe('DELIVERY_NOT_APPLICABLE');
+  });
+
+  it('opens a delivery order with its details, and drops them when the type changes', async () => {
+    await offer({ dine_in: true, takeaway: true, delivery: true });
+    const api = await asCashier();
+    const order = await openOrder(api, { type: 'delivery', delivery: details });
+    expect(order.delivery).toMatchObject({ phone: details.phone, note: null });
+
+    const changed = await api.patch(`${ORDERS}/${order.id}`, { type: 'takeaway' });
+    expect(orderOf(changed)).toMatchObject({ type: 'takeaway', delivery: null });
   });
 });

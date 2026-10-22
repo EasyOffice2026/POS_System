@@ -47,6 +47,9 @@ const knownCodes = [
   'CUSTOMER_REQUIRED',
   'TABLE_TAKEN',
   'TABLE_NOT_FOUND',
+  'ORDER_TYPE_NOT_OFFERED',
+  'DELIVERY_DETAILS_REQUIRED',
+  'DELIVERY_NOT_APPLICABLE',
   'network',
 ] as const;
 

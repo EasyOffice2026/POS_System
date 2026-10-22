@@ -87,9 +87,9 @@ describe('createOrderRequestSchema', () => {
   });
 
   it('says what is wrong with an unknown type, a missing branch or an unknown field', () => {
-    expect(codesOf(createOrderRequestSchema.safeParse({ branchId: id, type: 'delivery' }))).toEqual(
-      ['type: ORDER_TYPE_INVALID'],
-    );
+    expect(
+      codesOf(createOrderRequestSchema.safeParse({ branchId: id, type: 'drive_through' })),
+    ).toEqual(['type: ORDER_TYPE_INVALID']);
     expect(codesOf(createOrderRequestSchema.safeParse({ type: 'takeaway' }))).toEqual([
       'branchId: BRANCH_REQUIRED',
     ]);
@@ -305,5 +305,38 @@ describe('payOrderRequestSchema', () => {
         }),
       ),
     ).toEqual(['tenders.0.method: PAYMENT_METHOD_KEY_INVALID']);
+  });
+});
+
+describe('delivery details (spec 026)', () => {
+  const details = { phone: '+965 5555 1234', address: ' Block 4, Street 12 ' };
+
+  it('takes a delivery order, with its details or without', () => {
+    expect(createOrderRequestSchema.safeParse({ branchId: id, type: 'delivery' }).success).toBe(
+      true,
+    );
+    expect(
+      updateOrderRequestSchema.parse({ delivery: { ...details, name: ' ', note: ' Ring twice ' } }),
+    ).toEqual({
+      delivery: {
+        name: null,
+        phone: '+965 5555 1234',
+        address: 'Block 4, Street 12',
+        note: 'Ring twice',
+      },
+    });
+    expect(updateOrderRequestSchema.parse({ delivery: null })).toEqual({ delivery: null });
+  });
+
+  it('needs a phone and an address', () => {
+    expect(
+      codesOf(updateOrderRequestSchema.safeParse({ delivery: { phone: '5555', address: '' } })),
+    ).toEqual([
+      'delivery.phone: DELIVERY_PHONE_INVALID',
+      'delivery.address: DELIVERY_ADDRESS_REQUIRED',
+    ]);
+    expect(
+      codesOf(updateOrderRequestSchema.safeParse({ delivery: { address: 'Block 4' } })),
+    ).toEqual(['delivery.phone: DELIVERY_PHONE_REQUIRED']);
   });
 });

@@ -399,12 +399,34 @@ export const defaultKitchenSettings: KitchenSettings = {
 export const printsKitchenSlip = (kitchen: Pick<KitchenSettings, 'screen' | 'slip'>) =>
   kitchen.slip || !kitchen.screen;
 
+// Which order types the till of a branch offers (docs/specs/026-order-types.md). A kiosk has no
+// seats, so it switches Dine-in off. At least one stays on.
+export const branchOrderTypes = ['dine_in', 'takeaway', 'delivery'] as const;
+export const orderTypesSettingSchema = z
+  .strictObject({
+    dine_in: z.boolean({ error: 'ORDER_TYPES_INVALID' }),
+    takeaway: z.boolean({ error: 'ORDER_TYPES_INVALID' }),
+    delivery: z.boolean({ error: 'ORDER_TYPES_INVALID' }),
+  })
+  .refine((types) => types.dine_in || types.takeaway || types.delivery, 'ORDER_TYPES_NONE');
+export type OrderTypesSetting = z.infer<typeof orderTypesSettingSchema>;
+export const defaultOrderTypes: OrderTypesSetting = {
+  dine_in: true,
+  takeaway: true,
+  delivery: false,
+};
+
+// The types that are on, in the order the till shows them.
+export const offeredOrderTypes = (setting: OrderTypesSetting) =>
+  branchOrderTypes.filter((type) => setting[type]);
+
 export const branchConfigSchema = z.object({
   openingHours: openingHoursSchema,
   printers: printerListSchema,
   dayEndsAt: dayEndSchema.default(DEFAULT_DAY_END),
   specialHours: specialHoursSchema.default([]),
   kitchen: kitchenSettingsSchema.default(defaultKitchenSettings),
+  orderTypes: orderTypesSettingSchema.default(defaultOrderTypes),
 });
 
 export type BranchConfig = z.infer<typeof branchConfigSchema>;
@@ -416,6 +438,7 @@ export const branchConfigChangeSchema = z.strictObject({
   dayEndsAt: dayEndSchema.optional(),
   specialHours: specialHoursInputSchema.optional(),
   kitchen: kitchenSettingsSchema.optional(),
+  orderTypes: orderTypesSettingSchema.optional(),
 });
 
 // The day on the clock of a time zone, as YYYY-MM-DD, with the day ending at the hour given.
@@ -456,6 +479,7 @@ export function parseBranchConfig(stored: unknown): BranchConfig {
   const dayEnd = dayEndSchema.safeParse(source.dayEndsAt);
   const special = specialHoursSchema.safeParse(source.specialHours);
   const kitchen = kitchenSettingsSchema.safeParse(source.kitchen);
+  const types = orderTypesSettingSchema.safeParse(source.orderTypes);
 
   return {
     openingHours: hours.success ? hours.data : closedWeek(),
@@ -463,5 +487,6 @@ export function parseBranchConfig(stored: unknown): BranchConfig {
     dayEndsAt: dayEnd.success ? dayEnd.data : DEFAULT_DAY_END,
     specialHours: special.success ? special.data : [],
     kitchen: kitchen.success ? kitchen.data : defaultKitchenSettings,
+    orderTypes: types.success ? types.data : defaultOrderTypes,
   };
 }

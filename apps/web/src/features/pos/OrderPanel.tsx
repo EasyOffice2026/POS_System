@@ -1,4 +1,5 @@
 import {
+  type DeliveryDetails,
   type LoyaltySettings,
   MAX_LINE_QUANTITY,
   type Order,
@@ -22,10 +23,11 @@ import {
   ShoppingBag,
   SquarePlus,
   Trash2,
+  Truck,
   UserRound,
   UtensilsCrossed,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { chipClass } from '../../components/form';
 import { Price } from '../../components/Price';
@@ -294,6 +296,62 @@ function TableRow({ table, type, open, busy, ...props }: OrderPanelProps & { ope
   ) : null;
 }
 
+// The phone and address of a delivery order, with the button to type or change them
+// (docs/specs/026-order-types.md, rule 5).
+function DeliveryRow({
+  delivery,
+  type,
+  open,
+  busy,
+  onDelivery,
+}: OrderPanelProps & { open: boolean }) {
+  const { t } = useTranslation();
+  if (type !== 'delivery') return null;
+  if (!delivery) {
+    return open ? (
+      <button
+        type="button"
+        disabled={busy}
+        onClick={onDelivery}
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-control border border-dashed border-slate-400 bg-white text-sm font-semibold text-ink hover:bg-slate-50 [&_svg]:size-[18px]"
+      >
+        <Truck aria-hidden="true" />
+        {t('pos.delivery.add')}
+      </button>
+    ) : null;
+  }
+  return (
+    <InfoRow
+      testId="order-delivery"
+      icon={<Truck aria-hidden="true" />}
+      actions={
+        open && (
+          <button type="button" disabled={busy} onClick={onDelivery} className={linkButtonClass}>
+            {t('pos.delivery.change')}
+          </button>
+        )
+      }
+    >
+      <p className="font-semibold">
+        {delivery.name ? <bdi>{delivery.name}</bdi> : <bdi dir="ltr">{delivery.phone}</bdi>}
+      </p>
+      <p className="text-xs text-slate-600">
+        {delivery.name && (
+          <>
+            <bdi dir="ltr">{delivery.phone}</bdi> ·{' '}
+          </>
+        )}
+        <bdi>{delivery.address}</bdi>
+      </p>
+      {delivery.note && (
+        <p className="text-xs text-slate-600">
+          <bdi>{delivery.note}</bdi>
+        </p>
+      )}
+    </InfoRow>
+  );
+}
+
 interface CustomerRowProps extends OrderPanelProps {
   order: Order;
   open: boolean;
@@ -360,6 +418,11 @@ function CustomerRow({ order, open, busy, loyalty, ...props }: CustomerRowProps)
 interface OrderPanelProps {
   order: Order | null;
   type: OrderType;
+  // The order types the branch offers, in the order of its buttons (spec 026).
+  offered: readonly OrderType[];
+  // The phone and address of a delivery order, and the button to type them.
+  delivery: DeliveryDetails | null;
+  onDelivery: () => void;
   busy: boolean;
   onType: (type: OrderType) => void;
   onQuantity: (line: OrderLine, quantity: number) => void;
@@ -391,6 +454,7 @@ interface OrderPanelProps {
 const typeIcons: Record<OrderType, ReactNode> = {
   dine_in: <UtensilsCrossed aria-hidden="true" />,
   takeaway: <ShoppingBag aria-hidden="true" />,
+  delivery: <Truck aria-hidden="true" />,
 };
 
 // The order on the screen: its type, its lines, the totals, and what can be done with it.
@@ -460,11 +524,16 @@ export function OrderPanel(props: OrderPanelProps) {
             {t('pos.order.newOrder')}
           </button>
         </div>
-        <div className="flex gap-1 rounded-[0.625rem] bg-slate-100 p-1">
-          {typeButton('dine_in')}
-          {typeButton('takeaway')}
-        </div>
+        {/* Only the types the branch offers; a branch with one type has nothing to choose. */}
+        {props.offered.length > 1 && (
+          <div className="flex gap-1 rounded-[0.625rem] bg-slate-100 p-1">
+            {props.offered.map((key) => (
+              <Fragment key={key}>{typeButton(key)}</Fragment>
+            ))}
+          </div>
+        )}
         <TableRow {...props} open={open} />
+        <DeliveryRow {...props} open={open} />
         {order && <CustomerRow {...props} order={order} open={open} />}
       </div>
 

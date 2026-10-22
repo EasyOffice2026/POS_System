@@ -28,6 +28,7 @@ import { normalizeNumberInput } from '../../lib/numbers';
 import { useAuth } from '../auth/auth-context';
 import { useMenuBrand } from '../menu/use-menu-brand';
 import { BranchKitchenSettings } from './BranchKitchenSettings';
+import { BranchOrderTypesSettings } from './BranchOrderTypesSettings';
 import { settingsKeys, updateBrandSettings, useBrandSettings } from './settings-api';
 
 interface MethodRow {
@@ -216,6 +217,7 @@ function SettingsForm({
             ['settings-alerts', t('settings.alerts.title')],
             ['settings-look', t('settings.look.title')],
             ['settings-kitchen-branches', t('settings.kitchenBranches.title')],
+            ['settings-order-types', t('settings.sectionOrderTypes')],
           ] as const
         ).map(([id, label]) => (
           <a
@@ -761,6 +763,9 @@ export function SettingsPage() {
       )}
       {brandId && user?.permissions.includes('branches:write') && (
         <BranchKitchenSettings key={`kitchen-${brandId}`} branches={menuBrand.branches} />
+      )}
+      {brandId && user?.permissions.includes('branches:write') && (
+        <BranchOrderTypesSettings key={`types-${brandId}`} branches={menuBrand.branches} />
       )}
     </div>
   );

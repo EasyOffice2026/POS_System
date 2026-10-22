@@ -159,6 +159,13 @@ const messageKeys = {
   TABLE_NOT_FOUND: 'validation.TABLE_NOT_FOUND',
   TABLE_IN_USE: 'validation.TABLE_IN_USE',
   TABLE_TAKEN: 'validation.TABLE_TAKEN',
+  DELIVERY_PHONE_REQUIRED: 'validation.DELIVERY_PHONE_REQUIRED',
+  DELIVERY_PHONE_INVALID: 'validation.DELIVERY_PHONE_INVALID',
+  DELIVERY_ADDRESS_REQUIRED: 'validation.DELIVERY_ADDRESS_REQUIRED',
+  DELIVERY_ADDRESS_TOO_LONG: 'validation.DELIVERY_ADDRESS_TOO_LONG',
+  DELIVERY_NAME_TOO_LONG: 'validation.DELIVERY_NAME_TOO_LONG',
+  ORDER_TYPES_NONE: 'validation.ORDER_TYPES_NONE',
+  ORDER_TYPES_INVALID: 'validation.ORDER_TYPES_INVALID',
   saveError: 'common.saveError',
   network: 'auth.errors.network',
 } as const;

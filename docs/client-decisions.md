@@ -2,6 +2,12 @@
 
 The answers of Easy Office / Nexera to the questions of the specs and the launch plan, with what was done about each. Newest first.
 
+## 22 October 2026
+
+| Topic       | Decision                                                                                                                                            | Done                                                                                                                                                                                         |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Order types | Each branch chooses Dine-in, Takeaway and Delivery; a kiosk has no tables; a delivery order carries the customer's phone and address on the receipt | Done: Settings → Order types at the branches; the till shows only the types that are on, and a delivery order is not sent or paid without its address ([spec 026](specs/026-order-types.md)) |
+
 ## 21 October 2026
 
 | Topic          | Decision                                                                                                                        | Done                                                                                                                                                                                         |

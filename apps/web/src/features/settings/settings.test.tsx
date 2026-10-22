@@ -106,6 +106,40 @@ describe('the settings page', () => {
     ).toEqual({ config: { kitchen: { screen: false, slip: false, lateAfterMinutes: 12 } } });
   });
 
+  it('switches order types at a branch, and keeps one on (spec 026)', async () => {
+    const api = settingsApi({
+      [`GET /api/v1/branches/${pizzaMall.id}`]: () => json(branchDetail()),
+      [`PATCH /api/v1/branches/${pizzaMall.id}`]: (request) =>
+        json(
+          branchDetail({
+            config: { ...branchDetail().config, ...(request.body as { config: object }).config },
+          }),
+        ),
+    });
+    const user = userEvent.setup();
+    renderApp('/admin/settings');
+
+    const branch = 'Pizza Palace - Mall Branch';
+    const dineIn = await screen.findByLabelText(`Dine-in at ${branch}`);
+    const takeaway = screen.getByLabelText(`Takeaway at ${branch}`);
+    const delivery = screen.getByLabelText(`Delivery at ${branch}`);
+    expect(dineIn).toBeChecked();
+    expect(takeaway).toBeChecked();
+    expect(delivery).not.toBeChecked();
+
+    await user.click(delivery);
+    await user.click(dineIn);
+    // Delivery is the only type left once Dine-in and Takeaway are off: it cannot be switched off.
+    await user.click(takeaway);
+    expect(delivery).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Save the order types' }));
+
+    expect(await screen.findByText(/The order types were saved/)).toBeVisible();
+    expect(
+      api.calls.find((call) => call.key === `PATCH /api/v1/branches/${pizzaMall.id}`)?.body,
+    ).toEqual({ config: { orderTypes: { dine_in: false, takeaway: false, delivery: true } } });
+  });
+
   it('says when there are unsaved changes, and discards them on request', async () => {
     settingsApi();
     const user = userEvent.setup();
