@@ -89,6 +89,56 @@ describe('the menu import', () => {
     expect(updated?.basePrice.toFixed(3)).toBe('0.500');
   });
 
+  it("gives every dish the website's own photo, and none to the box the website does not have", async () => {
+    const data = (await mudawara()) as {
+      categories: { items: { name: { en: string }; imageUrl?: string }[] }[];
+    };
+    const dishes = data.categories.flatMap((category) => category.items);
+    const without = dishes.filter((item) => !item.imageUrl).map((item) => item.name.en);
+    expect(without).toEqual(['Mudawara box of your choice (12 pieces + free fries)']);
+    for (const item of dishes) {
+      if (item.imageUrl) {
+        expect(item.imageUrl, item.name.en).toMatch(
+          /^https:\/\/www\.madawarah\.com\/uploads\/(thumbs\/)?[\w-]+\.(png|jpg)$/,
+        );
+      }
+    }
+  });
+
+  it('replaces the photos a dish had before, and does not copy the dish', async () => {
+    const data = (await mudawara()) as {
+      categories: { items: { name: { en: string }; imageUrl?: string }[] }[];
+    };
+    // The menu as it was first imported: a stock photo on the dish.
+    const first = structuredClone(data);
+    const halloumi = first.categories[0]?.items.find((item) => item.name.en === 'Halloumi');
+    if (halloumi)
+      halloumi.imageUrl = 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=800';
+    await importMenu(prisma, world.pizza.id, first);
+    const before = await prisma.menuItem.findFirst({
+      where: { brandId: world.pizza.id, name: { path: ['en'], equals: 'Halloumi' } },
+    });
+    expect(before?.imageUrl).toContain('unsplash');
+
+    await importMenu(prisma, world.pizza.id, data);
+    const after = await prisma.menuItem.findMany({
+      where: { brandId: world.pizza.id, name: { path: ['en'], equals: 'Halloumi' } },
+    });
+    expect(after).toHaveLength(1);
+    expect(after[0]?.id).toBe(before?.id);
+    expect(after[0]?.imageUrl).toMatch(/^https:\/\/www\.madawarah\.com\/uploads\//);
+
+    // The till is told the same photo.
+    const api = as(app, await signIn(app, 'cashier@x.io'));
+    const menu = (await api.get(`/api/v1/menu?branchId=${world.mall.id}`)).body as {
+      categories: { items: { name: { en: string }; imageUrl: string | null }[] }[];
+    };
+    const onTill = menu.categories
+      .flatMap((category) => category.items)
+      .find((item) => item.name.en === 'Halloumi');
+    expect(onTill?.imageUrl).toBe(after[0]?.imageUrl);
+  });
+
   it('refuses a file that names a group it does not define', async () => {
     await expect(
       importMenu(prisma, world.pizza.id, {
