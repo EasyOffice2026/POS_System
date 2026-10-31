@@ -112,13 +112,17 @@ export function createBranchMenuService({ cache }: Pick<MenuDeps, 'cache'>) {
       select: { logoUrl: true, settings: true },
     });
 
+    const config = parseBranchConfig(branch.config);
+
     return {
       branchId: branch.id,
       brandId,
       currency: CURRENCY,
       timezone: branch.timezone,
-      kitchen: parseBranchConfig(branch.config).kitchen,
-      orderTypes: offeredOrderTypes(parseBranchConfig(branch.config).orderTypes),
+      kitchen: config.kitchen,
+      orderTypes: offeredOrderTypes(config.orderTypes),
+      // Enough to leave a job for the bridge; the addresses stay on the server (spec 028).
+      printers: config.printers.map(({ id, name, kind }) => ({ id, name, kind })),
       brand: {
         logoUrl: brandRow?.logoUrl ?? null,
         color: parseBrandSettings(brandRow?.settings).appearance.color,

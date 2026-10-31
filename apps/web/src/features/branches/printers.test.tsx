@@ -20,6 +20,8 @@ import { renderApp } from '../../test/render-app';
 const REFRESH = 'POST /api/v1/auth/refresh';
 const one = `GET /api/v1/branches/${pizzaMall.id}`;
 const patch = `PATCH /api/v1/branches/${pizzaMall.id}`;
+const keyInfo = `GET /api/v1/branches/${pizzaMall.id}/print-bridge-key`;
+const makeKey = `POST /api/v1/branches/${pizzaMall.id}/print-bridge-key`;
 
 const withPrinters = (...printers: Printer[]) =>
   branchDetail({
@@ -43,6 +45,7 @@ function openPrinters(branch = branchDetail(), extra: Record<string, MockHandler
   const api = mockApi({
     [REFRESH]: () => json(sessionFor(groupAdmin)),
     [one]: () => json(branch),
+    [keyInfo]: () => json({ createdAt: null }),
     ...directory,
     ...extra,
   });
@@ -415,5 +418,47 @@ describe('the printers in Arabic, and for somebody who may not change them', () 
     expect(screen.queryByRole('button', { name: 'Add printer' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Remove printer 1' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+  });
+});
+
+describe('the key of the print bridge (spec 028)', () => {
+  it('says there is none, makes one and shows it once', async () => {
+    const user = userEvent.setup();
+    const api = openPrinters(withPrinters(printer(1)), {
+      [makeKey]: () => json({ key: 'pb_abc123', createdAt: '2026-11-01T09:00:00.000Z' }, 201),
+    });
+
+    expect(await screen.findByText('This branch has no bridge key yet.')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Make a key' }));
+
+    expect(await screen.findByLabelText('Bridge key')).toHaveValue('pb_abc123');
+    expect(screen.getByText('Copy the key now: it is shown only once.')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Make a new key' })).toBeVisible();
+    expect(screen.getByText(/A key was made on 1 Nov 2026/)).toBeVisible();
+    expect(api.count(makeKey)).toBe(1);
+  });
+
+  it('says when the key was made, and offers a new one', async () => {
+    openPrinters(withPrinters(printer(1)), {
+      [keyInfo]: () => json({ createdAt: '2026-10-20T07:30:00.000Z' }),
+    });
+
+    expect(
+      await screen.findByText(/A key was made on 20 Oct 2026.*Making a new one stops the old one/),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Make a new key' })).toBeVisible();
+    expect(screen.queryByLabelText('Bridge key')).not.toBeInTheDocument();
+  });
+
+  it('is not offered to someone who may only look', async () => {
+    mockApi({
+      [REFRESH]: () => json(sessionFor(branchManager)),
+      [one]: () => json(withPrinters(printer(1))),
+      ...directory,
+    });
+    renderApp(`/admin/branches/${pizzaMall.id}?tab=printers`);
+
+    await screen.findByRole('group', { name: 'Printer 1' });
+    expect(screen.queryByText('Print bridge')).not.toBeInTheDocument();
   });
 });

@@ -10,12 +10,13 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
-  "dependencies": {
-    "zod": "^4.6.5"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@pos/shared": "*",
     "@types/node": "^24.19.1",
-    "tsx": "^4.23.15"
+    "@types/pngjs": "^6.0.5",
+    "pngjs": "^7.0.0",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.5"
   }
 }

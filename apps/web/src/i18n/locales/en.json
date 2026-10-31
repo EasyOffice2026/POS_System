@@ -262,6 +262,9 @@
     "PRINTER_HOST_INVALID": "Enter an IP address or a host name, without http:// and without a port.",
     "PRINTER_PORT_INVALID": "The port is a number from 1 to 65535.",
     "PRINTERS_TOO_MANY": "A branch can have at most 20 printers.",
+    "PRINT_IMAGE_REQUIRED": "There is nothing to print.",
+    "PRINT_IMAGE_INVALID": "The picture to print is not valid.",
+    "PRINT_IMAGE_TOO_LARGE": "The picture to print is too large.",
     "ITEM_NOT_FOUND": "This item does not exist, or you cannot see it.",
     "PRICE_INVALID": "Enter a number with at most 3 decimals, for example 12.500.",
     "IMAGE_URL_INVALID": "Enter a web link that starts with http:// or https://.",
@@ -604,7 +607,20 @@
     "hostHint": "An IP address or a host name, for example 192.168.1.50.",
     "port": "Port",
     "portHint": "Usually 9100.",
-    "saved": "Printers saved."
+    "saved": "Printers saved.",
+    "bridge": {
+      "title": "Print bridge",
+      "intro": "The print bridge is a small program on one computer in the branch's network. It takes the receipts and kitchen slips from the tills and sends them to the printers above, so every till prints the same way, tablets included. Without it, each till prints through its browser.",
+      "noKey": "This branch has no bridge key yet.",
+      "keySince": "A key was made on {{date}}. Making a new one stops the old one.",
+      "create": "Make a key",
+      "replace": "Make a new key",
+      "key": "Bridge key",
+      "shownOnce": "Copy the key now: it is shown only once.",
+      "copy": "Copy",
+      "copied": "Copied.",
+      "howTo": "On the shop computer, put the key in the bridge's .env file as PRINT_BRIDGE_KEY and start the bridge (docs/deployment.md, \"Print bridge\")."
+    }
   },
   "menu": {
     "title": "Menu",
@@ -1128,6 +1144,16 @@
       "print": "Print",
       "customer": "Customer:",
       "deliverTo": "Deliver to:"
+    },
+    "printing": {
+      "sending": "Sending to {{printer}}…",
+      "queued": "Sending to {{printer}}…",
+      "printing": "Printing on {{printer}}…",
+      "done": "Printed on {{printer}}.",
+      "failed": "Not printed on {{printer}}: {{error}}",
+      "noBridge": "Not printed on {{printer}}: the print bridge did not answer. Check that it is running on the shop computer.",
+      "slipFailed": "Kitchen slip:",
+      "printHere": "Print from this device"
     },
     "shift": {
       "since": "Shift since {{time}}",

@@ -2,6 +2,12 @@
 
 The answers of Easy Office / Nexera to the questions of the specs and the launch plan, with what was done about each. Newest first.
 
+## 27 October 2026
+
+| Topic       | Decision                                                               | Done                                                                                                                                                                                                                                              |
+| ----------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dish photos | The till shows the same photos as the Mudawara website (madawarah.com) | Done in `mudawara.json`: each of the 36 dishes the website has uses the website's own photo (its small thumbnail); the Mudawara box of your choice is not on the website and has none. Run `npm run menu:import` on the live database to apply it |
+
 ## 22 October 2026
 
 | Topic       | Decision                                                                                                                                            | Done                                                                                                                                                                                         |
@@ -32,7 +38,7 @@ The answers of Easy Office / Nexera to the questions of the specs and the launch
 | First brand        | Mudawara; its menu comes from its website                                            | Done: the website menu is in `apps/api/prisma/menus/mudawara.json` (22 dishes, 5 categories, extras and box choices) with the import `npm run menu:import`                                        |
 | Loyalty            | 1 point per KWD paid; a point is worth 75 fils; points are not shared between brands | Defaults set (`defaultLoyaltySettings`); each brand can change them in Settings                                                                                                                   |
 | Internet outage    | The tills should keep working without internet, but launch can go ahead without it   | Offline mode is the first work after launch                                                                                                                                                       |
-| Printers           | A way to choose the printer                                                          | Waits for the printer model; the browser's print dialog chooses one today                                                                                                                         |
+| Printers           | Every till must print the same way; the iPad does not print (asked on 31 October)    | Done: network printers per branch and the print bridge ([spec 028](specs/028-print-bridge.md)); a branch without printers keeps the browser's print dialog                                        |
 | Alerts             | The owner and the development team get them                                          | Void alerts go to the addresses in each brand's Settings → Alerts; system alerts on Vercel and Supabase once the addresses are known                                                              |
 | Customer phones    | No consent step; numbers may be kept                                                 | Nothing to change                                                                                                                                                                                 |
 | Till screen        | Stays signed in up to 24 hours, unless the team signs it out                         | `PIN_SESSION_HOURS` (24): a PIN session ends a day after it began                                                                                                                                 |

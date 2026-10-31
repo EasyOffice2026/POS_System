@@ -20,6 +20,7 @@ import {
 } from '../../components/form';
 import { fieldsFromIssues, fieldsUnder, messageFor, problemsFrom } from '../../lib/error-messages';
 import { updateBranch } from './branches-api';
+import { BridgeKeySection } from './BridgeKeySection';
 
 // A printer as it is edited. The port is text while it is typed. The key tells the rows apart on
 // the screen, and the id (which the server made) stays the same when the printer is saved again.
@@ -270,6 +271,8 @@ export function PrintersEditor({ branch, readOnly }: { branch: BranchDetail; rea
           </button>
         </div>
       )}
+
+      <BridgeKeySection branchId={branch.id} readOnly={readOnly} />
     </form>
   );
 }

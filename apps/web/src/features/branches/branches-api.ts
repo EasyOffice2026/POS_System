@@ -1,5 +1,5 @@
 import type { createBranchRequestSchema, updateBranchRequestSchema } from '@pos/shared';
-import { branchDetailSchema } from '@pos/shared';
+import { branchDetailSchema, printBridgeKeyInfoSchema, printBridgeKeySchema } from '@pos/shared';
 import type { z } from 'zod';
 import { request } from '../../lib/api';
 
@@ -15,3 +15,11 @@ export const createBranch = (brandId: string, body: CreateBranchInput) =>
 
 export const updateBranch = (id: string, body: UpdateBranchInput) =>
   request(`/branches/${id}`, { method: 'PATCH', body, schema: branchDetailSchema });
+
+// The key of the branch's print bridge (docs/specs/028-print-bridge.md, rule 4): when it was
+// made, and a new one, shown once.
+export const getBridgeKeyInfo = (id: string) =>
+  request(`/branches/${id}/print-bridge-key`, { schema: printBridgeKeyInfoSchema });
+
+export const createBridgeKey = (id: string) =>
+  request(`/branches/${id}/print-bridge-key`, { method: 'POST', schema: printBridgeKeySchema });

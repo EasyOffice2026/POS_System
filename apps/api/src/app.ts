@@ -31,6 +31,9 @@ import { createMenuService } from './modules/menu/menu.service';
 import { createOrdersRouter } from './modules/orders/orders.router';
 import { createOrdersService } from './modules/orders/orders.service';
 import { createVoidAlerts } from './modules/orders/void-alerts';
+import { createPrintBridgeRouter } from './modules/printing/print-bridge.router';
+import { createBridgeKeysRouter, createPrintJobsRouter } from './modules/printing/printing.router';
+import { createPrintingService } from './modules/printing/printing.service';
 import { createOverviewService } from './modules/reports/overview.service';
 import { createReportsRouter } from './modules/reports/reports.router';
 import { createReportsService } from './modules/reports/reports.service';
@@ -77,6 +80,8 @@ export function createApp({
   app.set('trust proxy', config.trustProxy);
   app.use(securityHeaders({ https: config.refreshToken.cookieSecure }));
   app.use(requestLog(log ?? (config.nodeEnv === 'test' ? () => {} : writeJsonLine)));
+  // A print job carries a picture of the receipt (docs/specs/028-print-bridge.md).
+  app.use('/api/v1/print-jobs', express.json({ limit: '1mb' }));
   app.use(express.json({ limit: '100kb' }));
 
   const tokens = createTokenService(config);
@@ -121,6 +126,7 @@ export function createApp({
       inventoryService.sellForOrder(tx, order, lines, by, at),
   });
   const shiftsService = createShiftsService({ prisma, now: now ?? (() => new Date()) });
+  const printingService = createPrintingService({ prisma, now: now ?? (() => new Date()) });
 
   const v1 = express.Router();
   v1.use('/health', createHealthRouter({ prisma }));
@@ -138,7 +144,14 @@ export function createApp({
     ...protectedRoutes,
     createTablesRouter({ service: createTablesService({ prisma }) }),
   );
+  v1.use('/branches', ...protectedRoutes, createBridgeKeysRouter({ service: printingService }));
   v1.use('/menu', ...protectedRoutes, createMenuRouter({ service: menuService }));
+  v1.use('/print-jobs', ...protectedRoutes, createPrintJobsRouter({ service: printingService }));
+  // The bridge is not a person: it has its own sign-in, with the key of its branch.
+  v1.use(
+    '/print-bridge',
+    createPrintBridgeRouter({ service: printingService, waitMs: config.printBridgeWaitMs }),
+  );
   v1.use('/orders', ...protectedRoutes, createOrdersRouter({ service: ordersService }));
   v1.use('/kitchen', ...protectedRoutes, createKitchenRouter({ service: kitchenService }));
   v1.use('/shifts', ...protectedRoutes, createShiftsRouter({ service: shiftsService }));

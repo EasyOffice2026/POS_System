@@ -30,6 +30,15 @@ const PUBLIC = new Set([
   'POST /api/v1/auth/logout',
 ]);
 
+// The routes of the print bridge (docs/specs/028-print-bridge.md): not for people at all. They
+// take the key of a branch's bridge, and refuse a person's token like no token.
+const BRIDGE_ONLY = new Set([
+  'GET /api/v1/print-bridge/',
+  'POST /api/v1/print-bridge/jobs/claim',
+  'POST /api/v1/print-bridge/jobs/:id/done',
+  'POST /api/v1/print-bridge/jobs/:id/failed',
+]);
+
 // The routes for anybody signed in, whatever their permissions, and why.
 const SIGNED_IN = new Map([
   ['GET /api/v1/auth/me', 'a person reads their own account'],
@@ -93,7 +102,9 @@ describe('every route of the API', () => {
     expect(all.length).toBeGreaterThan(100);
     const keys = all.map((route) => `${route.method} ${route.path}`);
     expect(new Set(keys).size).toBe(keys.length);
-    for (const key of [...PUBLIC, ...SIGNED_IN.keys()]) expect(keys).toContain(key);
+    for (const key of [...PUBLIC, ...SIGNED_IN.keys(), ...BRIDGE_ONLY]) {
+      expect(keys).toContain(key);
+    }
   });
 
   it('refuses a request without a token, but for the public ones', async () => {
@@ -122,7 +133,8 @@ describe('every route of the API', () => {
       const key = `${route.method} ${route.path}`;
       if (PUBLIC.has(key) || SIGNED_IN.has(key)) continue;
       const res = await send(route.method, concrete(route.path), token);
-      if (res.status !== 403) allowed.push(`${key} -> ${res.status}`);
+      const expected = BRIDGE_ONLY.has(key) ? 401 : 403;
+      if (res.status !== expected) allowed.push(`${key} -> ${res.status}`);
     }
     expect(allowed).toEqual([]);
   });

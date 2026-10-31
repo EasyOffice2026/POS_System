@@ -1,5 +1,5 @@
 {
-  "$comment": "The menu of Mudawara (مدورة): every dish and price of the client's price list of 6 October 2026 (Modawarah-Menu-Prices.xlsx), with the paid add-ons. Prices in KWD. Photos: the website's photos where it has one, otherwise free photos from Wikimedia Commons (CC0, no credit needed); Pepsi Diet, Mirinda, 7UP, 7UP Diet, Shani and Cheese Ice Cream have none until the brand uploads its own. Import with: npm run menu:import -w @pos/api -- --brand Mudawara --file prisma/menus/mudawara.json",
+  "$comment": "The menu of Mudawara (مدورة): every dish and price of the client's price list of 6 October 2026 (Modawarah-Menu-Prices.xlsx), with the paid add-ons. Prices in KWD. Photos: the website's own photo of each dish (its small thumbnail, from madawarah.com); the Mudawara box of your choice has none on the website until the brand uploads one. Import with: npm run menu:import -w @pos/api -- --brand Mudawara --file prisma/menus/mudawara.json",
   "categories": [
     {
       "name": {
@@ -13,7 +13,7 @@
             "ar": "شاورما لحم"
           },
           "price": "0.650",
-          "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/D%C3%B6ner_Kebab_Wrap_-_What_The_Pitta.jpg/960px-D%C3%B6ner_Kebab_Wrap_-_What_The_Pitta.jpg"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1792567628986-b8825ab8.jpg"
         },
         {
           "name": {
@@ -21,7 +21,7 @@
             "ar": "شاورما دجاج"
           },
           "price": "0.550",
-          "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/Handmade_Chicken_Shawarma_Wrap_-_Lavash.jpg/960px-Handmade_Chicken_Shawarma_Wrap_-_Lavash.jpg"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1792567808321-76f6b38d.jpg"
         },
         {
           "name": {
@@ -29,7 +29,7 @@
             "ar": "تركي"
           },
           "price": "0.650",
-          "imageUrl": "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789908840691-131eee4e.png"
         },
         {
           "name": {
@@ -37,7 +37,7 @@
             "ar": "تشكين فيليه"
           },
           "price": "0.850",
-          "imageUrl": "https://images.unsplash.com/photo-1615297928064-24977384d0da?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1792567675676-ee1eacb7.jpg"
         },
         {
           "name": {
@@ -45,7 +45,7 @@
             "ar": "كباب"
           },
           "price": "0.650",
-          "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/71/Shawerma_Roll.JPG/960px-Shawerma_Roll.JPG"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1792567712739-b9fec871.jpg"
         },
         {
           "name": {
@@ -53,7 +53,7 @@
             "ar": "فاهيتا"
           },
           "price": "0.650",
-          "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4e/Fajitas_Wraps.JPG/960px-Fajitas_Wraps.JPG"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1792567737471-61235a3e.jpg"
         },
         {
           "name": {
@@ -65,7 +65,7 @@
             "ar": "بيض مقلي أو مخفوق مع جبن ذائب"
           },
           "price": "0.500",
-          "imageUrl": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800",
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1792567764343-d8663571.jpg",
           "modifierGroups": ["extras", "sauces"]
         },
         {
@@ -78,7 +78,7 @@
             "ar": "بيض مطبوخ بصوص طماطم حار مع الفلفل والجبن"
           },
           "price": "0.550",
-          "imageUrl": "https://images.unsplash.com/photo-1590412200988-a436970781fa?w=800",
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1792567833323-33d564aa.jpg",
           "modifierGroups": ["extras", "sauces"]
         },
         {
@@ -87,7 +87,7 @@
             "ar": "أجبان مشكلة"
           },
           "price": "0.650",
-          "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/69/Cheese_sandwich_%28Rotterdam%29.jpg/960px-Cheese_sandwich_%28Rotterdam%29.jpg"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789908748314-f0d728ab.png"
         },
         {
           "name": {
@@ -99,7 +99,7 @@
             "ar": "كبدة مقلية بالبهارات مع شرائح الجبن"
           },
           "price": "0.750",
-          "imageUrl": "https://images.unsplash.com/photo-1432139555190-58524dae6a55?w=800",
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1792567856979-c4cf03c0.jpg",
           "modifierGroups": ["liverExtras", "sauces"]
         },
         {
@@ -112,7 +112,7 @@
             "ar": "جبن حلوم مشوي أو مقلي"
           },
           "price": "0.600",
-          "imageUrl": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1792567878385-22ee2d16.jpg"
         },
         {
           "name": {
@@ -124,7 +124,7 @@
             "ar": "أقراص فلافل مع حشوات وصوصات وخضار إضافية"
           },
           "price": "0.450",
-          "imageUrl": "https://images.unsplash.com/photo-1662116765994-1e4200c43589?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789908510730-27f56d07.png"
         }
       ]
     },
@@ -144,7 +144,7 @@
             "ar": "2 بيض جبن + 2 شكشوكة + 2 حلوم + 2 مكس أجبان + 2 مشكل + 2 لبنة زعتر"
           },
           "price": "6.000",
-          "imageUrl": "https://images.unsplash.com/photo-1493770348161-369560ae357d?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789909576684-d4de3786.png"
         },
         {
           "name": {
@@ -156,7 +156,7 @@
             "ar": "3 فاهيتا + 3 شاورما لحم + 3 شاورما دجاج + 3 كباب"
           },
           "price": "7.250",
-          "imageUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789909606236-afd2b4d6.png"
         },
         {
           "name": {
@@ -164,7 +164,6 @@
             "ar": "بوكس مدورة على اختيارك (12 قطعة + بطاطس مجاناً)"
           },
           "price": "7.600",
-          "imageUrl": "https://images.unsplash.com/photo-1541518763669-27fef04b14ea?w=800",
           "modifierGroups": ["boxPieces", "boxAddOns"]
         },
         {
@@ -173,7 +172,7 @@
             "ar": "بوكس عشاء 12 قطعة + بطاطس: 6 برجر لحم + 6 فيليه دجاج"
           },
           "price": "9.990",
-          "imageUrl": "https://images.unsplash.com/photo-1521305916504-4a1121188589?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789909666284-0d2fc5a0.png"
         }
       ]
     },
@@ -189,7 +188,7 @@
             "ar": "بوكس بطاطس"
           },
           "price": "0.750",
-          "imageUrl": "https://images.unsplash.com/photo-1518013431117-eb1465fa5752?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789906751818-fd0de780.png"
         }
       ]
     },
@@ -209,7 +208,7 @@
             "ar": "شاي أسود، حليب مكثف أو عادي، سكر، هيل وقرفة"
           },
           "price": "4.500",
-          "imageUrl": "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789909713143-33f1d3fe.png"
         },
         {
           "name": {
@@ -217,7 +216,7 @@
             "ar": "كرك"
           },
           "price": "0.450",
-          "imageUrl": "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789909731069-b96b4930.png"
         },
         {
           "name": {
@@ -229,7 +228,7 @@
             "ar": "مع سكر أو حليب حسب الرغبة"
           },
           "price": "0.300",
-          "imageUrl": "https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789909742641-20d4c8b4.png"
         },
         {
           "name": {
@@ -237,7 +236,7 @@
             "ar": "عصير برتقال"
           },
           "price": "0.850",
-          "imageUrl": "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789909756165-feaecb3c.png"
         },
         {
           "name": {
@@ -245,42 +244,47 @@
             "ar": "بيبسي"
           },
           "price": "0.150",
-          "imageUrl": "https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789910136657-01b38b0c.jpg"
         },
         {
           "name": {
             "en": "Pepsi Diet",
             "ar": "بيبسي دايت"
           },
-          "price": "0.150"
+          "price": "0.150",
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789910261023-01294fda.jpg"
         },
         {
           "name": {
             "en": "Mirinda",
             "ar": "ميرندا"
           },
-          "price": "0.150"
+          "price": "0.150",
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789910741876-49f3b0d9.jpg"
         },
         {
           "name": {
             "en": "7UP",
             "ar": "سفن أب"
           },
-          "price": "0.150"
+          "price": "0.150",
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789910333998-f9debd24.jpg"
         },
         {
           "name": {
             "en": "7UP Diet",
             "ar": "سفن أب دايت"
           },
-          "price": "0.150"
+          "price": "0.150",
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789910369705-46445cfc.jpg"
         },
         {
           "name": {
             "en": "Shani",
             "ar": "شاني"
           },
-          "price": "0.150"
+          "price": "0.150",
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789910623207-9d0dbf9b.jpg"
         },
         {
           "name": {
@@ -288,7 +292,7 @@
             "ar": "مياه"
           },
           "price": "0.150",
-          "imageUrl": "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789910836786-aa64224c.jpg"
         }
       ]
     },
@@ -304,7 +308,7 @@
             "ar": "خلية كلاسيك"
           },
           "price": "2.500",
-          "imageUrl": "https://images.unsplash.com/photo-1519676867240-f03562e64548?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789910944657-690fb389.png"
         },
         {
           "name": {
@@ -312,7 +316,7 @@
             "ar": "خلية بيكان"
           },
           "price": "3.500",
-          "imageUrl": "https://images.unsplash.com/photo-1623334044303-241021148842?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789911094786-65ebf10e.png"
         },
         {
           "name": {
@@ -320,7 +324,7 @@
             "ar": "خلية سينابون"
           },
           "price": "3.000",
-          "imageUrl": "https://images.unsplash.com/photo-1509365465985-25d11c17e812?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789910913028-db310727.png"
         },
         {
           "name": {
@@ -328,7 +332,7 @@
             "ar": "خلية سومو بيكان"
           },
           "price": "3.750",
-          "imageUrl": "https://images.unsplash.com/photo-1623334044303-241021148842?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789910999939-f8bb0b01.png"
         },
         {
           "name": {
@@ -336,7 +340,7 @@
             "ar": "خلية نوتيلا وزعتر"
           },
           "price": "3.500",
-          "imageUrl": "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789911018214-45105619.png"
         },
         {
           "name": {
@@ -344,7 +348,7 @@
             "ar": "خلية كنافة بالنوتيلا والبستاش"
           },
           "price": "3.750",
-          "imageUrl": "https://images.unsplash.com/photo-1519676867240-f03562e64548?w=800"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789911041772-56234cf5.png"
         }
       ]
     },
@@ -360,14 +364,15 @@
             "ar": "مدورة شوكليت أيس كريم"
           },
           "price": "5.000",
-          "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/ff/Ice_cream_-_Marrocco%27s_2025-05-09.jpg/960px-Ice_cream_-_Marrocco%27s_2025-05-09.jpg"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789911322193-2de2ad2f.png"
         },
         {
           "name": {
             "en": "Cheese Ice Cream Mudawara",
             "ar": "مدورة جبنة أيس كريم"
           },
-          "price": "5.000"
+          "price": "5.000",
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789911416278-f9346c5d.png"
         },
         {
           "name": {
@@ -375,7 +380,7 @@
             "ar": "مدورة مانجو أيس كريم"
           },
           "price": "5.000",
-          "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/da/Mango_lassi_ice_cream_at_Elephant_Garden_Creamery.jpg/960px-Mango_lassi_ice_cream_at_Elephant_Garden_Creamery.jpg"
+          "imageUrl": "https://www.madawarah.com/uploads/thumbs/1789911472726-5dce3344.png"
         }
       ]
     }

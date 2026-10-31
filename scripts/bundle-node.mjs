@@ -23,5 +23,10 @@ await build({
   format: 'esm',
   sourcemap: true,
   external: Object.keys(pkg.dependencies ?? {}),
+  // A CommonJS package that is bundled in (the print bridge's pngjs) still calls require() for
+  // Node's own modules; an ES module has none unless it makes one.
+  banner: {
+    js: "import { createRequire as __createRequire } from 'node:module'; const require = __createRequire(import.meta.url);",
+  },
   logLevel: 'info',
 });
