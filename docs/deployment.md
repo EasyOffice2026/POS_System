@@ -117,7 +117,7 @@ A till is a browser on the shop computer or tablet, open at `https://<address>/p
 "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --kiosk-printing --app=https://pos.nexerakw.com/pos
 ```
 
-Close every Edge window first, or the flag is ignored. Chrome takes the same flags. Set the kitchen or receipt printer as the computer's default printer, and its paper size to the roll (80 mm). A tablet (an iPad) cannot print this way: give the branch a network printer and run the print bridge (next section), and every till prints the same way, without a dialog.
+Close every Edge window first, or the flag is ignored. Chrome takes the same flags. Set the kitchen or receipt printer as the computer's default printer, and its paper size to the roll: 80 mm on a counter printer, the handheld's own roll on a Sunmi (58 mm). The receipt fills whatever roll is chosen, at the same text size; a wider paper than the roll is cut off on the right, a narrower one leaves blank paper. A tablet (an iPad) cannot print this way: give the branch a network printer and run the print bridge (next section), and every till prints the same way, without a dialog.
 
 ## Print bridge
 

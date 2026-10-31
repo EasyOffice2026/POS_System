@@ -83,6 +83,15 @@ html {
   color: var(--color-ink);
 }
 
+/* Printing from the browser (a receipt, a slip, a purchase order): no page margins, so a receipt
+   fills the roll and the browser adds no date or address at the top and bottom. The printed
+   pieces carry their own padding. */
+@media print {
+  @page {
+    margin: 0;
+  }
+}
+
 /* Prices, totals and times line up in columns. */
 .num {
   font-family: var(--font-num);

@@ -38,7 +38,9 @@ export type PrintLine =
       muted?: boolean;
     }
   | { kind: 'rule' }
-  | { kind: 'gap' };
+  | { kind: 'gap' }
+  // A picture across the top: the brand's logo.
+  | { kind: 'image'; url: string };
 
 export interface PrintDocument {
   kind: 'receipt' | 'kitchen-slip';
@@ -53,6 +55,8 @@ export const plainText = (text: PrintText): string =>
 interface Words {
   t: TFunction;
   language: string;
+  // The brand's logo, printed at the top of a receipt when the brand has one.
+  logoUrl?: string | null;
 }
 
 // A price as the API sends it, followed by the currency; the figures never change places.
@@ -79,6 +83,7 @@ export function receiptDocument(
   const lines: PrintLine[] = [];
   const small = { kind: 'text', align: 'center', size: 'xs', muted: true } as const;
 
+  if (words.logoUrl) lines.push({ kind: 'image', url: words.logoUrl });
   if (terminal.brandName) {
     lines.push({ kind: 'text', text: name(terminal.brandName), align: 'center', bold: true });
   }
