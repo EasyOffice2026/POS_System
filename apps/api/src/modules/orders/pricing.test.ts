@@ -75,6 +75,7 @@ const menu: BranchMenu = {
   brandId: randomUUID(),
   currency: 'KWD',
   timezone: 'Asia/Riyadh',
+  printers: [],
   kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
   orderTypes: ['dine_in', 'takeaway'],
   brand: { logoUrl: null, color: null },

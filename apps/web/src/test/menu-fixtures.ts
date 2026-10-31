@@ -229,6 +229,7 @@ export function branchMenu(overrides: Partial<BranchMenu> = {}): BranchMenu {
     timezone: 'Asia/Riyadh',
     kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
     orderTypes: ['dine_in', 'takeaway'],
+    printers: [],
     brand: { logoUrl: null, color: null },
     categories: [
       {

@@ -15,6 +15,7 @@ export * from './menu';
 export * from './money';
 export * from './orders';
 export * from './pagination';
+export * from './printing';
 export * from './promotions';
 export * from './purchase-orders';
 export * from './recipes';

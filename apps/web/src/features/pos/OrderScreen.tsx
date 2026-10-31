@@ -33,8 +33,11 @@ import { OpenOrdersDialog } from './OpenOrdersDialog';
 import { OrderPanel } from './OrderPanel';
 import { PaymentDialog } from './PaymentDialog';
 import { PointsDialog } from './PointsDialog';
+import { kitchenSlipDocument, receiptDocument } from './print-document';
+import { PrintStatus } from './PrintStatus';
 import { BillDialog, Receipt, ReceiptDialog } from './Receipt';
 import { RefundDialog } from './RefundDialog';
+import { usePrinting } from './use-printing';
 import { useBrandSettings } from '../settings/settings-api';
 
 // How often a terminal asks for the brand's settings again (spec 009, rule 8).
@@ -93,17 +96,34 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
   // The paid order whose receipt is shown, and printed.
   const [receipt, setReceipt] = useState<Order | null>(null);
 
+  // Printing: on the branch's printers through the bridge, or through the browser
+  // (docs/specs/028-print-bridge.md).
+  const printing = usePrinting(menu.data, terminal.branchId);
+  const words = { t, language: i18n.language };
+
   // The kitchen slip of the dishes just sent, printed by itself when the branch wants one
   // (docs/specs/027-kitchen-screen-and-slip.md, rule 4). What follows it, the receipt after a
   // payment, waits until it has gone to the printer.
   const [slip, setSlip] = useState<{ order: Order; lineIds: string[] } | null>(null);
-  const printSlip = (order: Order, lineIds: string[]) => {
+  // The last slip, to print it from this device when the printer did not.
+  const [lastSlip, setLastSlip] = useState<{ order: Order; lineIds: string[] } | null>(null);
+  const printSlipHere = (order: Order, lineIds: string[]) => {
     // The slip must be on the page before the browser prints it.
     flushSync(() => setSlip({ order, lineIds }));
     window.print();
     setSlip(null);
   };
+  const printSlip = (order: Order, lineIds: string[]) => {
+    setLastSlip({ order, lineIds });
+    void printing.print(
+      'kitchen',
+      kitchenSlipDocument(order, lineIds, terminal, words),
+      order.number,
+      () => printSlipHere(order, lineIds),
+    );
+  };
   const printsSlip = menu.data ? printsKitchenSlip(menu.data.kitchen) : false;
+  const slipPrint = printing.stateOf('kitchen');
   // How many of each dish the order already has, for the badge on its tile.
   const inOrder = new Map<string, number>();
   for (const line of order?.lines ?? []) {
@@ -213,6 +233,29 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             <button
               type="button"
               onClick={terminalOrder.dismissNotice}
+              aria-label={t('pos.notices.dismiss')}
+              className="rounded px-2 font-semibold"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {slipPrint.status === 'failed' && lastSlip && (
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-red-50 px-4 py-2 text-sm text-red-800">
+            <span className="font-semibold">{t('pos.printing.slipFailed')}</span>
+            <div className="min-w-0 flex-1">
+              <PrintStatus
+                state={slipPrint}
+                onPrintHere={() => {
+                  printing.reset('kitchen');
+                  printSlipHere(lastSlip.order, lastSlip.lineIds);
+                }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => printing.reset('kitchen')}
               aria-label={t('pos.notices.dismiss')}
               className="rounded px-2 font-semibold"
             >
@@ -355,7 +398,20 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             order={bill}
             terminal={terminal}
             cashier={cashier}
-            onClose={() => setBill(null)}
+            onClose={() => {
+              setBill(null);
+              printing.reset('bill');
+            }}
+            onPrint={() =>
+              void printing.print(
+                'bill',
+                receiptDocument(bill, terminal, cashier, true, words),
+                bill.number,
+                () => window.print(),
+              )
+            }
+            printState={printing.stateOf('bill')}
+            onPrintHere={() => window.print()}
           />
         )}
 
@@ -435,11 +491,25 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             order={receipt}
             terminal={terminal}
             cashier={cashier}
-            onClose={() => setReceipt(null)}
+            onClose={() => {
+              setReceipt(null);
+              printing.reset('receipt');
+            }}
             onNewOrder={() => {
               setReceipt(null);
+              printing.reset('receipt');
               terminalOrder.newOrder();
             }}
+            onPrint={() =>
+              void printing.print(
+                'receipt',
+                receiptDocument(receipt, terminal, cashier, false, words),
+                receipt.number,
+                () => window.print(),
+              )
+            }
+            printState={printing.stateOf('receipt')}
+            onPrintHere={() => window.print()}
           />
         )}
       </div>

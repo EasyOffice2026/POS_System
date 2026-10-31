@@ -59,19 +59,22 @@ model Branch {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  brand          Brand            @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  assignments    UserBranch[]
-  menuOverrides  BranchMenuItem[]
-  orders         Order[]
-  orderCounters  OrderCounter[]
-  shifts         Shift[]
-  stock          BranchStock[]
-  movements      StockMovement[]
-  transfersOut   StockTransfer[]  @relation("transfersOut")
-  transfersIn    StockTransfer[]  @relation("transfersIn")
-  stockCounts    StockCount[]
-  purchaseOrders PurchaseOrder[]
-  tables         DiningTable[]
+  brand           Brand            @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  assignments     UserBranch[]
+  menuOverrides   BranchMenuItem[]
+  orders          Order[]
+  orderCounters   OrderCounter[]
+  shifts          Shift[]
+  stock           BranchStock[]
+  movements       StockMovement[]
+  transfersOut    StockTransfer[]  @relation("transfersOut")
+  transfersIn     StockTransfer[]  @relation("transfersIn")
+  stockCounts     StockCount[]
+  purchaseOrders  PurchaseOrder[]
+  tables          DiningTable[]
+  printJobs       PrintJob[]
+  // One at most: its branch id is its key.
+  printBridgeKeys PrintBridgeKey[]
 
   // Lets tables that carry a brand id point at "this branch of this brand".
   @@unique([id, brandId])
@@ -1160,4 +1163,65 @@ model DiningTable {
   @@unique([id, branchId])
   @@index([brandId])
   @@map("dining_tables")
+}
+
+// ---- Printing without the browser. See docs/specs/028-print-bridge.md.
+
+enum PrintJobKind {
+  receipt
+  bill
+  kitchen
+
+  @@map("print_job_kind")
+}
+
+enum PrintJobStatus {
+  queued
+  printing
+  done
+  failed
+
+  @@map("print_job_status")
+}
+
+// A receipt, a bill or a kitchen slip waiting for the branch's print bridge. The till draws it
+// as a picture, so Arabic and English print the same on every printer.
+model PrintJob {
+  id          String         @id @default(uuid(7)) @db.Uuid
+  brandId     String         @map("brand_id") @db.Uuid
+  branchId    String         @map("branch_id") @db.Uuid
+  // One of the printers in the branch's configuration.
+  printerId   String         @map("printer_id") @db.Uuid
+  kind        PrintJobKind
+  status      PrintJobStatus @default(queued)
+  orderNumber Int?           @map("order_number")
+  // The page as a PNG.
+  image       Bytes
+  // How many times a bridge took the job. A bridge that stops in the middle leaves it taken.
+  attempts    Int            @default(0)
+  error       String?
+  createdById String         @map("created_by_id") @db.Uuid
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  claimedAt   DateTime?      @map("claimed_at") @db.Timestamptz(3)
+  finishedAt  DateTime?      @map("finished_at") @db.Timestamptz(3)
+
+  branch Branch @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Restrict)
+
+  // The next job of a branch, and the old ones to throw away.
+  @@index([branchId, status, createdAt])
+  @@map("print_jobs")
+}
+
+// The key a branch's print bridge signs in with: one per branch, only its hash kept, so a copy
+// of the database gives nobody a working key.
+model PrintBridgeKey {
+  branchId    String   @id @map("branch_id") @db.Uuid
+  brandId     String   @map("brand_id") @db.Uuid
+  keyHash     String   @unique @map("key_hash")
+  createdById String   @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  branch Branch @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@map("print_bridge_keys")
 }

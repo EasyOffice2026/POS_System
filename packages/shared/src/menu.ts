@@ -3,6 +3,7 @@ import { branchOrderTypes, kitchenSettingsSchema, openingHoursSchema } from './b
 import { localizedNameSchema, localizedTextSchema } from './localized';
 import { CURRENCY, priceChangeSchema, priceSchema } from './money';
 import { cursorQuerySchema } from './pagination';
+import { menuPrinterSchema } from './printing';
 import { searchQuerySchema } from './search';
 import { webLinkSchema } from './web-link';
 
@@ -171,6 +172,8 @@ export const branchMenuSchema = z.object({
   kitchen: kitchenSettingsSchema,
   // The order types the branch offers, in the till's order (spec 026).
   orderTypes: z.array(z.enum(branchOrderTypes)).min(1),
+  // The printers the branch's bridge prints to; none means the browser prints (spec 028).
+  printers: z.array(menuPrinterSchema),
   // How the brand shows on the till and the kitchen screen: its logo and its colour.
   brand: z.object({ logoUrl: z.string().nullable(), color: z.string().nullable() }),
   categories: z.array(branchMenuCategorySchema),

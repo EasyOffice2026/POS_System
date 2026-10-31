@@ -117,7 +117,25 @@ A till is a browser on the shop computer or tablet, open at `https://<address>/p
 "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --kiosk-printing --app=https://pos.nexerakw.com/pos
 ```
 
-Close every Edge window first, or the flag is ignored. Chrome takes the same flags. Set the kitchen or receipt printer as the computer's default printer, and its paper size to the roll (80 mm). Printing straight to a network printer, without the browser, comes with the printer model (docs/client-decisions.md).
+Close every Edge window first, or the flag is ignored. Chrome takes the same flags. Set the kitchen or receipt printer as the computer's default printer, and its paper size to the roll (80 mm). A tablet (an iPad) cannot print this way: give the branch a network printer and run the print bridge (next section), and every till prints the same way, without a dialog.
+
+## Print bridge
+
+The print bridge ([spec 028](specs/028-print-bridge.md)) is a small program on one computer in the branch's network, on all day. The tills leave their receipts and kitchen slips on the server; the bridge takes them and sends them to the branch's network printers (ESC/POS over port 9100: Epson, Xprinter, Sunmi and most other 80 mm receipt printers). Nothing is installed on the tills.
+
+1. **The printers.** Give each printer a fixed address on the shop's network (in the router, or on the printer itself), and add it under Branches → the branch → Printers, with its kind: Receipts, or Kitchen tickets. Save.
+2. **The key.** On the same tab, "Make a key" under Print bridge, and copy it: it is shown once. Making a new key stops the old one.
+3. **The computer.** Any Windows PC that stays on (the shop computer is fine). Install Node.js 24 (LTS) from nodejs.org. Copy the folder `apps/print-bridge/dist` from a build (`npm run build -w @pos/print-bridge` on a developer's machine) to the PC, for example to `C:\pos-print-bridge`, and next to `server.js` make a file `.env`:
+
+   ```
+   POS_API_URL=https://pos.nexerakw.com
+   PRINT_BRIDGE_KEY=pb_...
+   ```
+
+4. **Start it:** `node --env-file=.env server.js` in that folder. It prints the branch and its printers, then waits for jobs. To start it with Windows, make a Task Scheduler task "At log on" running that command in that folder (or a shortcut in the Startup folder). It needs no open port: it only calls the POS.
+5. **Try it:** on any till, pay an order and tap Print. The receipt comes out, and the till says "Printed on …". If the till says the bridge did not answer, the program is not running or the key is wrong; if it says the printer could not be reached, check the printer's address and that it is on the same network as the PC.
+
+The bridge logs each job it printed, and each try that failed, to its window. `PRINTER_TIMEOUT_MS` (5000) is how long it waits for a printer.
 
 ## Still to decide
 

@@ -483,6 +483,7 @@ describe('what the API answers', () => {
       timezone: 'Asia/Riyadh',
       kitchen: { screen: true, slip: false, lateAfterMinutes: 12 },
       orderTypes: ['dine_in', 'takeaway'],
+      printers: [{ id: id(7), name: 'Cash desk', kind: 'receipt' }],
       brand: { logoUrl: null, color: null },
       categories: [
         {

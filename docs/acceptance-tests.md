@@ -63,6 +63,7 @@
 | 2.8  | **Settings:** add a payment method, change the discount buttons, set the cashier limit to 10%, turn loyalty on. | The till shows the new method and buttons at once (or within three minutes).                  |        |      |
 | 2.9  | **Customers:** open a customer, give 50 points with a reason.                                                   | Their balance goes up by 50 and the history shows the reason.                                 |        |      |
 | 2.10 | **Branches → Mall → Floor plan:** add a table on the terrace and move it.                                       | The till's floor shows the new table where it was put.                                        |        |      |
+| 2.11 | **Branches → Mall → Printers:** add the receipt printer and the kitchen printer, then **Make a key**.           | The key is shown once; the print bridge started with it logs the branch and its two printers. |        |      |
 
 ## 3. Branch manager (Mall)
 
@@ -101,6 +102,9 @@
 | 4.18 | Settings → Order types at the branches: switch Dine-in off at one branch, Delivery on. | That branch's till has no **Tables** button and no Dine-in; it offers Takeaway and Delivery.    |        |      |
 | 4.19 | Choose **Delivery**, tap **Add delivery details**, type a phone and an address.        | The address shows on the order. Without an address, **Send to kitchen** and **Pay** ask for it. |        |      |
 | 4.20 | Pay the delivery order.                                                                | The receipt prints the name, phone, address and note under "Deliver to".                        |        |      |
+| 4.21 | With the bridge running (2.11), pay an order on the iPad and tap **Print**.            | No print dialog; the receipt comes out of the receipt printer; the till says "Printed on …".    |        |      |
+| 4.22 | Send an order to the kitchen at a branch with the kitchen slip on.                     | The slip comes out of the kitchen printer by itself.                                            |        |      |
+| 4.23 | Stop the bridge, pay an order and tap **Print**.                                       | Within 30 seconds the till says the bridge did not answer and offers "Print from this device".  |        |      |
 
 ## 5. Kitchen
 

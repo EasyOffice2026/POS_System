@@ -23,6 +23,9 @@ export interface Config {
   authRateLimit: { windowMs: number; max: number };
   // How long the menu of a branch is kept if nothing changes it (it is also cleared by every change).
   menuCacheTtlSeconds: number;
+  // How long a print bridge's request for the next job waits before answering "none"
+  // (docs/specs/028-print-bridge.md). Shorter than the hosting's limit on a request.
+  printBridgeWaitMs: number;
   // The email account alerts go out from (smtp://user:password@host:port), and the sender shown.
   mail: { smtpUrl: string | undefined; from: string | undefined };
   // Supabase Storage for photos: the project address, its service role key, and the bucket.
@@ -58,6 +61,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       .int()
       .min(1)
       .default(5 * 60),
+    PRINT_BRIDGE_WAIT_SECONDS: z.coerce.number().int().min(0).max(60).default(8),
   });
 
   const values = schema.parse(env);
@@ -84,6 +88,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     },
     authRateLimit: { windowMs: 15 * 60 * 1000, max: values.AUTH_RATE_LIMIT_MAX },
     menuCacheTtlSeconds: values.MENU_CACHE_TTL_SECONDS,
+    printBridgeWaitMs: values.PRINT_BRIDGE_WAIT_SECONDS * 1000,
     mail: { smtpUrl: values.SMTP_URL, from: values.ALERT_FROM },
     storage: {
       supabaseUrl: values.SUPABASE_URL,

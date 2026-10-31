@@ -78,6 +78,9 @@ const tenantModels: Record<string, ModelRule> = {
   LoyaltyEntry: { brand: 'brandId' },
   // The tables of a branch's floor plan (docs/specs/023-floor-plan.md).
   DiningTable: { brand: 'brandId', branch: 'branchId' },
+  // What a till left for the branch's print bridge, and the bridge's key (spec 028).
+  PrintJob: { brand: 'brandId', branch: 'branchId' },
+  PrintBridgeKey: { brand: 'brandId', branch: 'branchId' },
 };
 
 // Reference data every signed-in person may read. Never writable through this client.

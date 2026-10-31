@@ -91,7 +91,7 @@ Sign in as `admin@pos.local` and use the menu under the header. Each link shows 
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | Dashboard      | The brands and branches the person can see                                                                                                                                    | Any signed-in person                                                          |
 | Brands         | The brands of the group: add one, rename it, set a logo link, deactivate or activate it                                                                                       | `brands:read` (changing: `brands:write`)                                      |
-| Branches       | Branches of one brand or all. Settings in three tabs: details, opening hours, printers                                                                                        | `branches:read` (changing: `branches:write`)                                  |
+| Branches       | Branches of one brand or all. Settings in tabs: details, opening hours, printers (with the print bridge's key), tables                                                        | `branches:read` (changing: `branches:write`)                                  |
 | Menu           | Categories (drag to re-order), items with modifiers, prices and times per branch, combos, and a preview of the menu a branch terminal loads                                   | `menu:read` (changing: `menu:write`)                                          |
 | Users          | Search and filter people, add and change them, deactivate, unlock, set a password or PIN                                                                                      | `users:read` (changing: `users:write`)                                        |
 | Roles          | What each built-in role may do                                                                                                                                                | `roles:read`                                                                  |
@@ -133,15 +133,15 @@ The API tests need PostgreSQL, so run `npm run infra:up` first. They use their o
 
 ## Tech stack
 
-| Layer           | Technology                                                                             |
-| --------------- | -------------------------------------------------------------------------------------- |
-| Frontend        | React 19, TypeScript, Vite 8, React Router 8, TanStack Query, i18next, Tailwind CSS 4  |
-| Backend         | Node.js 24 LTS, Express 5, TypeScript, Zod, Prisma 7. Planned: Socket.io, BullMQ       |
-| Data            | PostgreSQL 18, Redis 8. S3-compatible object storage is still to be chosen             |
-| Sign-in         | JWT access tokens (jose), rotating refresh tokens in an httpOnly cookie, scrypt hashes |
-| Branch hardware | Node print bridge (skeleton) for ESC/POS receipt and kitchen printers                  |
-| Testing         | Vitest, Testing Library, Supertest. Planned: Playwright, k6                            |
-| DevOps          | Docker Compose, GitHub Actions. Planned: Sentry, Grafana                               |
+| Layer           | Technology                                                                                    |
+| --------------- | --------------------------------------------------------------------------------------------- |
+| Frontend        | React 19, TypeScript, Vite 8, React Router 8, TanStack Query, i18next, Tailwind CSS 4         |
+| Backend         | Node.js 24 LTS, Express 5, TypeScript, Zod, Prisma 7. Planned: Socket.io, BullMQ              |
+| Data            | PostgreSQL 18, Redis 8. S3-compatible object storage is still to be chosen                    |
+| Sign-in         | JWT access tokens (jose), rotating refresh tokens in an httpOnly cookie, scrypt hashes        |
+| Branch hardware | Node print bridge on the shop computer: ESC/POS receipt and kitchen printers over the network |
+| Testing         | Vitest, Testing Library, Supertest. Planned: Playwright, k6                                   |
+| DevOps          | Docker Compose, GitHub Actions. Planned: Sentry, Grafana                                      |
 
 ## Repository structure
 
