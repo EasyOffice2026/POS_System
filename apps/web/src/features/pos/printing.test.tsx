@@ -189,6 +189,10 @@ describe('printing a receipt on the printer of the branch (spec 028)', () => {
     expect(print).toHaveBeenCalledTimes(1);
     expect(api.count(JOBS)).toBe(0);
     expect(within(receipt).queryByRole('status')).not.toBeInTheDocument();
+    // The printed copy fills the roll, 58 mm or 80 mm, at the text size of the screen (asked by
+    // the client on 1 November 2026: the receipt was cut off on the right, or shrunk).
+    const printed = screen.getAllByTestId('receipt').find((element) => !receipt.contains(element));
+    expect(printed).toHaveClass('print:w-full', 'print:max-w-[80mm]', 'print:text-black');
     print.mockRestore();
   });
 });
@@ -271,5 +275,43 @@ describe('printing the kitchen slip on the kitchen printer (spec 028)', () => {
     expect(printed[0]).toContain('1 × Cola');
     expect(screen.queryByText('Kitchen slip:')).not.toBeInTheDocument();
     print.mockRestore();
+  });
+});
+
+describe('the logo on the receipt', () => {
+  it('shows the brand logo at the top of the receipt when the brand has one', async () => {
+    tillApi([], {
+      'GET /api/v1/menu': () =>
+        json(
+          branchMenu({ brand: { logoUrl: 'https://cdn.example.com/mudawara.png', color: null } }),
+        ),
+      'GET /api/v1/orders': () => json(page([orderSummary(open)])),
+      [GET_FIRST]: () => json(open),
+      [PAY]: () => json(paid),
+    });
+    const user = userEvent.setup();
+    renderApp('/pos');
+
+    const receipt = await payCash(user);
+
+    const logo = within(receipt).getByTestId('receipt-logo');
+    expect(logo).toHaveAttribute('src', 'https://cdn.example.com/mudawara.png');
+    expect(logo.compareDocumentPosition(within(receipt).getByText('Order 1'))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
+  it('shows no picture when the brand has no logo', async () => {
+    tillApi([], {
+      'GET /api/v1/orders': () => json(page([orderSummary(open)])),
+      [GET_FIRST]: () => json(open),
+      [PAY]: () => json(paid),
+    });
+    const user = userEvent.setup();
+    renderApp('/pos');
+
+    const receipt = await payCash(user);
+
+    expect(within(receipt).queryByTestId('receipt-logo')).not.toBeInTheDocument();
   });
 });

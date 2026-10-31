@@ -20,6 +20,10 @@ const INDENT = 28;
 const LINE_HEIGHT = 1.3;
 const RULE_HEIGHT = 18;
 const GAP_HEIGHT = 14;
+// The logo at most this big, in dots, with a little space under it.
+const LOGO_MAX_WIDTH = 320;
+const LOGO_MAX_HEIGHT = 160;
+const LOGO_GAP = 12;
 // The font sizes in dots: paper is read from further away than a screen.
 const fontSize: Record<PrintSize, number> = { xs: 22, sm: 26, md: 30, lg: 36, xl: 48 };
 const FONT_FAMILY = '"IBM Plex Sans", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif';
@@ -77,14 +81,63 @@ interface Placed {
   // The wrapped text of a text line, or the start text of a row.
   parts: string[];
   endText?: string;
+  // A picture, scaled to fit, or missing when it could not be loaded.
+  image?: { source: HTMLImageElement; width: number; height: number };
 }
 
-function layout(ctx: CanvasRenderingContext2D, document: PrintDocument, width: number): Placed[] {
+// The pictures of the document, loaded so they can be drawn. A picture that will not load (no
+// connection, or a host that refuses other sites) is left out: the receipt still prints.
+async function loadImages(document: PrintDocument): Promise<Map<string, HTMLImageElement>> {
+  const loaded = new Map<string, HTMLImageElement>();
+  const urls = new Set(document.lines.flatMap((line) => (line.kind === 'image' ? [line.url] : [])));
+  await Promise.all(
+    [...urls].map(
+      (url) =>
+        new Promise<void>((resolve) => {
+          const image = new Image();
+          // Without this the canvas could not be read back after drawing a picture from
+          // another site.
+          image.crossOrigin = 'anonymous';
+          image.onload = () => {
+            loaded.set(url, image);
+            resolve();
+          };
+          image.onerror = () => resolve();
+          image.src = url;
+        }),
+    ),
+  );
+  return loaded;
+}
+
+function layout(
+  ctx: CanvasRenderingContext2D,
+  document: PrintDocument,
+  width: number,
+  images: Map<string, HTMLImageElement>,
+): Placed[] {
   const placed: Placed[] = [];
   let y = MARGIN;
   const content = width - 2 * MARGIN;
 
   for (const line of document.lines) {
+    if (line.kind === 'image') {
+      const source = images.get(line.url);
+      if (!source || source.naturalWidth === 0) continue;
+      const scale = Math.min(
+        LOGO_MAX_WIDTH / source.naturalWidth,
+        LOGO_MAX_HEIGHT / source.naturalHeight,
+        1,
+      );
+      const image = {
+        source,
+        width: Math.round(source.naturalWidth * scale),
+        height: Math.round(source.naturalHeight * scale),
+      };
+      placed.push({ line, y, height: image.height + LOGO_GAP, parts: [], image });
+      y += image.height + LOGO_GAP;
+      continue;
+    }
     if (line.kind === 'rule') {
       placed.push({ line, y, height: RULE_HEIGHT, parts: [] });
       y += RULE_HEIGHT;
@@ -123,11 +176,12 @@ export async function renderPrintImage(
   // The fonts the page uses, so the picture does not fall back to another while they load.
   await window.document.fonts?.ready;
 
+  const images = await loadImages(document);
   const canvas = window.document.createElement('canvas');
   const probe = canvas.getContext('2d');
   if (!probe) throw new Error('This browser cannot draw the receipt');
   probe.direction = direction;
-  const placed = layout(probe, document, width);
+  const placed = layout(probe, document, width, images);
   const height = (placed.at(-1)?.y ?? MARGIN) + (placed.at(-1)?.height ?? 0) + MARGIN;
 
   canvas.width = width;
@@ -147,6 +201,18 @@ export async function renderPrintImage(
 
   for (const item of placed) {
     const { line } = item;
+    if (line.kind === 'image') {
+      if (item.image) {
+        ctx.drawImage(
+          item.image.source,
+          Math.round((width - item.image.width) / 2),
+          item.y,
+          item.image.width,
+          item.image.height,
+        );
+      }
+      continue;
+    }
     if (line.kind === 'rule') {
       ctx.save();
       ctx.strokeStyle = '#000000';

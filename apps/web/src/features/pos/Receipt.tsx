@@ -15,15 +15,21 @@ interface ReceiptProps {
   cashier: string;
   // The bill of an order not paid yet, printed for the table (docs/specs/023-floor-plan.md).
   bill?: boolean;
+  // The brand's logo, at the top, when the brand has one.
+  logoUrl?: string | null;
 }
 
 // What was sold and how it was paid, as the lines of print-document.ts say. See
 // docs/specs/007-payments.md, rule 9.
-export function Receipt({ order, terminal, cashier, bill = false }: ReceiptProps) {
+export function Receipt({ order, terminal, cashier, bill = false, logoUrl = null }: ReceiptProps) {
   const { t, i18n } = useTranslation();
   return (
     <PrintDocumentView
-      document={receiptDocument(order, terminal, cashier, bill, { t, language: i18n.language })}
+      document={receiptDocument(order, terminal, cashier, bill, {
+        t,
+        language: i18n.language,
+        logoUrl,
+      })}
     />
   );
 }

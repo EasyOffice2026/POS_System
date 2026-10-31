@@ -99,7 +99,9 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
   // Printing: on the branch's printers through the bridge, or through the browser
   // (docs/specs/028-print-bridge.md).
   const printing = usePrinting(menu.data, terminal.branchId);
-  const words = { t, language: i18n.language };
+  // The brand's logo goes on the receipt (asked by the client on 1 November 2026).
+  const logoUrl = menu.data?.brand.logoUrl ?? null;
+  const words = { t, language: i18n.language, logoUrl };
 
   // The kitchen slip of the dishes just sent, printed by itself when the branch wants one
   // (docs/specs/027-kitchen-screen-and-slip.md, rule 4). What follows it, the receipt after a
@@ -398,6 +400,7 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             order={bill}
             terminal={terminal}
             cashier={cashier}
+            logoUrl={logoUrl}
             onClose={() => {
               setBill(null);
               printing.reset('bill');
@@ -491,6 +494,7 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
             order={receipt}
             terminal={terminal}
             cashier={cashier}
+            logoUrl={logoUrl}
             onClose={() => {
               setReceipt(null);
               printing.reset('receipt');
@@ -522,12 +526,12 @@ export function OrderScreen({ terminal, shift, onCloseShift }: OrderScreenProps)
       )}
       {bill && !receipt && !slip && (
         <div className="hidden bg-white print:block">
-          <Receipt order={bill} terminal={terminal} cashier={cashier} bill />
+          <Receipt order={bill} terminal={terminal} cashier={cashier} logoUrl={logoUrl} bill />
         </div>
       )}
       {receipt && !slip && (
         <div className="hidden bg-white print:block">
-          <Receipt order={receipt} terminal={terminal} cashier={cashier} />
+          <Receipt order={receipt} terminal={terminal} cashier={cashier} logoUrl={logoUrl} />
         </div>
       )}
     </>

@@ -2,6 +2,14 @@
 
 The answers of Easy Office / Nexera to the questions of the specs and the launch plan, with what was done about each. Newest first.
 
+## 1 November 2026
+
+| Topic               | Decision                                                                                                         | Done                                                                                                                                                                                                                      |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Printing from tills | Every till prints the same way, the iPad included; a separate card machine is kept for the till                  | Done: network printers per branch and the print bridge on the shop computer ([spec 028](specs/028-print-bridge.md)); the card machine stays separate, the cashier marks the payment as card                               |
+| Logo on the receipt | The Mudawara logo at the top of the receipt                                                                      | Done: a receipt or bill starts with the brand's logo (Brands → the brand → logo); upload the logo there and every till shows it on the screen, in the browser print and on the printer                                    |
+| Receipt on the roll | The text size of the 80 mm print, but fitting the paper (on the Sunmi it was cut off at 80 mm and tiny at 50 mm) | Done: the browser print has no page margins and the receipt fills the roll, 58 mm or 80 mm, at the same text size; in the print dialog choose the paper of the printer (the Sunmi's own roll, 80 mm on a counter printer) |
+
 ## 27 October 2026
 
 | Topic       | Decision                                                               | Done                                                                                                                                                                                                                                              |
