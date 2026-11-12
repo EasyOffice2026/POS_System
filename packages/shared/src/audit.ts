@@ -7,6 +7,8 @@ export const auditActions = [
   'auth.login.failed',
   'auth.login.locked',
   'auth.login.blocked',
+  'auth.sso.success',
+  'auth.sso.failed',
   'auth.logout',
   'auth.refresh.reuse_detected',
   'auth.password_changed',

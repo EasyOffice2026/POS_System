@@ -2,6 +2,7 @@ import { apiError, changePasswordRequestSchema, loginRequestSchema } from '@pos/
 import { parseCookie } from 'cookie';
 import { type CookieOptions, type Request, type RequestHandler, Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
+import { z } from 'zod';
 import type { Config } from '../../config';
 import { errors } from '../../lib/http-errors';
 import { requestMeta } from '../../lib/request-meta';
@@ -10,6 +11,7 @@ import type { AuthService } from './auth.service';
 
 // The refresh cookie is only sent to the auth routes.
 const COOKIE_PATH = '/api/v1/auth';
+const ssoRequestSchema = z.strictObject({ ticket: z.string().min(1).max(4096) });
 
 export function createAuthRouter(deps: {
   service: AuthService;
@@ -44,6 +46,16 @@ export function createAuthRouter(deps: {
     const input = parseWith(loginRequestSchema, req.body);
     const result = await service.login(input, requestMeta(req));
 
+    res.cookie(cookie.cookieName, result.refreshToken, {
+      ...cookieOptions(),
+      expires: result.refreshExpiresAt,
+    });
+    res.json(result.session);
+  });
+
+  router.post('/sso', limiter, async (req, res) => {
+    const { ticket } = parseWith(ssoRequestSchema, req.body);
+    const result = await service.sso(ticket, requestMeta(req));
     res.cookie(cookie.cookieName, result.refreshToken, {
       ...cookieOptions(),
       expires: result.refreshExpiresAt,

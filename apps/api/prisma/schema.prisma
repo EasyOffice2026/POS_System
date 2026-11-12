@@ -1225,3 +1225,27 @@ model PrintBridgeKey {
 
   @@map("print_bridge_keys")
 }
+
+// The keys another system (the ERP) reads the accounting figures with (docs/specs/029-erp-link.md).
+// Only the hash of a key is kept.
+model IntegrationKey {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  name        String
+  keyHash     String    @unique @map("key_hash")
+  createdById String    @map("created_by_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastUsedAt  DateTime? @map("last_used_at") @db.Timestamptz(3)
+  revokedAt   DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  @@map("integration_keys")
+}
+
+// The single sign-on tickets already used, so none is used twice.
+model SsoRedemption {
+  jti       String   @id
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@map("sso_redemptions")
+}

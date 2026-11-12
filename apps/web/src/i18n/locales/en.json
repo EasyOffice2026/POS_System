@@ -1,4 +1,9 @@
 {
+  "sso": {
+    "signingIn": "Signing you in…",
+    "failed": "This sign-in link is not valid or has expired. Open the POS again from the ERP, or sign in here.",
+    "toLogin": "Go to sign-in"
+  },
   "image": {
     "upload": "Upload a photo",
     "uploading": "Uploading…",
@@ -417,6 +422,8 @@
       "auth_login_failed": "Failed sign-in",
       "auth_login_locked": "Account locked",
       "auth_login_blocked": "Sign-in blocked (account locked)",
+      "auth_sso_success": "Signed in from the ERP",
+      "auth_sso_failed": "Sign-in from the ERP refused",
       "auth_logout": "Signed out",
       "auth_refresh_reuse_detected": "Session token reused",
       "user_created": "User created",
