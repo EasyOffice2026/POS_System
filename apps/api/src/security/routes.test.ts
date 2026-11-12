@@ -28,6 +28,8 @@ const PUBLIC = new Set([
   'POST /api/v1/auth/login',
   'POST /api/v1/auth/refresh',
   'POST /api/v1/auth/logout',
+  // A single sign-on ticket signed by the ERP (docs/specs/029-erp-link.md).
+  'POST /api/v1/auth/sso',
 ]);
 
 // The routes of the print bridge (docs/specs/028-print-bridge.md): not for people at all. They
@@ -37,6 +39,10 @@ const BRIDGE_ONLY = new Set([
   'POST /api/v1/print-bridge/jobs/claim',
   'POST /api/v1/print-bridge/jobs/:id/done',
   'POST /api/v1/print-bridge/jobs/:id/failed',
+  // The accounting figures the ERP reads with its integration key (docs/specs/029-erp-link.md).
+  'GET /api/v1/accounting/structure',
+  'GET /api/v1/accounting/days',
+  'GET /api/v1/accounting/goods-receipts',
 ]);
 
 // The routes for anybody signed in, whatever their permissions, and why.

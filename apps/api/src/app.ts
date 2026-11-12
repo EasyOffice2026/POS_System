@@ -1,4 +1,5 @@
 import type { BranchMenu } from '@pos/shared';
+import type { JWTVerifyGetKey } from 'jose';
 import express from 'express';
 import type { Config } from './config';
 import { createMailer, type Mailer } from './lib/mailer';
@@ -12,6 +13,11 @@ import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { type LogLine, requestLog, writeJsonLine } from './middleware/request-log';
 import { securityHeaders } from './middleware/security-headers';
 import { createAuditRouter } from './modules/audit/audit.router';
+import {
+  createAccountingRouter,
+  createIntegrationKeysRouter,
+} from './modules/accounting/accounting.router';
+import { createAccountingService } from './modules/accounting/accounting.service';
 import { createAuthRouter } from './modules/auth/auth.router';
 import { createAuthService } from './modules/auth/auth.service';
 import { createBranchesRouter } from './modules/brands/branches.router';
@@ -63,6 +69,8 @@ export interface AppDeps {
   mailer?: Mailer;
   // Tests pass their own storage to see what would be kept.
   storage?: Storage;
+  // Tests pass the ERP's public keys instead of fetching them (docs/specs/029-erp-link.md).
+  ssoKeys?: JWTVerifyGetKey;
 }
 
 export function createApp({
@@ -74,6 +82,7 @@ export function createApp({
   log,
   mailer,
   storage,
+  ssoKeys,
 }: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
@@ -86,7 +95,13 @@ export function createApp({
 
   const tokens = createTokenService(config);
   const passwordHasher = hasher ?? createPasswordHasher(hashProfiles[config.passwordHashProfile]);
-  const authService = createAuthService({ prisma, hasher: passwordHasher, tokens, config });
+  const authService = createAuthService({
+    prisma,
+    hasher: passwordHasher,
+    tokens,
+    config,
+    ...(ssoKeys ? { ssoKeys } : {}),
+  });
   const usersService = createUsersService({
     prisma,
     hasher: passwordHasher,
@@ -127,6 +142,7 @@ export function createApp({
   });
   const shiftsService = createShiftsService({ prisma, now: now ?? (() => new Date()) });
   const printingService = createPrintingService({ prisma, now: now ?? (() => new Date()) });
+  const accountingService = createAccountingService({ prisma, now: now ?? (() => new Date()) });
 
   const v1 = express.Router();
   v1.use('/health', createHealthRouter({ prisma }));
@@ -189,6 +205,13 @@ export function createApp({
   );
   v1.use('/roles', ...protectedRoutes, createRolesRouter());
   v1.use('/audit-logs', ...protectedRoutes, createAuditRouter());
+  v1.use(
+    '/integration-keys',
+    ...protectedRoutes,
+    createIntegrationKeysRouter({ service: accountingService }),
+  );
+  // The ERP is not a person: it reads with an integration key (docs/specs/029-erp-link.md).
+  v1.use('/accounting', createAccountingRouter({ service: accountingService }));
   app.use('/api/v1', v1);
 
   app.use(notFoundHandler);

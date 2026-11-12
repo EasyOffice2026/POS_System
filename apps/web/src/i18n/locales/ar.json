@@ -1,4 +1,9 @@
 {
+  "sso": {
+    "signingIn": "جارٍ تسجيل دخولك…",
+    "failed": "رابط الدخول غير صالح أو انتهت صلاحيته. افتح نقاط البيع من نظام ERP مرة أخرى، أو سجّل الدخول هنا.",
+    "toLogin": "الذهاب إلى تسجيل الدخول"
+  },
   "image": {
     "upload": "رفع صورة",
     "uploading": "جارٍ الرفع…",
@@ -421,6 +426,8 @@
       "auth_login_failed": "محاولة دخول فاشلة",
       "auth_login_locked": "قفل الحساب",
       "auth_login_blocked": "منع الدخول (الحساب مقفل)",
+      "auth_sso_success": "دخول من نظام ERP",
+      "auth_sso_failed": "رفض الدخول من نظام ERP",
       "auth_logout": "تسجيل خروج",
       "auth_refresh_reuse_detected": "إعادة استخدام رمز الجلسة",
       "user_created": "إنشاء مستخدم",

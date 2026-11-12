@@ -30,6 +30,8 @@ export interface Config {
   mail: { smtpUrl: string | undefined; from: string | undefined };
   // Supabase Storage for photos: the project address, its service role key, and the bucket.
   storage: { supabaseUrl: string | undefined; serviceRoleKey: string | undefined; bucket: string };
+  // Single sign-on from the ERP (docs/specs/029-erp-link.md). Off unless the issuer is set.
+  sso: { issuer: string; jwksUrl: string; audience: string } | undefined;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -62,6 +64,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       .min(1)
       .default(5 * 60),
     PRINT_BRIDGE_WAIT_SECONDS: z.coerce.number().int().min(0).max(60).default(8),
+    SSO_ISSUER: z.string().url().optional(),
+    SSO_JWKS_URL: z.string().url().optional(),
+    SSO_AUDIENCE: z.string().min(1).default('pos'),
   });
 
   const values = schema.parse(env);
@@ -95,5 +100,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       serviceRoleKey: values.SUPABASE_SERVICE_ROLE_KEY,
       bucket: values.STORAGE_BUCKET,
     },
+    sso: values.SSO_ISSUER
+      ? {
+          issuer: values.SSO_ISSUER,
+          jwksUrl:
+            values.SSO_JWKS_URL ?? `${values.SSO_ISSUER.replace(/\/$/, '')}/api/v1/sso/jwks.json`,
+          audience: values.SSO_AUDIENCE,
+        }
+      : undefined,
   };
 }
