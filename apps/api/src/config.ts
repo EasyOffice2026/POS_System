@@ -81,6 +81,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (production && values.JWT_ACCESS_SECRET === DEV_JWT_SECRET) {
     throw new Error('JWT_ACCESS_SECRET must be a secret of your own in production.');
   }
+  // Signing keys and money notices must not travel where someone on the way could change them.
+  for (const name of ['SSO_ISSUER', 'SSO_JWKS_URL', 'ACCOUNTING_WEBHOOK_URL'] as const) {
+    const url = values[name];
+    if (production && url && !url.startsWith('https://')) {
+      throw new Error(`${name} must be an https:// address in production.`);
+    }
+  }
 
   return {
     nodeEnv: values.NODE_ENV,
