@@ -2,7 +2,7 @@ import { sessionResponseSchema } from '@pos/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { request } from '../../lib/api';
+import { refreshSession, request } from '../../lib/api';
 import { sessionStore } from '../../lib/session-store';
 
 // Single sign-on from the ERP (docs/specs/029-erp-link.md): the ERP opens /sso#ticket=…, and the
@@ -18,12 +18,18 @@ export function SsoPage() {
     if (started.current || !ticket) return;
     started.current = true;
     window.history.replaceState(null, '', window.location.pathname);
-    request('/auth/sso', {
-      method: 'POST',
-      body: { ticket },
-      schema: sessionResponseSchema,
-      authenticated: false,
-    })
+    // A session restored from an older cookie must finish first, or its answer would replace
+    // the account this link signs in to.
+    refreshSession()
+      .catch(() => null)
+      .then(() =>
+        request('/auth/sso', {
+          method: 'POST',
+          body: { ticket },
+          schema: sessionResponseSchema,
+          authenticated: false,
+        }),
+      )
       .then((session) => {
         sessionStore.set(session);
         void navigate('/', { replace: true });
