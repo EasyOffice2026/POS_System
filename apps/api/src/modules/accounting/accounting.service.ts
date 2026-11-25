@@ -547,7 +547,10 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
           await tx.branchStock.update({ where, data: { quantity: after } });
         }
         return { key: input.key, duplicate: false };
-      });
+      },
+      // Two receipts of one ingredient must not both average from the same starting cost.
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
     },
   };
 }
