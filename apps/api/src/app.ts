@@ -182,6 +182,7 @@ export function createApp({
       counts: countsService,
       suppliers: suppliersService,
       purchaseOrders: purchaseOrdersService,
+      purchasingInErp: config.purchasingInErp,
     }),
   );
   v1.use('/users', ...protectedRoutes, createUsersRouter({ service: usersService }));

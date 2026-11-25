@@ -198,3 +198,77 @@ describe('single sign-on from the ERP', () => {
     expect((await sso('not-a-ticket')).status).toBe(401);
   });
 });
+
+describe('stock from the accounting system', () => {
+  const post = (key: string, body: object) =>
+    request(app).post('/api/v1/accounting/stock').set('Authorization', `Bearer ${key}`).send(body);
+
+  it('receives goods once per key, at the average cost, and moves transfers', async () => {
+    const key = await newKey();
+    const flour = await prisma.ingredient.create({
+      data: {
+        brandId: world.pizza.id,
+        name: { en: 'Flour', ar: 'طحين' },
+        searchText: 'flour',
+        unit: 'kg',
+        costPerUnit: '0.200',
+      },
+    });
+    await prisma.branchStock.create({
+      data: {
+        branchId: world.mall.id,
+        ingredientId: flour.id,
+        brandId: world.pizza.id,
+        quantity: '10',
+      },
+    });
+    const body = {
+      key: 'proc_receive:1',
+      branchId: world.mall.id,
+      kind: 'received',
+      lines: [{ ingredientId: flour.id, quantity: '10.000', unitCost: '0.300' }],
+    };
+    expect((await post(key, body)).status).toBe(201);
+    expect((await post(key, body)).status).toBe(200);
+    const stock = await prisma.branchStock.findUniqueOrThrow({
+      where: { branchId_ingredientId: { branchId: world.mall.id, ingredientId: flour.id } },
+    });
+    expect(stock.quantity.toFixed(3)).toBe('20.000');
+    const after = await prisma.ingredient.findUniqueOrThrow({ where: { id: flour.id } });
+    expect(after.costPerUnit.toFixed(3)).toBe('0.250');
+
+    const out = await post(key, {
+      key: 'transfer_out:1',
+      branchId: world.mall.id,
+      kind: 'transfer_out',
+      lines: [{ ingredientId: flour.id, quantity: '4' }],
+    });
+    expect(out.status).toBe(201);
+    const moved = await prisma.stockMovement.findFirstOrThrow({ where: { kind: 'transfer_out' } });
+    expect(moved.quantity.toFixed(3)).toBe('-4.000');
+    expect(moved.unitCost?.toFixed(3)).toBe('0.250');
+  });
+
+  it('refuses an ingredient of another brand and lists the ingredients', async () => {
+    const key = await newKey();
+    const other = await prisma.brand.create({ data: { name: { en: 'Other', ar: 'أخرى' } } });
+    const salt = await prisma.ingredient.create({
+      data: { brandId: other.id, name: { en: 'Salt', ar: 'ملح' }, searchText: 'salt', unit: 'kg' },
+    });
+    const res = await post(key, {
+      key: 'x:1',
+      branchId: world.mall.id,
+      kind: 'received',
+      lines: [{ ingredientId: salt.id, quantity: '1' }],
+    });
+    expect(res.status).toBe(404);
+    const list = await withKey(key).get('/api/v1/accounting/ingredients');
+    expect((list.body as { ingredients: { id: string }[] }).ingredients.map((i) => i.id)).toContain(
+      salt.id,
+    );
+    const costs = await withKey(key).get(
+      '/api/v1/accounting/stock-costs?from=2026-11-01&to=2026-11-02',
+    );
+    expect(costs.status).toBe(200);
+  });
+});

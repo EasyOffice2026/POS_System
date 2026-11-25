@@ -747,6 +747,8 @@ model StockMovement {
   note          String?
   // The order or transfer it came from, later.
   referenceId   String?      @map("reference_id") @db.Uuid
+  // What one unit was worth when it moved, so a later price change does not change past days.
+  unitCost      Decimal?     @map("unit_cost") @db.Decimal(12, 3)
   byId          String?      @map("by_id") @db.Uuid
   byName        String?      @map("by_name")
   createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -1248,4 +1250,16 @@ model SsoRedemption {
 
   @@index([expiresAt])
   @@map("sso_redemptions")
+}
+
+// Stock the accounting system posted (goods it received, transfers between its stores and the
+// branches), each once: its key is the ERP's own reference (docs/specs/029-erp-link.md).
+model ExternalStockPost {
+  key       String   @id
+  brandId   String   @map("brand_id") @db.Uuid
+  branchId  String   @map("branch_id") @db.Uuid
+  kind      MovementKind
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("external_stock_posts")
 }

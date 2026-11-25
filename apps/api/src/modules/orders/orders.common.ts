@@ -45,6 +45,7 @@ export type OrderTx = Pick<
   | 'loyaltyEntry'
   | 'diningTable'
   | 'recipeLine'
+  | 'ingredient'
   | 'branchStock'
   | 'stockMovement'
 >;

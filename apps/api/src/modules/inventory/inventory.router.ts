@@ -25,7 +25,8 @@ import {
   transferListQuerySchema,
   updateIngredientRequestSchema,
 } from '@pos/shared';
-import { Router } from 'express';
+import { type RequestHandler, Router } from 'express';
+import { errors } from '../../lib/http-errors';
 import { z } from 'zod';
 import { requestMeta } from '../../lib/request-meta';
 import { parseWith } from '../../lib/validate';
@@ -48,14 +49,27 @@ export function createInventoryRouter({
   counts,
   suppliers,
   purchaseOrders,
+  purchasingInErp = false,
 }: {
   service: InventoryService;
   transfers: TransfersService;
   counts: CountsService;
   suppliers: SuppliersService;
   purchaseOrders: PurchaseOrdersService;
+  purchasingInErp?: boolean;
 }): Router {
   const router = Router();
+  // With purchases entered in the accounting system, goods are not ordered or received here.
+  const purchasing: RequestHandler = (req, _res, next) => {
+    const body = req.body as { kind?: unknown } | undefined;
+    const receiving = req.path === '/movements' && body?.kind === 'received';
+    if (purchasingInErp && (req.path.startsWith('/purchase-orders') || receiving)) {
+      throw errors.conflict('PURCHASING_IN_ERP', 'Purchases are entered in the accounting system');
+    }
+    next();
+  };
+  router.post('/{*rest}', purchasing);
+  router.put('/{*rest}', purchasing);
   const read = requirePermission('inventory:read');
   const write = requirePermission('inventory:write');
 

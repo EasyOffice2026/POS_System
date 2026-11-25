@@ -34,6 +34,9 @@ export interface Config {
   sso: { issuer: string; jwksUrl: string; audience: string } | undefined;
   // Where to tell the accounting system that figures changed (docs/specs/029-erp-link.md).
   accountingWebhook: { url: string; secret: string } | undefined;
+  // Purchases are entered in the accounting system, which posts the stock: ordering and
+  // receiving goods here are switched off so nothing is bought twice.
+  purchasingInErp: boolean;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -71,6 +74,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     SSO_AUDIENCE: z.string().min(1).default('pos'),
     ACCOUNTING_WEBHOOK_URL: z.string().url().optional(),
     ACCOUNTING_WEBHOOK_SECRET: z.string().min(16).optional(),
+    PURCHASING_IN_ERP: z.enum(['true', 'false']).default('false'),
   });
 
   const values = schema.parse(env);
@@ -123,5 +127,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       values.ACCOUNTING_WEBHOOK_URL && values.ACCOUNTING_WEBHOOK_SECRET
         ? { url: values.ACCOUNTING_WEBHOOK_URL, secret: values.ACCOUNTING_WEBHOOK_SECRET }
         : undefined,
+    purchasingInErp: values.PURCHASING_IN_ERP === 'true',
   };
 }

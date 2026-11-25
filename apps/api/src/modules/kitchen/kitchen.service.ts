@@ -19,7 +19,7 @@ export interface KitchenDeps {
   // Takes the ingredients of a ticket's dishes off the branch's stock, for brands that do it when
   // the kitchen starts (spec 013; docs/client-decisions.md).
   deductStock: (
-    tx: Pick<ScopedClient, 'recipeLine' | 'branchStock' | 'stockMovement'>,
+    tx: Pick<ScopedClient, 'recipeLine' | 'branchStock' | 'stockMovement' | 'ingredient'>,
     order: { id: string; number: number; brandId: string; branchId: string },
     lines: { itemId: string | null; quantity: number; status: string; details: unknown }[],
     by: { id: string; name: string | null },

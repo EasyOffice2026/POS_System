@@ -67,6 +67,20 @@ export interface BranchDay {
   countDifference: Money;
 }
 
+export interface StockPostLine {
+  ingredientId: string;
+  quantity: string;
+  unitCost?: string | undefined;
+}
+export interface StockPost {
+  key: string;
+  branchId: string;
+  kind: 'received' | 'transfer_in' | 'transfer_out';
+  at?: string | undefined;
+  note?: string | undefined;
+  lines: StockPostLine[];
+}
+
 export function createAccountingService({ prisma, now }: AccountingDeps) {
   async function branches() {
     const rows = await prisma.branch.findMany({
@@ -288,6 +302,7 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
           branchId: true,
           kind: true,
           quantity: true,
+          unitCost: true,
           createdAt: true,
           ingredient: { select: { costPerUnit: true } },
         },
@@ -300,7 +315,10 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
         const entry = dayFor(row.branchId, date);
         if (!entry) continue;
         // Stock going out is a negative quantity; its cost is counted as a positive amount.
-        const cost = row.quantity.negated().times(row.ingredient.costPerUnit).toDecimalPlaces(3);
+        const cost = row.quantity
+          .negated()
+          .times(row.unitCost ?? row.ingredient.costPerUnit)
+          .toDecimalPlaces(3);
         if (row.kind === 'sold') entry.costOfSales = entry.costOfSales.plus(cost);
         else if (row.kind === 'waste') entry.waste = entry.waste.plus(cost);
         else entry.countDifference = entry.countDifference.plus(cost);
@@ -377,6 +395,159 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
         ];
       });
       return { from: range.from, to: range.to, receipts };
+    },
+
+    // Every brand's stock items, for the ERP to link its own purchase items to.
+    async ingredients() {
+      const rows = await prisma.ingredient.findMany({
+        orderBy: [{ brandId: 'asc' }, { searchText: 'asc' }],
+      });
+      return {
+        ingredients: rows.map((row) => ({
+          id: row.id,
+          brandId: row.brandId,
+          name: nameOf(row.name),
+          unit: row.unit,
+          costPerUnit: text(row.costPerUnit),
+          isActive: row.isActive,
+        })),
+      };
+    },
+
+    // The cost of what each branch sold, threw away or found different at a count, per
+    // ingredient and business day, at the cost each movement moved at.
+    async stockCosts(range: DateRange) {
+      checkRange(range);
+      const branchOf = await branches();
+      const rows = await prisma.stockMovement.findMany({
+        where: { createdAt: widened(range), kind: { in: ['sold', 'waste', 'count'] } },
+        select: {
+          branchId: true,
+          ingredientId: true,
+          kind: true,
+          quantity: true,
+          unitCost: true,
+          createdAt: true,
+          ingredient: { select: { costPerUnit: true } },
+        },
+      });
+      interface Sum {
+        branchId: string;
+        businessDate: string;
+        ingredientId: string;
+        kind: string;
+        quantity: Money;
+        cost: Money;
+      }
+      const sums = new Map<string, Sum>();
+      for (const row of rows) {
+        const branch = branchOf.get(row.branchId);
+        if (!branch) continue;
+        const businessDate = businessDateOf(branch, row.createdAt);
+        if (!inRange(businessDate, range)) continue;
+        const key = `${row.branchId}|${businessDate}|${row.ingredientId}|${row.kind}`;
+        const sum = sums.get(key) ?? {
+          branchId: row.branchId,
+          businessDate,
+          ingredientId: row.ingredientId,
+          kind: row.kind,
+          quantity: zero(),
+          cost: zero(),
+        };
+        // Stock going out is a negative quantity; its cost is counted as a positive amount.
+        sum.quantity = sum.quantity.plus(row.quantity.negated());
+        sum.cost = sum.cost.plus(
+          row.quantity
+            .negated()
+            .times(row.unitCost ?? row.ingredient.costPerUnit)
+            .toDecimalPlaces(3),
+        );
+        sums.set(key, sum);
+      }
+      return {
+        from: range.from,
+        to: range.to,
+        costs: [...sums.values()].map((sum) => ({
+          ...sum,
+          quantity: text(sum.quantity),
+          cost: text(sum.cost),
+        })),
+      };
+    },
+
+    // Stock the ERP posts: goods it received at a branch or store, or a transfer leaving or
+    // reaching one. Each key is posted once; posting it again changes nothing. Goods received
+    // move the ingredient's cost to the average of what is on hand and what came in.
+    async postStock(input: StockPost) {
+      return prisma.$transaction(async (tx) => {
+        if (await tx.externalStockPost.findUnique({ where: { key: input.key } })) {
+          return { key: input.key, duplicate: true };
+        }
+        const branch = await tx.branch.findUnique({ where: { id: input.branchId } });
+        if (!branch) throw errors.notFound('Branch');
+        const ids = [...new Set(input.lines.map((line) => line.ingredientId))];
+        const ingredients = await tx.ingredient.findMany({
+          where: { id: { in: ids }, brandId: branch.brandId },
+        });
+        if (ingredients.length !== ids.length) throw errors.notFound('Ingredient');
+        const byId = new Map(ingredients.map((row) => [row.id, row]));
+        await tx.externalStockPost.create({
+          data: { key: input.key, brandId: branch.brandId, branchId: branch.id, kind: input.kind },
+        });
+        const at = input.at ? new Date(input.at) : now();
+        const sign = input.kind === 'transfer_out' ? -1 : 1;
+        for (const line of input.lines) {
+          const ingredient = byId.get(line.ingredientId);
+          if (!ingredient) continue;
+          const quantity = new Prisma.Decimal(line.quantity);
+          const unitCost = line.unitCost
+            ? new Prisma.Decimal(line.unitCost)
+            : ingredient.costPerUnit;
+          if (input.kind === 'received' && quantity.greaterThan(0)) {
+            const held = await tx.branchStock.aggregate({
+              where: { ingredientId: ingredient.id },
+              _sum: { quantity: true },
+            });
+            const onHand = Prisma.Decimal.max(held._sum.quantity ?? zero(), zero());
+            const average = onHand
+              .times(ingredient.costPerUnit)
+              .plus(quantity.times(unitCost))
+              .dividedBy(onHand.plus(quantity))
+              .toDecimalPlaces(3);
+            await tx.ingredient.update({
+              where: { id: ingredient.id },
+              data: { costPerUnit: average },
+            });
+            ingredient.costPerUnit = average;
+          }
+          const where = {
+            branchId_ingredientId: { branchId: branch.id, ingredientId: ingredient.id },
+          };
+          const current = await tx.branchStock.upsert({
+            where,
+            create: { branchId: branch.id, ingredientId: ingredient.id, brandId: branch.brandId },
+            update: {},
+          });
+          const delta = quantity.times(sign);
+          const after = current.quantity.plus(delta);
+          await tx.stockMovement.create({
+            data: {
+              brandId: branch.brandId,
+              branchId: branch.id,
+              ingredientId: ingredient.id,
+              kind: input.kind,
+              quantity: delta,
+              quantityAfter: after,
+              note: input.note ?? null,
+              unitCost,
+              byName: 'Accounting',
+              createdAt: at,
+            },
+          });
+          await tx.branchStock.update({ where, data: { quantity: after } });
+        }
+        return { key: input.key, duplicate: false };
+      });
     },
   };
 }
