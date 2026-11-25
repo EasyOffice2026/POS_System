@@ -440,7 +440,10 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
       checkRange(range);
       const branchOf = await branches();
       const rows = await prisma.stockMovement.findMany({
-        where: { createdAt: widened(range), kind: { in: ['sold', 'waste', 'count'] } },
+        where: {
+          createdAt: widened(range),
+          kind: { in: ['sold', 'waste', 'count', 'adjustment'] },
+        },
         select: {
           branchId: true,
           ingredientId: true,
@@ -465,12 +468,14 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
         if (!branch) continue;
         const businessDate = businessDateOf(branch, row.createdAt);
         if (!inRange(businessDate, range)) continue;
-        const key = `${row.branchId}|${businessDate}|${row.ingredientId}|${row.kind}`;
+        // A manual adjustment sets the stock to what was found, like a count.
+        const kind = row.kind === 'adjustment' ? 'count' : row.kind;
+        const key = `${row.branchId}|${businessDate}|${row.ingredientId}|${kind}`;
         const sum = sums.get(key) ?? {
           branchId: row.branchId,
           businessDate,
           ingredientId: row.ingredientId,
-          kind: row.kind,
+          kind,
           quantity: zero(),
           cost: zero(),
         };
