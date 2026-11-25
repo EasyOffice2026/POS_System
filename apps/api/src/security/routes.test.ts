@@ -43,6 +43,9 @@ const BRIDGE_ONLY = new Set([
   'GET /api/v1/accounting/structure',
   'GET /api/v1/accounting/days',
   'GET /api/v1/accounting/goods-receipts',
+  'GET /api/v1/accounting/ingredients',
+  'GET /api/v1/accounting/stock-costs',
+  'POST /api/v1/accounting/stock',
 ]);
 
 // The routes for anybody signed in, whatever their permissions, and why.

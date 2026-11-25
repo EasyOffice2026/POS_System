@@ -61,6 +61,7 @@ export function createInventoryRouter({
   const router = Router();
   // With purchases entered in the accounting system, goods are not ordered or received here.
   const purchasing: RequestHandler = (req, _res, next) => {
+    if (req.method !== 'POST' && req.method !== 'PUT') return next();
     const body = req.body as { kind?: unknown } | undefined;
     // Matched the way Express routes: any case, with or without a trailing slash.
     const path = req.path.toLowerCase().replace(/\/+$/, '');
@@ -72,8 +73,7 @@ export function createInventoryRouter({
     }
     next();
   };
-  router.post('/{*rest}', purchasing);
-  router.put('/{*rest}', purchasing);
+  router.use(purchasing);
   const read = requirePermission('inventory:read');
   const write = requirePermission('inventory:write');
 
