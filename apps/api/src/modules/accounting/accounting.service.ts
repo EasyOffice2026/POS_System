@@ -76,7 +76,6 @@ export interface StockPost {
   key: string;
   branchId: string;
   kind: 'received' | 'transfer_in' | 'transfer_out';
-  at?: string | undefined;
   note?: string | undefined;
   lines: StockPostLine[];
 }
@@ -479,77 +478,81 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
     // reaching one. Each key is posted once; posting it again changes nothing. Goods received
     // move the ingredient's cost to the average of what is on hand and what came in.
     async postStock(input: StockPost) {
-      return prisma.$transaction(async (tx) => {
-        if (await tx.externalStockPost.findUnique({ where: { key: input.key } })) {
-          return { key: input.key, duplicate: true };
-        }
-        const branch = await tx.branch.findUnique({ where: { id: input.branchId } });
-        if (!branch) throw errors.notFound('Branch');
-        const ids = [...new Set(input.lines.map((line) => line.ingredientId))];
-        const ingredients = await tx.ingredient.findMany({
-          where: { id: { in: ids }, brandId: branch.brandId },
-        });
-        if (ingredients.length !== ids.length) throw errors.notFound('Ingredient');
-        const byId = new Map(ingredients.map((row) => [row.id, row]));
-        await tx.externalStockPost.create({
-          data: { key: input.key, brandId: branch.brandId, branchId: branch.id, kind: input.kind },
-        });
-        const at = input.at ? new Date(input.at) : now();
-        const sign = input.kind === 'transfer_out' ? -1 : 1;
-        for (const line of input.lines) {
-          const ingredient = byId.get(line.ingredientId);
-          if (!ingredient) continue;
-          const quantity = new Prisma.Decimal(line.quantity);
-          const unitCost = line.unitCost
-            ? new Prisma.Decimal(line.unitCost)
-            : ingredient.costPerUnit;
-          if (input.kind === 'received' && quantity.greaterThan(0)) {
-            const held = await tx.branchStock.aggregate({
-              where: { ingredientId: ingredient.id },
-              _sum: { quantity: true },
-            });
-            const onHand = Prisma.Decimal.max(held._sum.quantity ?? zero(), zero());
-            const average = onHand
-              .times(ingredient.costPerUnit)
-              .plus(quantity.times(unitCost))
-              .dividedBy(onHand.plus(quantity))
-              .toDecimalPlaces(3);
-            await tx.ingredient.update({
-              where: { id: ingredient.id },
-              data: { costPerUnit: average },
-            });
-            ingredient.costPerUnit = average;
+      return prisma.$transaction(
+        async (tx) => {
+          if (await tx.externalStockPost.findUnique({ where: { key: input.key } })) {
+            return { key: input.key, duplicate: true };
           }
-          const where = {
-            branchId_ingredientId: { branchId: branch.id, ingredientId: ingredient.id },
-          };
-          const current = await tx.branchStock.upsert({
-            where,
-            create: { branchId: branch.id, ingredientId: ingredient.id, brandId: branch.brandId },
-            update: {},
+          const branch = await tx.branch.findUnique({ where: { id: input.branchId } });
+          if (!branch) throw errors.notFound('Branch');
+          const ids = [...new Set(input.lines.map((line) => line.ingredientId))];
+          const ingredients = await tx.ingredient.findMany({
+            where: { id: { in: ids }, brandId: branch.brandId },
           });
-          const delta = quantity.times(sign);
-          const after = current.quantity.plus(delta);
-          await tx.stockMovement.create({
+          if (ingredients.length !== ids.length) throw errors.notFound('Ingredient');
+          const byId = new Map(ingredients.map((row) => [row.id, row]));
+          await tx.externalStockPost.create({
             data: {
+              key: input.key,
               brandId: branch.brandId,
               branchId: branch.id,
-              ingredientId: ingredient.id,
               kind: input.kind,
-              quantity: delta,
-              quantityAfter: after,
-              note: input.note ?? null,
-              unitCost,
-              byName: 'Accounting',
-              createdAt: at,
             },
           });
-          await tx.branchStock.update({ where, data: { quantity: after } });
-        }
-        return { key: input.key, duplicate: false };
-      },
-      // Two receipts of one ingredient must not both average from the same starting cost.
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+          const sign = input.kind === 'transfer_out' ? -1 : 1;
+          for (const line of input.lines) {
+            const ingredient = byId.get(line.ingredientId);
+            if (!ingredient) continue;
+            const quantity = new Prisma.Decimal(line.quantity);
+            const unitCost = line.unitCost
+              ? new Prisma.Decimal(line.unitCost)
+              : ingredient.costPerUnit;
+            if (input.kind === 'received' && quantity.greaterThan(0)) {
+              const held = await tx.branchStock.aggregate({
+                where: { ingredientId: ingredient.id },
+                _sum: { quantity: true },
+              });
+              const onHand = Prisma.Decimal.max(held._sum.quantity ?? zero(), zero());
+              const average = onHand
+                .times(ingredient.costPerUnit)
+                .plus(quantity.times(unitCost))
+                .dividedBy(onHand.plus(quantity))
+                .toDecimalPlaces(3);
+              await tx.ingredient.update({
+                where: { id: ingredient.id },
+                data: { costPerUnit: average },
+              });
+              ingredient.costPerUnit = average;
+            }
+            const where = {
+              branchId_ingredientId: { branchId: branch.id, ingredientId: ingredient.id },
+            };
+            const current = await tx.branchStock.upsert({
+              where,
+              create: { branchId: branch.id, ingredientId: ingredient.id, brandId: branch.brandId },
+              update: {},
+            });
+            const delta = quantity.times(sign);
+            const after = current.quantity.plus(delta);
+            await tx.stockMovement.create({
+              data: {
+                brandId: branch.brandId,
+                branchId: branch.id,
+                ingredientId: ingredient.id,
+                kind: input.kind,
+                quantity: delta,
+                quantityAfter: after,
+                note: input.note ?? null,
+                unitCost,
+                byName: 'Accounting',
+              },
+            });
+            await tx.branchStock.update({ where, data: { quantity: after } });
+          }
+          return { key: input.key, duplicate: false };
+        },
+        // Two receipts of one ingredient must not both average from the same starting cost.
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
     },
   };

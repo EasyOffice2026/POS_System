@@ -12,7 +12,6 @@ const stockPostBody = z.strictObject({
   key: z.string().trim().min(1).max(200),
   branchId: z.uuid(),
   kind: z.enum(['received', 'transfer_in', 'transfer_out']),
-  at: z.iso.datetime().optional(),
   note: z.string().max(500).optional(),
   lines: z
     .array(z.strictObject({ ingredientId: z.uuid(), quantity: money, unitCost: money.optional() }))
