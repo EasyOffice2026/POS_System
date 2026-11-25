@@ -62,8 +62,12 @@ export function createInventoryRouter({
   // With purchases entered in the accounting system, goods are not ordered or received here.
   const purchasing: RequestHandler = (req, _res, next) => {
     const body = req.body as { kind?: unknown } | undefined;
-    const receiving = req.path === '/movements' && body?.kind === 'received';
-    if (purchasingInErp && (req.path.startsWith('/purchase-orders') || receiving)) {
+    // Matched the way Express routes: any case, with or without a trailing slash.
+    const path = req.path.toLowerCase().replace(/\/+$/, '');
+    const receiving = path === '/movements' && body?.kind === 'received';
+    // Orders already open can still be cancelled.
+    const ordering = path.startsWith('/purchase-orders') && !path.endsWith('/cancel');
+    if (purchasingInErp && (ordering || receiving)) {
       throw errors.conflict('PURCHASING_IN_ERP', 'Purchases are entered in the accounting system');
     }
     next();
