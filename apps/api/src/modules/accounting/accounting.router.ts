@@ -23,7 +23,14 @@ const createKeyBody = z.strictObject({ name: z.string().trim().min(1).max(100) }
 
 // The routes the ERP uses with its integration key (docs/specs/029-erp-link.md). It reads the
 // figures, and posts the stock it bought and transferred, since purchases are entered there.
-export function createAccountingRouter({ service }: { service: AccountingService }): Router {
+export function createAccountingRouter({
+  service,
+  stockPosts = false,
+}: {
+  service: AccountingService;
+  // Only when purchasing is in the ERP may it post stock; otherwise the keys only read.
+  stockPosts?: boolean;
+}): Router {
   const router = Router();
 
   const authenticateKey: RequestHandler = async (req, res, next) => {
@@ -52,6 +59,9 @@ export function createAccountingRouter({ service }: { service: AccountingService
     res.json(await service.stockCosts(parseWith(rangeQuery, req.query)));
   });
   router.post('/stock', async (req, res) => {
+    if (!stockPosts) {
+      throw errors.conflict('PURCHASING_IN_POS', 'Purchases are entered in the POS');
+    }
     const result = await service.postStock(parseWith(stockPostBody, req.body));
     res.status(result.duplicate ? 200 : 201).json(result);
   });

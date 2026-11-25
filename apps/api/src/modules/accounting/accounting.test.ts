@@ -25,6 +25,7 @@ const app = createApp({
     AUTH_RATE_LIMIT_MAX: '1000',
     SSO_ISSUER: ISSUER,
     SSO_AUDIENCE: AUDIENCE,
+    PURCHASING_IN_ERP: 'true',
   }),
   ssoKeys: createLocalJWKSet({ keys: [publicJwk] }),
 });

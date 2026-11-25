@@ -214,7 +214,10 @@ export function createApp({
     createIntegrationKeysRouter({ service: accountingService }),
   );
   // The ERP is not a person: it reads with an integration key (docs/specs/029-erp-link.md).
-  v1.use('/accounting', createAccountingRouter({ service: accountingService }));
+  v1.use(
+    '/accounting',
+    createAccountingRouter({ service: accountingService, stockPosts: config.purchasingInErp }),
+  );
   app.use('/api/v1', v1);
 
   app.use(notFoundHandler);
