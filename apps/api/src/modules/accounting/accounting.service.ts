@@ -79,10 +79,11 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
   type BranchInfo = Awaited<ReturnType<typeof branches>> extends Map<string, infer V> ? V : never;
   const businessDateOf = (branch: BranchInfo, at: Date) =>
     businessDateOn(at, branch.timezone, branch.dayEndsAt);
-  // A business day can end the next morning, so the clock times looked at run a day either side.
+  // A business day can end the next morning, and a branch's clock can be up to 14 hours either
+  // side of UTC, so the clock times looked at run two days either side.
   const widened = ({ from, to }: DateRange) => ({
-    gte: new Date(dbDate(from).getTime() - 86_400_000),
-    lt: new Date(dbDate(to).getTime() + 2 * 86_400_000),
+    gte: new Date(dbDate(from).getTime() - 2 * 86_400_000),
+    lt: new Date(dbDate(to).getTime() + 3 * 86_400_000),
   });
   const inRange = (date: string, { from, to }: DateRange) => date >= from && date <= to;
 
