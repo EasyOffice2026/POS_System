@@ -45,6 +45,7 @@ const BRIDGE_ONLY = new Set([
   'GET /api/v1/accounting/goods-receipts',
   'GET /api/v1/accounting/ingredients',
   'GET /api/v1/accounting/stock-costs',
+  'GET /api/v1/accounting/stock-on-hand',
   'POST /api/v1/accounting/stock',
 ]);
 

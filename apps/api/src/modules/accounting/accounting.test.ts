@@ -248,6 +248,16 @@ describe('stock from the accounting system', () => {
     const moved = await prisma.stockMovement.findFirstOrThrow({ where: { kind: 'transfer_out' } });
     expect(moved.quantity.toFixed(3)).toBe('-4.000');
     expect(moved.unitCost?.toFixed(3)).toBe('0.250');
+
+    const onHand = await withKey(key).get('/api/v1/accounting/stock-on-hand');
+    expect(
+      (onHand.body as { stock: { ingredientId: string; quantity: string; value: string }[] }).stock,
+    ).toContainEqual({
+      branchId: world.mall.id,
+      ingredientId: flour.id,
+      quantity: '16.000',
+      value: '4.000',
+    });
   });
 
   it('refuses an ingredient of another brand and lists the ingredients', async () => {

@@ -413,6 +413,27 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
       };
     },
 
+    // What each branch holds now, per ingredient, valued at the ingredient's average cost.
+    async stockOnHand() {
+      const rows = await prisma.branchStock.findMany({
+        select: {
+          branchId: true,
+          ingredientId: true,
+          quantity: true,
+          ingredient: { select: { costPerUnit: true } },
+        },
+        orderBy: [{ branchId: 'asc' }, { ingredientId: 'asc' }],
+      });
+      return {
+        stock: rows.map((row) => ({
+          branchId: row.branchId,
+          ingredientId: row.ingredientId,
+          quantity: text(row.quantity),
+          value: text(row.quantity.times(row.ingredient.costPerUnit).toDecimalPlaces(3)),
+        })),
+      };
+    },
+
     // The cost of what each branch sold, threw away or found different at a count, per
     // ingredient and business day, at the cost each movement moved at.
     async stockCosts(range: DateRange) {

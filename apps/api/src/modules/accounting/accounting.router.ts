@@ -54,6 +54,9 @@ export function createAccountingRouter({
   router.get('/ingredients', async (_req, res) => {
     res.json(await service.ingredients());
   });
+  router.get('/stock-on-hand', async (_req, res) => {
+    res.json(await service.stockOnHand());
+  });
   router.get('/stock-costs', async (req, res) => {
     res.json(await service.stockCosts(parseWith(rangeQuery, req.query)));
   });
