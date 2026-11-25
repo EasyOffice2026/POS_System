@@ -296,7 +296,10 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
       }
 
       const movements = await prisma.stockMovement.findMany({
-        where: { createdAt: widened(range), kind: { in: ['sold', 'waste', 'count'] } },
+        where: {
+          createdAt: widened(range),
+          kind: { in: ['sold', 'waste', 'count', 'adjustment'] },
+        },
         select: {
           branchId: true,
           kind: true,
