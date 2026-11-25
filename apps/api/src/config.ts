@@ -32,6 +32,8 @@ export interface Config {
   storage: { supabaseUrl: string | undefined; serviceRoleKey: string | undefined; bucket: string };
   // Single sign-on from the ERP (docs/specs/029-erp-link.md). Off unless the issuer is set.
   sso: { issuer: string; jwksUrl: string; audience: string } | undefined;
+  // Where to tell the accounting system that figures changed (docs/specs/029-erp-link.md).
+  accountingWebhook: { url: string; secret: string } | undefined;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -67,6 +69,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     SSO_ISSUER: z.string().url().optional(),
     SSO_JWKS_URL: z.string().url().optional(),
     SSO_AUDIENCE: z.string().min(1).default('pos'),
+    ACCOUNTING_WEBHOOK_URL: z.string().url().optional(),
+    ACCOUNTING_WEBHOOK_SECRET: z.string().min(16).optional(),
   });
 
   const values = schema.parse(env);
@@ -108,5 +112,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
           audience: values.SSO_AUDIENCE,
         }
       : undefined,
+    accountingWebhook:
+      values.ACCOUNTING_WEBHOOK_URL && values.ACCOUNTING_WEBHOOK_SECRET
+        ? { url: values.ACCOUNTING_WEBHOOK_URL, secret: values.ACCOUNTING_WEBHOOK_SECRET }
+        : undefined,
   };
 }

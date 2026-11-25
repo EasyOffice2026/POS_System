@@ -18,6 +18,7 @@ import {
   createIntegrationKeysRouter,
 } from './modules/accounting/accounting.router';
 import { createAccountingService } from './modules/accounting/accounting.service';
+import { createAccountingNotifier } from './modules/accounting/notifier';
 import { createAuthRouter } from './modules/auth/auth.router';
 import { createAuthService } from './modules/auth/auth.service';
 import { createBranchesRouter } from './modules/brands/branches.router';
@@ -145,6 +146,7 @@ export function createApp({
   const accountingService = createAccountingService({ prisma, now: now ?? (() => new Date()) });
 
   const v1 = express.Router();
+  v1.use(createAccountingNotifier(config.accountingWebhook));
   v1.use('/health', createHealthRouter({ prisma }));
   v1.use(
     '/auth',
