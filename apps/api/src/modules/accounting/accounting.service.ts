@@ -775,7 +775,7 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
             const share = received.greaterThan(0)
               ? Prisma.Decimal.min(onHand, received).dividedBy(received)
               : zero();
-            let applied = amount.times(share).toDecimalPlaces(3);
+            let applied = amount.times(share);
             if (onHand.greaterThan(0) && !applied.isZero()) {
               // Rounded toward zero, so no more than the difference is ever put on stock.
               const perUnit = applied
