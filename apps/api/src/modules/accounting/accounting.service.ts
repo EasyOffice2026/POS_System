@@ -364,7 +364,7 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
       const movements = await prisma.stockMovement.findMany({
         where: {
           createdAt: widened(range),
-          kind: { in: ['sold', 'waste', 'count', 'adjustment', 'used_in_production'] },
+          kind: { in: ['sold', 'waste', 'count', 'adjustment'] },
         },
         select: {
           branchId: true,
@@ -655,22 +655,28 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
     async saveIngredient(input: IngredientSave) {
       const brand = await prisma.brand.findUnique({ where: { id: input.brandId } });
       if (!brand) throw errors.notFound('Brand');
-      const data = {
-        name: input.name,
-        searchText: searchTextOf(input.name),
-        isActive: input.isActive ?? true,
-      };
+      // The POS needs an Arabic name; the English one stands in when the ERP has none.
+      const name = { en: input.name.en, ar: input.name.ar || input.name.en };
+      const data = { name, searchText: searchTextOf(name) };
       if (input.id) {
         const row = await prisma.ingredient.findFirst({
           where: { id: input.id, brandId: input.brandId },
         });
         if (!row) throw errors.notFound('Ingredient');
         // The unit stays: stock and recipes are already counted in it.
-        await prisma.ingredient.update({ where: { id: row.id }, data });
+        await prisma.ingredient.update({
+          where: { id: row.id },
+          data: { ...data, isActive: input.isActive ?? row.isActive },
+        });
         return { id: row.id, unit: row.unit };
       }
       const row = await prisma.ingredient.create({
-        data: { ...data, brandId: input.brandId, unit: input.unit },
+        data: {
+          ...data,
+          isActive: input.isActive ?? true,
+          brandId: input.brandId,
+          unit: input.unit,
+        },
       });
       return { id: row.id, unit: row.unit };
     },
@@ -771,8 +777,11 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
               : zero();
             let applied = amount.times(share).toDecimalPlaces(3);
             if (onHand.greaterThan(0) && !applied.isZero()) {
-              const value = onHand.times(ingredient.costPerUnit).plus(applied);
-              const cost = Prisma.Decimal.max(value, zero()).dividedBy(onHand).toDecimalPlaces(3);
+              // Rounded toward zero, so no more than the difference is ever put on stock.
+              const perUnit = applied
+                .dividedBy(onHand)
+                .toDecimalPlaces(3, Prisma.Decimal.ROUND_DOWN);
+              const cost = Prisma.Decimal.max(ingredient.costPerUnit.plus(perUnit), zero());
               applied = cost.minus(ingredient.costPerUnit).times(onHand).toDecimalPlaces(3);
               await tx.ingredient.update({
                 where: { id: ingredient.id },

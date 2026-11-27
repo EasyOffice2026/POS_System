@@ -316,6 +316,25 @@ describe('stock from the accounting system', () => {
       unit: 'g',
     });
     expect((rename.body as { unit: string }).unit).toBe('kg');
+    const blank = await write(key, 'ingredients', {
+      brandId: world.pizza.id,
+      name: { en: 'Salt', ar: '' },
+      unit: 'kg',
+    });
+    const salt = await prisma.ingredient.findUniqueOrThrow({
+      where: { id: (blank.body as { id: string }).id },
+    });
+    expect(salt.name).toEqual({ en: 'Salt', ar: 'Salt' });
+    await prisma.ingredient.update({ where: { id: salt.id }, data: { isActive: false } });
+    await write(key, 'ingredients', {
+      id: salt.id,
+      brandId: world.pizza.id,
+      name: { en: 'Sea salt', ar: 'ملح' },
+      unit: 'kg',
+    });
+    expect((await prisma.ingredient.findUniqueOrThrow({ where: { id: salt.id } })).isActive).toBe(
+      false,
+    );
     await post(key, {
       key: 'opening:1',
       branchId: world.mall.id,
@@ -392,6 +411,12 @@ describe('stock from the accounting system', () => {
     });
     const after = await prisma.ingredient.findUniqueOrThrow({ where: { id: flour.id } });
     expect(after.costPerUnit.toFixed(3)).toBe('0.400');
+    const small = await write(key, 'revalue', {
+      key: 'invoice:10',
+      branchId: world.mall.id,
+      lines: [{ ingredientId: flour.id, receivedQuantity: '4', amount: '0.006' }],
+    });
+    expect(small.body).toMatchObject({ lines: [{ applied: '0.004', unapplied: '0.002' }] });
   });
 
   it('lists every dish with its price and recipe', async () => {
