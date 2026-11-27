@@ -25,7 +25,8 @@ import {
   transferListQuerySchema,
   updateIngredientRequestSchema,
 } from '@pos/shared';
-import { Router } from 'express';
+import { type RequestHandler, Router } from 'express';
+import { errors } from '../../lib/http-errors';
 import { z } from 'zod';
 import { requestMeta } from '../../lib/request-meta';
 import { parseWith } from '../../lib/validate';
@@ -48,14 +49,31 @@ export function createInventoryRouter({
   counts,
   suppliers,
   purchaseOrders,
+  purchasingInErp = false,
 }: {
   service: InventoryService;
   transfers: TransfersService;
   counts: CountsService;
   suppliers: SuppliersService;
   purchaseOrders: PurchaseOrdersService;
+  purchasingInErp?: boolean;
 }): Router {
   const router = Router();
+  // With purchases entered in the accounting system, goods are not ordered or received here.
+  const purchasing: RequestHandler = (req, _res, next) => {
+    if (req.method !== 'POST' && req.method !== 'PUT') return next();
+    const body = req.body as { kind?: unknown } | undefined;
+    // Matched the way Express routes: any case, with or without a trailing slash.
+    const path = req.path.toLowerCase().replace(/\/+$/, '');
+    const receiving = path === '/movements' && body?.kind === 'received';
+    // Orders already open can still be cancelled.
+    const ordering = path.startsWith('/purchase-orders') && !path.endsWith('/cancel');
+    if (purchasingInErp && (ordering || receiving)) {
+      throw errors.conflict('PURCHASING_IN_ERP', 'Purchases are entered in the accounting system');
+    }
+    next();
+  };
+  router.use(purchasing);
   const read = requirePermission('inventory:read');
   const write = requirePermission('inventory:write');
 

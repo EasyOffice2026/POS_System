@@ -9,6 +9,7 @@ import {
   type SessionResponse,
 } from '@pos/shared';
 import { randomUUID } from 'node:crypto';
+import { createRemoteJWKSet, type JWTVerifyGetKey, jwtVerify } from 'jose';
 import type { Config } from '../../config';
 import type { Prisma } from '../../generated/prisma/client';
 import { type AuditEvent, writeAudit } from '../../lib/audit';
@@ -37,6 +38,8 @@ export interface AuthDeps {
   hasher: PasswordHasher;
   tokens: TokenService;
   config: Config;
+  // The ERP's public keys for single sign-on; fetched from config.sso.jwksUrl when not given.
+  ssoKeys?: JWTVerifyGetKey;
 }
 
 export interface IssuedSession {
@@ -88,7 +91,9 @@ function toAuthUser(user: UserWithAccess, claims: AccessTokenClaims): AuthUser {
   };
 }
 
-export function createAuthService({ prisma, hasher, tokens, config }: AuthDeps) {
+export function createAuthService({ prisma, hasher, tokens, config, ssoKeys }: AuthDeps) {
+  const sso = config.sso;
+  const ssoKeySet = ssoKeys ?? (sso ? createRemoteJWKSet(new URL(sso.jwksUrl)) : undefined);
   const audit = (event: AuditEvent, meta: RequestMeta) =>
     writeAudit(prisma, { ...event, ip: meta.ip, userAgent: meta.userAgent });
 
@@ -270,6 +275,59 @@ export function createAuthService({ prisma, hasher, tokens, config }: AuthDeps) 
 
       return {
         session: await buildSession(user, sessionBranchId),
+        refreshToken: issued.token,
+        refreshExpiresAt: issued.expiresAt,
+      };
+    },
+
+    // Single sign-on from the ERP (docs/specs/029-erp-link.md): a ticket the ERP signed for a
+    // person, good for a minute and only once, signs in the POS user with the same email. Only
+    // password users (not PIN staff) can come this way.
+    async sso(ticket: string, meta: RequestMeta): Promise<IssuedSession> {
+      if (!sso || !ssoKeySet) throw errors.notFound('Single sign-on');
+      let email: string;
+      let jti: string;
+      let expiresAt: Date;
+      try {
+        const { payload } = await jwtVerify(ticket, ssoKeySet, {
+          issuer: sso.issuer,
+          audience: sso.audience,
+          algorithms: ['EdDSA'],
+          maxTokenAge: '2m',
+        });
+        if (typeof payload.email !== 'string' || !payload.jti || !payload.exp) {
+          throw new Error('incomplete ticket');
+        }
+        email = payload.email.toLowerCase();
+        jti = payload.jti;
+        expiresAt = new Date(payload.exp * 1000);
+      } catch {
+        await audit({ action: 'auth.sso.failed', metadata: { reason: 'ticket' } }, meta);
+        throw errors.invalidCredentials();
+      }
+
+      const now = new Date();
+      await prisma.ssoRedemption.deleteMany({ where: { expiresAt: { lt: now } } });
+      try {
+        await prisma.ssoRedemption.create({ data: { jti, expiresAt } });
+      } catch {
+        await audit({ action: 'auth.sso.failed', metadata: { reason: 'reused' } }, meta);
+        throw errors.invalidCredentials();
+      }
+
+      const user = await prisma.user.findUnique({ where: { email }, include: withAccess });
+      if (!user?.isActive || !user.passwordHash || (user.lockedUntil && user.lockedUntil > now)) {
+        await audit({ action: 'auth.sso.failed', metadata: { email, reason: 'user' } }, meta);
+        throw errors.invalidCredentials();
+      }
+      await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: now } });
+      const issued = await issueRefreshToken(user.id, randomUUID(), null, meta);
+      await audit(
+        { action: 'auth.sso.success', userId: user.id, brandId: user.brandId, metadata: {} },
+        meta,
+      );
+      return {
+        session: await buildSession(user, null),
         refreshToken: issued.token,
         refreshExpiresAt: issued.expiresAt,
       };

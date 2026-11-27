@@ -356,6 +356,7 @@ export function createInventoryService({ prisma, now }: InventoryDeps) {
             quantity: fromMils(delta),
             quantityAfter: fromMils(after),
             note: input.note ?? null,
+            unitCost: ingredient.costPerUnit,
             byId: auth.sub,
             byName,
             createdAt: now(),
@@ -370,7 +371,7 @@ export function createInventoryService({ prisma, now }: InventoryDeps) {
     // "sold" movement per ingredient that names the order. A dish without a recipe takes nothing
     // off, and a sale may take the stock below zero. See docs/specs/013-recipes.md, rules 3 to 5.
     async sellForOrder(
-      tx: Pick<ScopedClient, 'recipeLine' | 'branchStock' | 'stockMovement'>,
+      tx: Pick<ScopedClient, 'recipeLine' | 'branchStock' | 'stockMovement' | 'ingredient'>,
       order: { id: string; number: number; brandId: string; branchId: string },
       lines: { itemId: string | null; quantity: number; status: string; details: unknown }[],
       by: { id: string; name: string | null },
@@ -415,6 +416,12 @@ export function createInventoryService({ prisma, now }: InventoryDeps) {
         if (times > 0) add(used, recipe.ingredientId, mils(recipe.quantity) * times);
       }
       if (used.size === 0) return;
+      // Each movement keeps what the ingredient cost when it was sold.
+      const costs = await tx.ingredient.findMany({
+        where: { id: { in: [...used.keys()] } },
+        select: { id: true, costPerUnit: true },
+      });
+      const costOf = new Map(costs.map((row) => [row.id, row.costPerUnit]));
 
       for (const [ingredientId, quantity] of used) {
         const where = { branchId_ingredientId: { branchId: order.branchId, ingredientId } };
@@ -434,6 +441,7 @@ export function createInventoryService({ prisma, now }: InventoryDeps) {
             quantityAfter: fromMils(after),
             note: `Order ${order.number}`,
             referenceId: order.id,
+            unitCost: costOf.get(ingredientId) ?? null,
             byId: by.id,
             byName: by.name,
             createdAt: at,

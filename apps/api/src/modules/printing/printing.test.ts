@@ -343,6 +343,8 @@ describe('the bridge (rule 3)', () => {
     const bridge = asBridge(await bridgeKey());
     expect((await bridge.post(`${BRIDGE}/jobs/claim`)).status).toBe(200);
     expect((await bridge.post(`${BRIDGE}/jobs/${job.id}/done`)).status).toBe(204);
+    // createdAt comes from the database clock; pin it to the test's clock.
+    await prisma.printJob.update({ where: { id: job.id }, data: { createdAt: clock } });
 
     clock = new Date('2026-11-09T09:00:00Z');
     expect((await bridge.post(`${BRIDGE}/jobs/claim`)).status).toBe(204);

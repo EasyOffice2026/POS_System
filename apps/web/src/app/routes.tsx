@@ -3,6 +3,7 @@ import { AdminLayout } from '../features/admin/AdminLayout';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RequireAuth } from '../features/auth/RequireAuth';
 import { RequirePermission } from '../features/auth/RequirePermission';
+import { SsoPage } from '../features/auth/SsoPage';
 import { NotFoundPage } from './NotFoundPage';
 import { lazyPage } from './lazy-page';
 
@@ -89,6 +90,7 @@ const UsersPage = lazyPage(() => import('../features/users/UsersPage'), 'UsersPa
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
+  { path: '/sso', element: <SsoPage /> },
   // The terminal shows its own PIN screen to people who are not signed in.
   { path: '/pos', element: <PosPage /> },
   { path: '/kds', element: <KdsPage /> },

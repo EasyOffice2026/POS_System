@@ -30,6 +30,13 @@ export interface Config {
   mail: { smtpUrl: string | undefined; from: string | undefined };
   // Supabase Storage for photos: the project address, its service role key, and the bucket.
   storage: { supabaseUrl: string | undefined; serviceRoleKey: string | undefined; bucket: string };
+  // Single sign-on from the ERP (docs/specs/029-erp-link.md). Off unless the issuer is set.
+  sso: { issuer: string; jwksUrl: string; audience: string } | undefined;
+  // Where to tell the accounting system that figures changed (docs/specs/029-erp-link.md).
+  accountingWebhook: { url: string; secret: string } | undefined;
+  // Purchases are entered in the accounting system, which posts the stock: ordering and
+  // receiving goods here are switched off so nothing is bought twice.
+  purchasingInErp: boolean;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -62,6 +69,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       .min(1)
       .default(5 * 60),
     PRINT_BRIDGE_WAIT_SECONDS: z.coerce.number().int().min(0).max(60).default(8),
+    SSO_ISSUER: z.string().url().optional(),
+    SSO_JWKS_URL: z.string().url().optional(),
+    SSO_AUDIENCE: z.string().min(1).default('pos'),
+    ACCOUNTING_WEBHOOK_URL: z.string().url().optional(),
+    ACCOUNTING_WEBHOOK_SECRET: z.string().min(16).optional(),
+    PURCHASING_IN_ERP: z.enum(['true', 'false']).default('false'),
   });
 
   const values = schema.parse(env);
@@ -71,6 +84,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   // The development secret is in the code for everyone to read; anyone could sign tokens with it.
   if (production && values.JWT_ACCESS_SECRET === DEV_JWT_SECRET) {
     throw new Error('JWT_ACCESS_SECRET must be a secret of your own in production.');
+  }
+  // Signing keys and money notices must not travel where someone on the way could change them.
+  for (const name of ['SSO_ISSUER', 'SSO_JWKS_URL', 'ACCOUNTING_WEBHOOK_URL'] as const) {
+    const url = values[name];
+    if (production && url && !url.startsWith('https://')) {
+      throw new Error(`${name} must be an https:// address in production.`);
+    }
   }
 
   return {
@@ -95,5 +115,18 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       serviceRoleKey: values.SUPABASE_SERVICE_ROLE_KEY,
       bucket: values.STORAGE_BUCKET,
     },
+    sso: values.SSO_ISSUER
+      ? {
+          issuer: values.SSO_ISSUER,
+          jwksUrl:
+            values.SSO_JWKS_URL ?? `${values.SSO_ISSUER.replace(/\/$/, '')}/api/v1/sso/jwks.json`,
+          audience: values.SSO_AUDIENCE,
+        }
+      : undefined,
+    accountingWebhook:
+      values.ACCOUNTING_WEBHOOK_URL && values.ACCOUNTING_WEBHOOK_SECRET
+        ? { url: values.ACCOUNTING_WEBHOOK_URL, secret: values.ACCOUNTING_WEBHOOK_SECRET }
+        : undefined,
+    purchasingInErp: values.PURCHASING_IN_ERP === 'true',
   };
 }

@@ -21,6 +21,9 @@ export const movementKinds = [
   'transfer_in',
   'transfer_out',
   'count',
+  'used_in_production',
+  'produced',
+  'revalued',
 ] as const;
 export const movementKindSchema = z.enum(movementKinds, { error: 'MOVEMENT_KIND_INVALID' });
 export type MovementKind = z.infer<typeof movementKindSchema>;

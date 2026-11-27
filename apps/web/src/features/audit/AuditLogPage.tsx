@@ -13,6 +13,8 @@ const actionKeys = {
   'auth.login.failed': 'audit.actions.auth_login_failed',
   'auth.login.locked': 'audit.actions.auth_login_locked',
   'auth.login.blocked': 'audit.actions.auth_login_blocked',
+  'auth.sso.success': 'audit.actions.auth_sso_success',
+  'auth.sso.failed': 'audit.actions.auth_sso_failed',
   'auth.logout': 'audit.actions.auth_logout',
   'auth.refresh.reuse_detected': 'audit.actions.auth_refresh_reuse_detected',
   'auth.password_changed': 'audit.actions.auth_password_changed',

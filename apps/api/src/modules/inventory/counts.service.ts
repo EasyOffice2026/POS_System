@@ -342,6 +342,7 @@ export function createCountsService({ prisma, now }: CountsDeps) {
               quantityAfter: fromMils(target),
               note: `Count ${count.number}`,
               referenceId: id,
+              unitCost: costOf.get(line.ingredientId) ?? null,
               byId: by.id,
               byName: by.name,
               createdAt: at,

@@ -684,6 +684,11 @@ enum MovementKind {
   transfer_in
   transfer_out
   count
+  // Central kitchen production: ingredients used up, and the prepared item made from them.
+  used_in_production
+  produced
+  // A supplier invoice that changed what received stock cost (no quantity moves).
+  revalued
 
   @@map("movement_kind")
 }
@@ -747,6 +752,8 @@ model StockMovement {
   note          String?
   // The order or transfer it came from, later.
   referenceId   String?      @map("reference_id") @db.Uuid
+  // What one unit was worth when it moved, so a later price change does not change past days.
+  unitCost      Decimal?     @map("unit_cost") @db.Decimal(12, 3)
   byId          String?      @map("by_id") @db.Uuid
   byName        String?      @map("by_name")
   createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -1224,4 +1231,42 @@ model PrintBridgeKey {
   branch Branch @relation(fields: [branchId, brandId], references: [id, brandId], onDelete: Cascade)
 
   @@map("print_bridge_keys")
+}
+
+// The keys another system (the ERP) reads the accounting figures with (docs/specs/029-erp-link.md).
+// Only the hash of a key is kept.
+model IntegrationKey {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  name        String
+  keyHash     String    @unique @map("key_hash")
+  createdById String    @map("created_by_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastUsedAt  DateTime? @map("last_used_at") @db.Timestamptz(3)
+  revokedAt   DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  @@map("integration_keys")
+}
+
+// The single sign-on tickets already used, so none is used twice.
+model SsoRedemption {
+  jti       String   @id
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@map("sso_redemptions")
+}
+
+// Stock the accounting system posted (goods it received, transfers between its stores and the
+// branches), each once: its key is the ERP's own reference (docs/specs/029-erp-link.md).
+model ExternalStockPost {
+  key       String   @id
+  brandId   String   @map("brand_id") @db.Uuid
+  branchId  String   @map("branch_id") @db.Uuid
+  kind      MovementKind
+  // What the post worked out (a production's cost, a revaluation's split), returned again on a repeat.
+  result    Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("external_stock_posts")
 }

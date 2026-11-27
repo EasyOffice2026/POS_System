@@ -456,6 +456,7 @@ export function createPurchaseOrdersService({ prisma, now }: PurchaseOrdersDeps)
               quantityAfter: fromMils(after),
               note: `Purchase order ${order.number}`,
               referenceId: id,
+              unitCost: fromMils(price),
               byId: by.id,
               byName: by.name,
               createdAt: at,
