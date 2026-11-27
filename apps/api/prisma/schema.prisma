@@ -684,6 +684,11 @@ enum MovementKind {
   transfer_in
   transfer_out
   count
+  // Central kitchen production: ingredients used up, and the prepared item made from them.
+  used_in_production
+  produced
+  // A supplier invoice that changed what received stock cost (no quantity moves).
+  revalued
 
   @@map("movement_kind")
 }
@@ -1259,6 +1264,8 @@ model ExternalStockPost {
   brandId   String   @map("brand_id") @db.Uuid
   branchId  String   @map("branch_id") @db.Uuid
   kind      MovementKind
+  // What the post worked out (a production's cost, a revaluation's split), returned again on a repeat.
+  result    Json?
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@map("external_stock_posts")

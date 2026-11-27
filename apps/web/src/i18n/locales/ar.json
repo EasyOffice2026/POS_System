@@ -1547,7 +1547,10 @@
         "sold": "مبيع",
         "transfer_in": "تحويل وارد",
         "transfer_out": "تحويل صادر",
-        "count": "جرد"
+        "count": "جرد",
+        "used_in_production": "مستخدم في الإنتاج",
+        "produced": "منتج",
+        "revalued": "تعديل سعر الفاتورة"
       },
       "quantity": "الكمية ({{unit}})",
       "counted": "الكمية المعدودة ({{unit}})",

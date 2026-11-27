@@ -1,4 +1,4 @@
-import { businessDateOn, parseBranchConfig, parseBrandSettings } from '@pos/shared';
+import { businessDateOn, parseBranchConfig, parseBrandSettings, searchTextOf } from '@pos/shared';
 import { createHash, randomBytes } from 'node:crypto';
 import { Prisma } from '../../generated/prisma/client';
 import { errors } from '../../lib/http-errors';
@@ -78,6 +78,72 @@ export interface StockPost {
   kind: 'received' | 'transfer_in' | 'transfer_out';
   note?: string | undefined;
   lines: StockPostLine[];
+}
+
+export interface IngredientSave {
+  id?: string | undefined;
+  brandId: string;
+  name: { en: string; ar: string };
+  unit: 'g' | 'kg' | 'ml' | 'l' | 'piece';
+  isActive?: boolean | undefined;
+}
+export interface ProductionPost {
+  key: string;
+  branchId: string;
+  outputIngredientId: string;
+  outputQuantity: string;
+  inputs: { ingredientId: string; quantity: string }[];
+  note?: string | undefined;
+}
+export interface RevaluePost {
+  key: string;
+  branchId: string;
+  lines: { ingredientId: string; receivedQuantity: string; amount: string }[];
+  note?: string | undefined;
+}
+
+type Tx = Prisma.TransactionClient;
+
+// One stock movement at a branch, keeping the branch's stock the sum of its movements.
+async function moveStock(
+  tx: Tx,
+  branch: { id: string; brandId: string },
+  ingredientId: string,
+  kind: 'used_in_production' | 'produced',
+  delta: Prisma.Decimal,
+  unitCost: Prisma.Decimal,
+  note: string | null,
+) {
+  const where = { branchId_ingredientId: { branchId: branch.id, ingredientId } };
+  const current = await tx.branchStock.upsert({
+    where,
+    create: { branchId: branch.id, ingredientId, brandId: branch.brandId },
+    update: {},
+  });
+  const after = current.quantity.plus(delta);
+  await tx.stockMovement.create({
+    data: {
+      brandId: branch.brandId,
+      branchId: branch.id,
+      ingredientId,
+      kind,
+      quantity: delta,
+      quantityAfter: after,
+      note,
+      unitCost,
+      byName: 'Accounting',
+    },
+  });
+  await tx.branchStock.update({ where, data: { quantity: after } });
+}
+
+// What the brand holds of an ingredient across its branches, never below zero.
+async function heldOf(tx: Tx, ingredientId: string) {
+  const held = await tx.branchStock.aggregate({
+    where: { ingredientId },
+    _sum: { quantity: true },
+  });
+  return Prisma.Decimal.max(held._sum.quantity ?? new Prisma.Decimal(0), new Prisma.Decimal(0));
 }
 
 export function createAccountingService({ prisma, now }: AccountingDeps) {
@@ -298,7 +364,7 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
       const movements = await prisma.stockMovement.findMany({
         where: {
           createdAt: widened(range),
-          kind: { in: ['sold', 'waste', 'count', 'adjustment'] },
+          kind: { in: ['sold', 'waste', 'count', 'adjustment', 'used_in_production'] },
         },
         select: {
           branchId: true,
@@ -445,7 +511,7 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
       const rows = await prisma.stockMovement.findMany({
         where: {
           createdAt: widened(range),
-          kind: { in: ['sold', 'waste', 'count', 'adjustment'] },
+          kind: { in: ['sold', 'waste', 'count', 'adjustment', 'used_in_production'] },
         },
         select: {
           branchId: true,
@@ -583,6 +649,205 @@ export function createAccountingService({ prisma, now }: AccountingDeps) {
         // Two receipts of one ingredient must not both average from the same starting cost.
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
+    },
+
+    // The ERP keeps the item list; each item is a stock item of every brand that uses it.
+    async saveIngredient(input: IngredientSave) {
+      const brand = await prisma.brand.findUnique({ where: { id: input.brandId } });
+      if (!brand) throw errors.notFound('Brand');
+      const data = {
+        name: input.name,
+        searchText: searchTextOf(input.name),
+        isActive: input.isActive ?? true,
+      };
+      if (input.id) {
+        const row = await prisma.ingredient.findFirst({
+          where: { id: input.id, brandId: input.brandId },
+        });
+        if (!row) throw errors.notFound('Ingredient');
+        // The unit stays: stock and recipes are already counted in it.
+        await prisma.ingredient.update({ where: { id: row.id }, data });
+        return { id: row.id, unit: row.unit };
+      }
+      const row = await prisma.ingredient.create({
+        data: { ...data, brandId: input.brandId, unit: input.unit },
+      });
+      return { id: row.id, unit: row.unit };
+    },
+
+    // A central kitchen batch: the ingredients leave the kitchen's stock at their average cost,
+    // and the prepared item comes in at what they cost together, over the quantity made.
+    async postProduction(input: ProductionPost) {
+      return prisma.$transaction(
+        async (tx) => {
+          const done = await tx.externalStockPost.findUnique({ where: { key: input.key } });
+          if (done) return { ...(done.result as object), key: input.key, duplicate: true };
+          const branch = await tx.branch.findUnique({ where: { id: input.branchId } });
+          if (!branch) throw errors.notFound('Branch');
+          if (input.inputs.some((line) => line.ingredientId === input.outputIngredientId)) {
+            throw errors.conflict('PRODUCTION_LOOP', 'An item cannot be made from itself');
+          }
+          const ids = [
+            ...new Set([input.outputIngredientId, ...input.inputs.map((l) => l.ingredientId)]),
+          ];
+          const rows = await tx.ingredient.findMany({
+            where: { id: { in: ids }, brandId: branch.brandId },
+          });
+          if (rows.length !== ids.length) throw errors.notFound('Ingredient');
+          const byId = new Map(rows.map((row) => [row.id, row]));
+          const note = input.note ?? null;
+          let total = zero();
+          const used: { ingredientId: string; quantity: string; cost: string }[] = [];
+          for (const line of input.inputs) {
+            const ingredient = byId.get(line.ingredientId);
+            if (!ingredient) continue;
+            const quantity = new Prisma.Decimal(line.quantity);
+            const cost = quantity.times(ingredient.costPerUnit).toDecimalPlaces(3);
+            total = total.plus(cost);
+            used.push({ ingredientId: ingredient.id, quantity: text(quantity), cost: text(cost) });
+            await moveStock(
+              tx,
+              branch,
+              ingredient.id,
+              'used_in_production',
+              quantity.negated(),
+              ingredient.costPerUnit,
+              note,
+            );
+          }
+          const output = byId.get(input.outputIngredientId);
+          if (!output) throw errors.notFound('Ingredient');
+          const made = new Prisma.Decimal(input.outputQuantity);
+          const unitCost = total.dividedBy(made).toDecimalPlaces(3);
+          const onHand = await heldOf(tx, output.id);
+          const average = onHand
+            .times(output.costPerUnit)
+            .plus(total)
+            .dividedBy(onHand.plus(made))
+            .toDecimalPlaces(3);
+          await tx.ingredient.update({ where: { id: output.id }, data: { costPerUnit: average } });
+          await moveStock(tx, branch, output.id, 'produced', made, unitCost, note);
+          const result = { cost: text(total), unitCost: text(unitCost), inputs: used };
+          await tx.externalStockPost.create({
+            data: {
+              key: input.key,
+              brandId: branch.brandId,
+              branchId: branch.id,
+              kind: 'produced',
+              result,
+            },
+          });
+          return { ...result, key: input.key, duplicate: false };
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    },
+
+    // A supplier invoice that differs from what was received. The part of the difference on
+    // stock still held changes the average cost; the part on stock already used is returned
+    // as unapplied, for the ERP to book to cost of sales.
+    async revalue(input: RevaluePost) {
+      return prisma.$transaction(
+        async (tx) => {
+          const done = await tx.externalStockPost.findUnique({ where: { key: input.key } });
+          if (done) return { ...(done.result as object), key: input.key, duplicate: true };
+          const branch = await tx.branch.findUnique({ where: { id: input.branchId } });
+          if (!branch) throw errors.notFound('Branch');
+          const ids = [...new Set(input.lines.map((l) => l.ingredientId))];
+          const rows = await tx.ingredient.findMany({
+            where: { id: { in: ids }, brandId: branch.brandId },
+          });
+          if (rows.length !== ids.length) throw errors.notFound('Ingredient');
+          const byId = new Map(rows.map((row) => [row.id, row]));
+          const lines: { ingredientId: string; applied: string; unapplied: string }[] = [];
+          for (const line of input.lines) {
+            const ingredient = byId.get(line.ingredientId);
+            if (!ingredient) continue;
+            const amount = new Prisma.Decimal(line.amount);
+            const received = new Prisma.Decimal(line.receivedQuantity);
+            const onHand = await heldOf(tx, ingredient.id);
+            const share = received.greaterThan(0)
+              ? Prisma.Decimal.min(onHand, received).dividedBy(received)
+              : zero();
+            let applied = amount.times(share).toDecimalPlaces(3);
+            if (onHand.greaterThan(0) && !applied.isZero()) {
+              const value = onHand.times(ingredient.costPerUnit).plus(applied);
+              const cost = Prisma.Decimal.max(value, zero()).dividedBy(onHand).toDecimalPlaces(3);
+              applied = cost.minus(ingredient.costPerUnit).times(onHand).toDecimalPlaces(3);
+              await tx.ingredient.update({
+                where: { id: ingredient.id },
+                data: { costPerUnit: cost },
+              });
+              ingredient.costPerUnit = cost;
+            } else {
+              applied = zero();
+            }
+            lines.push({
+              ingredientId: ingredient.id,
+              applied: text(applied),
+              unapplied: text(amount.minus(applied)),
+            });
+          }
+          const result = { lines };
+          await tx.externalStockPost.create({
+            data: {
+              key: input.key,
+              brandId: branch.brandId,
+              branchId: branch.id,
+              kind: 'revalued',
+              result,
+            },
+          });
+          return { ...result, key: input.key, duplicate: false };
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    },
+
+    // Every dish and modifier with its price and recipe, for the ERP's dish cost list.
+    async recipes() {
+      const recipe = { select: { ingredientId: true, quantity: true } };
+      const items = await prisma.menuItem.findMany({
+        where: { isActive: true },
+        select: {
+          id: true,
+          brandId: true,
+          name: true,
+          basePrice: true,
+          category: { select: { name: true } },
+          recipeLines: recipe,
+          modifierGroups: {
+            where: { isActive: true },
+            select: {
+              modifiers: {
+                where: { isActive: true },
+                select: { id: true, name: true, priceDelta: true, recipeLines: recipe },
+              },
+            },
+          },
+        },
+        orderBy: [{ brandId: 'asc' }, { searchText: 'asc' }],
+      });
+      const lines = (rows: { ingredientId: string; quantity: Money }[]) =>
+        rows.map((row) => ({ ingredientId: row.ingredientId, quantity: text(row.quantity) }));
+      return {
+        items: items.map((item) => ({
+          id: item.id,
+          brandId: item.brandId,
+          name: nameOf(item.name),
+          category: nameOf(item.category.name),
+          price: text(item.basePrice),
+          recipe: lines(item.recipeLines),
+          modifiers: item.modifierGroups.flatMap((group) =>
+            group.modifiers.map((m) => ({
+              id: m.id,
+              name: nameOf(m.name),
+              price: text(m.priceDelta),
+              recipe: lines(m.recipeLines),
+            })),
+          ),
+        })),
+      };
     },
   };
 }

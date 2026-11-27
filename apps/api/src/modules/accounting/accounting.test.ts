@@ -282,4 +282,123 @@ describe('stock from the accounting system', () => {
     );
     expect(costs.status).toBe(200);
   });
+
+  const write = (key: string, path: string, body: object) =>
+    request(app)
+      .post(`/api/v1/accounting/${path}`)
+      .set('Authorization', `Bearer ${key}`)
+      .send(body);
+  const stockOf = async (ingredientId: string) =>
+    (
+      await prisma.branchStock.findUniqueOrThrow({
+        where: { branchId_ingredientId: { branchId: world.mall.id, ingredientId } },
+      })
+    ).quantity.toFixed(3);
+
+  it('makes a prepared item from its ingredients at what they cost, once per key', async () => {
+    const key = await newKey();
+    const made = async (name: string, unit: string) => {
+      const res = await write(key, 'ingredients', {
+        brandId: world.pizza.id,
+        name: { en: name, ar: name },
+        unit,
+      });
+      expect(res.status).toBe(200);
+      return (res.body as { id: string }).id;
+    };
+    const flour = await made('Flour', 'kg');
+    const oil = await made('Oil', 'l');
+    const dough = await made('Dough', 'kg');
+    const rename = await write(key, 'ingredients', {
+      id: dough,
+      brandId: world.pizza.id,
+      name: { en: 'Pizza dough', ar: 'عجينة' },
+      unit: 'g',
+    });
+    expect((rename.body as { unit: string }).unit).toBe('kg');
+    await post(key, {
+      key: 'opening:1',
+      branchId: world.mall.id,
+      kind: 'received',
+      lines: [
+        { ingredientId: flour, quantity: '10', unitCost: '0.300' },
+        { ingredientId: oil, quantity: '2', unitCost: '1.000' },
+      ],
+    });
+    const body = {
+      key: 'production:1',
+      branchId: world.mall.id,
+      outputIngredientId: dough,
+      outputQuantity: '12',
+      inputs: [
+        { ingredientId: flour, quantity: '10' },
+        { ingredientId: oil, quantity: '1' },
+      ],
+    };
+    const res = await write(key, 'production', body);
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      cost: '4.000',
+      unitCost: '0.333',
+      inputs: [
+        { ingredientId: flour, cost: '3.000' },
+        { ingredientId: oil, cost: '1.000' },
+      ],
+    });
+    const again = await write(key, 'production', body);
+    expect(again.status).toBe(200);
+    expect(again.body).toMatchObject({ cost: '4.000', duplicate: true });
+    expect(await stockOf(flour)).toBe('0.000');
+    expect(await stockOf(oil)).toBe('1.000');
+    expect(await stockOf(dough)).toBe('12.000');
+    const cost = await prisma.ingredient.findUniqueOrThrow({ where: { id: dough } });
+    expect(cost.costPerUnit.toFixed(3)).toBe('0.333');
+    const loop = await write(key, 'production', {
+      ...body,
+      key: 'production:2',
+      inputs: [{ ingredientId: dough, quantity: '1' }],
+    });
+    expect(loop.status).toBe(409);
+  });
+
+  it('spreads an invoice difference over the stock still held', async () => {
+    const key = await newKey();
+    const flour = await prisma.ingredient.create({
+      data: {
+        brandId: world.pizza.id,
+        name: { en: 'Flour', ar: 'طحين' },
+        searchText: 'flour',
+        unit: 'kg',
+      },
+    });
+    await post(key, {
+      key: 'proc_receive:9',
+      branchId: world.mall.id,
+      kind: 'received',
+      lines: [{ ingredientId: flour.id, quantity: '10', unitCost: '0.300' }],
+    });
+    await prisma.branchStock.update({
+      where: { branchId_ingredientId: { branchId: world.mall.id, ingredientId: flour.id } },
+      data: { quantity: '4' },
+    });
+    const res = await write(key, 'revalue', {
+      key: 'invoice:9',
+      branchId: world.mall.id,
+      lines: [{ ingredientId: flour.id, receivedQuantity: '10', amount: '1.000' }],
+    });
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      lines: [{ ingredientId: flour.id, applied: '0.400', unapplied: '0.600' }],
+    });
+    const after = await prisma.ingredient.findUniqueOrThrow({ where: { id: flour.id } });
+    expect(after.costPerUnit.toFixed(3)).toBe('0.400');
+  });
+
+  it('lists every dish with its price and recipe', async () => {
+    const key = await newKey();
+    const res = await withKey(key).get('/api/v1/accounting/recipes');
+    expect(res.status).toBe(200);
+    const items = (res.body as { items: { id: string; price: string }[] }).items;
+    expect(items.map((i) => i.id)).toContain(world.items.margherita.id);
+  });
 });

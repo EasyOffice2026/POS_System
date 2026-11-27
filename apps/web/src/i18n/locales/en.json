@@ -1483,7 +1483,10 @@
         "sold": "Sold",
         "transfer_in": "Transfer in",
         "transfer_out": "Transfer out",
-        "count": "Count"
+        "count": "Count",
+        "used_in_production": "Used in production",
+        "produced": "Produced",
+        "revalued": "Invoice price"
       },
       "quantity": "Quantity ({{unit}})",
       "counted": "Counted in stock ({{unit}})",

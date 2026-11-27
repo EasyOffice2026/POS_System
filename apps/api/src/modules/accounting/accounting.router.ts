@@ -18,6 +18,38 @@ const stockPostBody = z.strictObject({
     .min(1)
     .max(500),
 });
+const signedMoney = z.string().regex(/^-?\d{1,9}(\.\d{1,3})?$/);
+const quantity = z
+  .string()
+  .regex(/^\d{1,9}(\.\d{1,3})?$/)
+  .refine((v) => Number(v) > 0);
+const ingredientBody = z.strictObject({
+  id: z.uuid().optional(),
+  brandId: z.uuid(),
+  name: z.strictObject({ en: z.string().trim().min(1).max(120), ar: z.string().trim().max(120) }),
+  unit: z.enum(['g', 'kg', 'ml', 'l', 'piece']),
+  isActive: z.boolean().optional(),
+});
+const productionBody = z.strictObject({
+  key: z.string().trim().min(1).max(200),
+  branchId: z.uuid(),
+  outputIngredientId: z.uuid(),
+  outputQuantity: quantity,
+  inputs: z
+    .array(z.strictObject({ ingredientId: z.uuid(), quantity }))
+    .min(1)
+    .max(200),
+  note: z.string().max(500).optional(),
+});
+const revalueBody = z.strictObject({
+  key: z.string().trim().min(1).max(200),
+  branchId: z.uuid(),
+  lines: z
+    .array(z.strictObject({ ingredientId: z.uuid(), receivedQuantity: money, amount: signedMoney }))
+    .min(1)
+    .max(500),
+  note: z.string().max(500).optional(),
+});
 const createKeyBody = z.strictObject({ name: z.string().trim().min(1).max(100) });
 
 // The routes the ERP uses with its integration key (docs/specs/029-erp-link.md). It reads the
@@ -65,6 +97,26 @@ export function createAccountingRouter({
       throw errors.conflict('PURCHASING_IN_POS', 'Purchases are entered in the POS');
     }
     const result = await service.postStock(parseWith(stockPostBody, req.body));
+    res.status(result.duplicate ? 200 : 201).json(result);
+  });
+  const erpWrites: RequestHandler = (_req, _res, next) => {
+    if (!stockPosts) {
+      throw errors.conflict('PURCHASING_IN_POS', 'Purchases are entered in the POS');
+    }
+    next();
+  };
+  router.get('/recipes', async (_req, res) => {
+    res.json(await service.recipes());
+  });
+  router.post('/ingredients', erpWrites, async (req, res) => {
+    res.json(await service.saveIngredient(parseWith(ingredientBody, req.body)));
+  });
+  router.post('/production', erpWrites, async (req, res) => {
+    const result = await service.postProduction(parseWith(productionBody, req.body));
+    res.status(result.duplicate ? 200 : 201).json(result);
+  });
+  router.post('/revalue', erpWrites, async (req, res) => {
+    const result = await service.revalue(parseWith(revalueBody, req.body));
     res.status(result.duplicate ? 200 : 201).json(result);
   });
   return router;
